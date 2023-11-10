@@ -1,7 +1,5 @@
 package main.java;
 
-import com.sun.xml.internal.bind.v2.runtime.output.StAXExStreamWriterOutput;
-
 import javax.swing.*;
 import java.awt.*;
 
