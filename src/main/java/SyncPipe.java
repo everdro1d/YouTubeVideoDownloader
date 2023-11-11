@@ -1,9 +1,7 @@
 package main.java;
 
-import javax.swing.*;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Scanner;
 
 class SyncPipe implements Runnable
 {

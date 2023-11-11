@@ -18,7 +18,7 @@ public class mainWindow extends JFrame {
                 protected JPanel centerVerticalPanelRow2;
                     protected JPanel advancedSettingsPanel;
                         protected JComboBox<String> comboBoxVideoAudio;
-                        protected JComboBox comboBoxVideoOptions;
+                        protected JComboBox<String> comboBoxVideoOptions;
                         protected JComboBox<String> comboBoxAudioOptions;
             protected JPanel southPanel;
 
@@ -189,7 +189,7 @@ public class mainWindow extends JFrame {
                     //TODO: add advanced settings
                     {
                         //add two combo boxes in the center of the advancedSettingsPanel
-                        comboBoxVideoOptions = new JComboBox<String>(mainWorker.arrayVideoFormats);
+                        comboBoxVideoOptions = new JComboBox<>(mainWorker.arrayVideoFormats);
                         comboBoxVideoOptions.setFont(new Font("Tahoma", Font.PLAIN, 18));
                         comboBoxVideoOptions.setBorder(BorderFactory.createLineBorder(Color.BLACK));
                         comboBoxVideoOptions.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -197,13 +197,11 @@ public class mainWindow extends JFrame {
                         comboBoxVideoOptions.setSelectedIndex(0);
                             advancedSettingsPanel.add(comboBoxVideoOptions);
 
-                            comboBoxVideoOptions.addActionListener((e) -> {
-                                mainWorker.videoFormat = comboBoxVideoOptions.getSelectedIndex();
-                            });
+                            comboBoxVideoOptions.addActionListener((e) -> mainWorker.videoFormat = comboBoxVideoOptions.getSelectedIndex());
 
                         advancedSettingsPanel.add(Box.createRigidArea(new Dimension(20, 0)));
 
-                        comboBoxAudioOptions = new JComboBox<String>(mainWorker.arrayAudioFormats);
+                        comboBoxAudioOptions = new JComboBox<>(mainWorker.arrayAudioFormats);
                         comboBoxAudioOptions.setFont(new Font("Tahoma", Font.PLAIN, 18));
                         comboBoxAudioOptions.setBorder(BorderFactory.createLineBorder(Color.BLACK));
                         comboBoxAudioOptions.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -211,9 +209,7 @@ public class mainWindow extends JFrame {
                         comboBoxAudioOptions.setSelectedIndex(0);
                             advancedSettingsPanel.add(comboBoxAudioOptions);
 
-                            comboBoxAudioOptions.addActionListener((e) -> {
-                                mainWorker.audioFormat = comboBoxAudioOptions.getSelectedIndex();
-                            });
+                            comboBoxAudioOptions.addActionListener((e) -> mainWorker.audioFormat = comboBoxAudioOptions.getSelectedIndex());
 
                     }
                 }

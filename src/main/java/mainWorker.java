@@ -19,11 +19,7 @@ package main.java;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Scanner;
 
 public class mainWorker {
 
@@ -76,7 +72,7 @@ public class mainWorker {
     }
 
     public static void readVideoOptionsFromYT() {
-        //TODO
+        //TODO - read the table from console output and sort it into the GUI
 
         // get the video options from the URL
         getVideoOptions();
@@ -143,8 +139,8 @@ public class mainWorker {
     }
 
     public static String getAdvancedOptions() {
-        String output = "";
-        ArrayList<String> arrayListAdvancedOptions = new ArrayList<String>();
+        StringBuilder output = new StringBuilder();
+        ArrayList<String> arrayListAdvancedOptions = new ArrayList<>();
 
         //TODO
 
@@ -165,20 +161,17 @@ public class mainWorker {
             arrayListAdvancedOptions.add(defaultVideoOptions);
         } else if (videoAudio == 2) {
             arrayListAdvancedOptions.add(defaultAudioOptions);
-        } else {
-            System.err.println("Error: videoAudio variable is not set to a valid value.");
         }
         //TODO
-        // add the options to the cmd variable
+        // add the selected options to the cmd variable
 
 
-
-        for (int i = 0; i < arrayListAdvancedOptions.size() ; i++) {
+        for (String arrayListAdvancedOption : arrayListAdvancedOptions) {
             // add the options to the cmd variable
-            output += arrayListAdvancedOptions.get(i) + " ";
+            output.append(arrayListAdvancedOption).append(" ");
         }
 
-        return output;
+        return output.toString();
     }
 
 
@@ -214,11 +207,11 @@ public class mainWorker {
         // TODO
         // 1. get the file path from the file chooser
         // 2. update the file path variable
-
-
         String output = "";
 
-        if (output.equals("")) {
+
+
+        if ( output.isEmpty() ) {
             output = (System.getProperty("user.home") + "\\Downloads\\");
         }
         output = "C:\\Users\\everd\\Documents\\IntelliJ\\YoutubeVideoDownloaderV2\\";
