@@ -26,7 +26,7 @@ public class mainWindow extends JFrame {
 
 
     private final String titleText = "YouTube Video Downloader V2.0";
-    private final String[] typeComboBoxOptions = {"Video", "Audio"};
+    private final String[] typeComboBoxOptions = {"Video + Audio", "Only Video", "Only Audio"};
 
 
 
@@ -123,6 +123,7 @@ public class mainWindow extends JFrame {
 
                         comboBoxVideoAudio.addActionListener((e) -> {
                             mainWorker.videoAudio = comboBoxVideoAudio.getSelectedIndex();
+                            checkType();
                             // 0 = video and 1 = audio
                         });
 
@@ -156,6 +157,7 @@ public class mainWindow extends JFrame {
                         centerVerticalPanelRow1.add(checkBoxAdvanced);
 
                         checkBoxAdvanced.addActionListener((e) -> {
+                            checkType();
                             if (checkBoxAdvanced.isSelected()) {
                                 mainWorker.readVideoOptionsFromYT();
                                 System.out.println("Advanced Settings enabled");
@@ -192,10 +194,11 @@ public class mainWindow extends JFrame {
                         comboBoxVideoOptions.setBorder(BorderFactory.createLineBorder(Color.BLACK));
                         comboBoxVideoOptions.setAlignmentX(Component.CENTER_ALIGNMENT);
                         comboBoxVideoOptions.setMaximumSize(new Dimension(100, 30));
+                        comboBoxVideoOptions.setSelectedIndex(0);
                             advancedSettingsPanel.add(comboBoxVideoOptions);
 
                             comboBoxVideoOptions.addActionListener((e) -> {
-                                comboBoxVideoOptions.getItemAt(comboBoxVideoOptions.getSelectedIndex());
+                                mainWorker.videoFormat = comboBoxVideoOptions.getSelectedIndex();
                             });
 
                         advancedSettingsPanel.add(Box.createRigidArea(new Dimension(20, 0)));
@@ -205,10 +208,11 @@ public class mainWindow extends JFrame {
                         comboBoxAudioOptions.setBorder(BorderFactory.createLineBorder(Color.BLACK));
                         comboBoxAudioOptions.setAlignmentX(Component.CENTER_ALIGNMENT);
                         comboBoxAudioOptions.setMaximumSize(new Dimension(100, 30));
+                        comboBoxAudioOptions.setSelectedIndex(0);
                             advancedSettingsPanel.add(comboBoxAudioOptions);
 
-                            comboBoxVideoOptions.addActionListener((e) -> {
-                                comboBoxAudioOptions.getItemAt(comboBoxAudioOptions.getSelectedIndex());
+                            comboBoxAudioOptions.addActionListener((e) -> {
+                                mainWorker.audioFormat = comboBoxAudioOptions.getSelectedIndex();
                             });
 
                     }
@@ -234,6 +238,19 @@ public class mainWindow extends JFrame {
                     buttonDownload.addActionListener((e) -> mainWorker.downloadButtonClicked());
             }
 
+    }
+
+    private void checkType() {
+        if (comboBoxVideoAudio.getSelectedIndex() == 0) {
+            comboBoxVideoOptions.setEnabled(true);
+            comboBoxAudioOptions.setEnabled(true);
+        } else if (comboBoxVideoAudio.getSelectedIndex() == 1) {
+            comboBoxVideoOptions.setEnabled(true);
+            comboBoxAudioOptions.setEnabled(false);
+        } else if (comboBoxVideoAudio.getSelectedIndex() == 2) {
+            comboBoxVideoOptions.setEnabled(false);
+            comboBoxAudioOptions.setEnabled(true);
+        }
     }
 
 }

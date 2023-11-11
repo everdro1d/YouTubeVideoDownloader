@@ -1,7 +1,9 @@
 package main.java;
 
+import javax.swing.*;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Scanner;
 
 class SyncPipe implements Runnable
 {
@@ -20,7 +22,7 @@ class SyncPipe implements Runnable
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+            e.printStackTrace(System.out);
         }
     }
     private final OutputStream oStream_;

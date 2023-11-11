@@ -19,19 +19,26 @@ package main.java;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 public class mainWorker {
 
     public static String rawURL; // raw URL String from the text field
-    public static int videoAudio; // 0 = video, 1 = audio
+    public static int videoAudio; // 0 = video and audio, 1 = audio only, 2 = video only
     private static final String downloadBinary = "libs/yt-dlp.exe "; // the path to the binary to run
     protected static String filePath = ""; // the path to download the video to
 
+    protected static int videoFormat = 0; // the video format to download
+    protected static int audioFormat = 0; // the audio format to download
+
     protected static String[] arrayVideoFormats = new String[]
-            {"mp4", "mkv", "webm", "avi", "mov"};
+            {"mp4", "avi", "mov", "mkv", "flv", "webm"};
     protected static String[] arrayAudioFormats = new String[]
-            {"m4a", "mp3", "aac", "flac", "ogg", "opus", "vorbis", "aiff", "opus"};
+            {"m4a", "mp3", "aac", "aiff", "flac", "ogg", "wav", "webm"};
 
     public static void main(String[] args) {
         try {
@@ -132,7 +139,7 @@ public class mainWorker {
         // the options to pass to the binary
         String advancedOptions = getAdvancedOptions();
 
-        return downloadBinary + advancedOptions + "-o \"" + filePath + "%(title)s.%(ext)s\" " + rawURL;
+        return downloadBinary + advancedOptions + "-o \"" + filePath + "%(title)s.%(ext)s\" " + "\"" + rawURL + "\"";
     }
 
     public static String getAdvancedOptions() {
@@ -140,13 +147,26 @@ public class mainWorker {
         ArrayList<String> arrayListAdvancedOptions = new ArrayList<String>();
 
         //TODO
-        String defaultVideoOptions = "--restrict-filenames -S res:1080,ext:" + arrayVideoFormats[0] + ":" + arrayAudioFormats[0];
-        String defaultAudioOptions = "--restrict-filenames -x --audio-format " + arrayAudioFormats[0] + " --audio-quality 0";
+
+        // restrict filenames to ascii characters only, get the best video of selected format, get the best audio of selected format, merge the two files
+        // if none of the selected formats are available, get the best available format
+        String defaultVideoAudioOptions
+                = "--restrict-filenames -f \"bv*[ext=" + arrayVideoFormats[videoFormat] + "]+ba[ext="
+                + arrayAudioFormats[audioFormat] + "]\"";
+        String defaultVideoOptions
+                = "--restrict-filenames -f \"bv[ext=" + arrayVideoFormats[videoFormat] + "]\"";
+        String defaultAudioOptions
+                = "--restrict-filenames -x --audio-format " + arrayAudioFormats[audioFormat] + " --audio-quality 0";
+
 
         if (videoAudio == 0) {
-            arrayListAdvancedOptions.add(defaultVideoOptions);
+            arrayListAdvancedOptions.add(defaultVideoAudioOptions);
         } else if (videoAudio == 1) {
+            arrayListAdvancedOptions.add(defaultVideoOptions);
+        } else if (videoAudio == 2) {
             arrayListAdvancedOptions.add(defaultAudioOptions);
+        } else {
+            System.err.println("Error: videoAudio variable is not set to a valid value.");
         }
         //TODO
         // add the options to the cmd variable
@@ -161,6 +181,8 @@ public class mainWorker {
         return output;
     }
 
+
+
     public static void download(String cmd) {
         // start download
         try {
@@ -173,8 +195,12 @@ public class mainWorker {
                     new Thread(new SyncPipe(p.getErrorStream(), System.err)).start();
                     new Thread(new SyncPipe(p.getInputStream(), System.out)).start();
                     p.waitFor();
+
                     //dispose of the dialog
-                    JOptionPane.showConfirmDialog(null, "Done", "Finished!", JOptionPane.DEFAULT_OPTION);
+
+                    //show a dialog saying the download is done
+                    JOptionPane.showMessageDialog(null, "Download Completed", "Finished!", JOptionPane.INFORMATION_MESSAGE);
+
                 } catch (Exception e) {
                     e.printStackTrace(System.out);
                 }
