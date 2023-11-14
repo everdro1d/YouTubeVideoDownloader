@@ -2,7 +2,9 @@ package main.java;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import static main.java.advancedOptions.*;
 
@@ -231,7 +233,7 @@ public class mainWindow extends JFrame {
                                 if (videoAudio == 0) {
                                     comboBoxAudioExt.setSelectedIndex(videoExt);
                                 }
-                                doCascadeFilter("comboBoxVideoExt");
+                                doCascadeFilter(comboBoxVideoExt);
                             });
 
                         advancedSettingsPanel.add(Box.createRigidArea(new Dimension(5, 0)));
@@ -241,7 +243,7 @@ public class mainWindow extends JFrame {
                         advancedSettingsPanel.add(comboBoxVideoResolution);
                             comboBoxVideoResolution.addActionListener((e) -> { //TODO video resolution combobox
                                 videoResolution = comboBoxVideoResolution.getSelectedIndex();
-                                doCascadeFilter("comboBoxVideoResolution");
+                                doCascadeFilter(comboBoxVideoResolution);
                             });
 
                         advancedSettingsPanel.add(Box.createRigidArea(new Dimension(5, 0)));
@@ -251,7 +253,7 @@ public class mainWindow extends JFrame {
                         advancedSettingsPanel.add(comboBoxVideoFPS);
                         comboBoxVideoFPS.addActionListener((e) -> { //TODO video FPS combobox
                             videoFPS = comboBoxVideoFPS.getSelectedIndex();
-                            doCascadeFilter("comboBoxVideoFPS");
+                            doCascadeFilter(comboBoxVideoFPS);
                         });
 
                         advancedSettingsPanel.add(Box.createRigidArea(new Dimension(5, 0)));
@@ -261,7 +263,7 @@ public class mainWindow extends JFrame {
                         advancedSettingsPanel.add(comboBoxVideoCodec);
                             comboBoxVideoCodec.addActionListener((e) -> { //TODO video codec combobox
                                 videoCodec = comboBoxVideoCodec.getSelectedIndex();
-                                doCascadeFilter("comboBoxVideoCodec");
+                                doCascadeFilter(comboBoxVideoCodec);
                             });
 
 
@@ -272,30 +274,30 @@ public class mainWindow extends JFrame {
                         comboBoxAudioExt = new JComboBox<>(arrayAudioExtensions);
                         comboBoxMaker(comboBoxAudioExt, audioExt);
                         advancedSettingsPanel.add(comboBoxAudioExt);
-                            comboBoxAudioExt.addActionListener((e) -> { //TODO audio format combobox
-                                audioExt = comboBoxAudioExt.getSelectedIndex();
-                                doCascadeFilter("comboBoxAudioExt");
-                            });
+                        comboBoxAudioExt.addActionListener((e) -> { //TODO audio format combobox
+                            audioExt = comboBoxAudioExt.getSelectedIndex();
+                            doCascadeFilter(comboBoxAudioExt);
+                        });
 
                         advancedSettingsPanel.add(Box.createRigidArea(new Dimension(5, 0)));
 
                         comboBoxAudioChannels = new JComboBox<>(arrayAudioChannels);
                         comboBoxMaker(comboBoxAudioChannels, audioChannels);
                         advancedSettingsPanel.add(comboBoxAudioChannels);
-                            comboBoxAudioChannels.addActionListener((e) -> { //TODO audio channels combobox
-                                audioChannels = comboBoxAudioChannels.getSelectedIndex();
-                                doCascadeFilter("comboBoxAudioChannels");
-                            });
+                        comboBoxAudioChannels.addActionListener((e) -> { //TODO audio channels combobox
+                            audioChannels = comboBoxAudioChannels.getSelectedIndex();
+                            doCascadeFilter(comboBoxAudioChannels);
+                        });
 
                         advancedSettingsPanel.add(Box.createRigidArea(new Dimension(5, 0)));
 
                         comboBoxAudioASR = new JComboBox<>(arrayAudioASR);
                         comboBoxMaker(comboBoxAudioASR, audioASR);
                         advancedSettingsPanel.add(comboBoxAudioASR);
-                            comboBoxAudioASR.addActionListener((e) -> { //TODO audio ASR combobox
-                                audioASR = comboBoxAudioASR.getSelectedIndex();
-                                doCascadeFilter("comboBoxAudioASR");
-                            });
+                        comboBoxAudioASR.addActionListener((e) -> { //TODO audio ASR combobox
+                            audioASR = comboBoxAudioASR.getSelectedIndex();
+                            doCascadeFilter(comboBoxAudioASR);
+                        });
 
                         advancedSettingsPanel.add(Box.createRigidArea(new Dimension(5, 0)));
 
@@ -304,7 +306,7 @@ public class mainWindow extends JFrame {
                         advancedSettingsPanel.add(comboBoxAudioCodec);
                             comboBoxAudioCodec.addActionListener((e) -> { //TODO audio codec combobox
                                 audioCodec = comboBoxAudioCodec.getSelectedIndex();
-                                doCascadeFilter("comboBoxAudioCodec");
+                                doCascadeFilter(comboBoxAudioCodec);
                             });
 
 
@@ -382,43 +384,64 @@ public class mainWindow extends JFrame {
         }
     }
 
-    public static void doCascadeFilter(String comboBox) { //FIXME filter is not additive. it should be
+    //Additive filters for the combo boxes
+    //Example: if the user selects "mp4" in the video format combobox, the video resolution combobox should only show
+    //resolutions that are available for mp4 files
+    //Then, if the user selects "1920x1080" in the video resolution combobox, the video FPS combobox should only show
+    //FPS values that are available for 1920x1080 mp4 files
+    //Then, if the user selects "30" in the video FPS combobox, the video codec combobox should only show codecs that
+    //are available for 1920x1080 30fps mp4 files
+    public static void doCascadeFilter(JComboBox<String> comboBox) {
         // Video
-        switch (comboBox) {
-            case "comboBoxVideoExt":
-                updateComboBoxByProperty("RESOLUTION", "EXT", arrayVideoExtensions[videoExt], comboBoxVideoResolution, "video");
-                break;
-            case "comboBoxVideoResolution":
-                updateComboBoxByProperty("FPS", "RESOLUTION", arrayVideoResolution[videoResolution], comboBoxVideoFPS, "video");
-                break;
-            case "comboBoxVideoFPS":
-                updateComboBoxByProperty("VCODEC", "FPS", arrayVideoFPS[videoFPS], comboBoxVideoCodec, "video");
-                break;
+        if (comboBox.equals(comboBoxVideoExt)) {
+            Map<String, String> filterPropertiesMap = new HashMap<>();
+            filterPropertiesMap.put("EXT", comboBox.getItemAt(videoExt));
+            updateComboBoxByProperty("RESOLUTION", filterPropertiesMap, comboBoxVideoResolution, "video");
+            doCascadeFilter(comboBoxVideoResolution);
+        } else if (comboBox.equals(comboBoxVideoResolution)) {
+            Map<String, String> filterPropertiesMap = new HashMap<>();
+            filterPropertiesMap.put("EXT", comboBoxVideoExt.getItemAt(videoExt));
+            filterPropertiesMap.put("RESOLUTION", comboBox.getItemAt(videoResolution));
+            updateComboBoxByProperty("FPS", filterPropertiesMap, comboBoxVideoFPS, "video");
+            doCascadeFilter(comboBoxVideoFPS);
+        } else if (comboBox.equals(comboBoxVideoFPS)) {
+            Map<String, String> filterPropertiesMap = new HashMap<>();
+            filterPropertiesMap.put("EXT", comboBoxVideoExt.getItemAt(videoExt));
+            filterPropertiesMap.put("RESOLUTION", comboBoxVideoResolution.getItemAt(videoResolution));
+            filterPropertiesMap.put("FPS", comboBox.getItemAt(videoFPS));
+            updateComboBoxByProperty("VCODEC", filterPropertiesMap, comboBoxVideoCodec, "video");
 
             // Audio
-            case "comboBoxAudioExt":
-                updateComboBoxByProperty("CH", "EXT", arrayAudioExtensions[audioExt], comboBoxAudioChannels, "audio");
-                break;
-            case "comboBoxAudioChannels":
-                updateComboBoxByProperty("ASR", "CH", arrayAudioChannels[audioChannels], comboBoxAudioASR, "audio");
-                break;
-            case "comboBoxAudioASR":
-                updateComboBoxByProperty("ACODEC", "ASR", arrayAudioASR[audioASR], comboBoxAudioCodec, "audio");
-                break;
+        } else if (comboBox.equals(comboBoxAudioExt)) {
+            Map<String, String> filterPropertiesMap = new HashMap<>();
+            filterPropertiesMap.put("EXT", comboBox.getItemAt(audioExt));
+            updateComboBoxByProperty("CH", filterPropertiesMap, comboBoxAudioChannels, "audio");
+            doCascadeFilter(comboBoxAudioChannels);
+        } else if (comboBox.equals(comboBoxAudioChannels)) {
+            Map<String, String> filterPropertiesMap = new HashMap<>();
+            filterPropertiesMap.put("EXT", comboBoxAudioExt.getItemAt(audioExt));
+            filterPropertiesMap.put("CH", comboBox.getItemAt(audioChannels));
+            updateComboBoxByProperty("ASR", filterPropertiesMap, comboBoxAudioASR, "audio");
+            doCascadeFilter(comboBoxAudioASR);
+        } else if (comboBox.equals(comboBoxAudioASR)) {
+            Map<String, String> filterPropertiesMap = new HashMap<>();
+            filterPropertiesMap.put("EXT", comboBoxAudioExt.getItemAt(audioExt));
+            filterPropertiesMap.put("CH", comboBoxAudioChannels.getItemAt(audioChannels));
+            filterPropertiesMap.put("ASR", comboBox.getItemAt(audioASR));
+            updateComboBoxByProperty("ACODEC", filterPropertiesMap, comboBoxAudioCodec, "audio");
         }
     }
 
-    private static void updateComboBoxByProperty(String property, String filterProperty, String filterPropertyValue, JComboBox<String> comboBox, String context) {
-        if (property != null && filterPropertyValue != null) {
+    private static void updateComboBoxByProperty(String property, Map<String, String> filterPropertiesMap, JComboBox<String> comboBox, String context) {
+        if (property != null && filterPropertiesMap != null && !filterPropertiesMap.isEmpty()) {
             Set<String> values;
+
             switch (context) {
                 case "video":
-                    values = getUniqueValuesForVideo(property, filterProperty, filterPropertyValue);
-                    System.out.println("RAWValues: " + values);
+                    values = getUniqueValuesForVideo(property, filterPropertiesMap);
                     break;
                 case "audio":
-                    values = getUniqueValuesForAudio(property, filterProperty, filterPropertyValue);
-                    System.out.println("RAWValues: " + values);
+                    values = getUniqueValuesForAudio(property, filterPropertiesMap);
                     break;
                 default:
                     throw new IllegalArgumentException("Invalid context: " + context);
@@ -427,39 +450,20 @@ public class mainWindow extends JFrame {
             values.removeIf(value -> value.contains("only") || value.contains("ec"));
             String[] arrayValues = values.toArray(new String[0]);
 
-            switch (property) {
-                case "RESOLUTION":
-                    Arrays.sort(arrayValues, Comparator.comparingInt(s -> -1 * Integer.parseInt(s.split("x")[1])));
-                    break;
+            sortArrayValues(property, arrayValues);
 
-                case "FPS":
-                case "CH":
-                    Arrays.sort(arrayValues, Comparator.comparingInt(s -> -1 * Integer.parseInt(s)));
-                    break;
-
-                case "VCODEC":
-                case "ACODEC":
-                    Arrays.sort(arrayValues,
-                            Comparator.<String, String>comparing(s -> s.replaceAll("[^A-Za-z]", ""))
-                                    .thenComparing(s -> s.replaceAll("[^0-9]", ""),
-                                            Comparator.nullsLast(Comparator.naturalOrder())).reversed());
-                    break;
-
-                case "ASR":
-                    Arrays.sort(arrayValues,
-                            Comparator.comparingInt(s -> -1 * Integer.parseInt(s.replaceAll("k", ""))));
-                    break;
-            }
-
-            System.out.println("Property: " + property);
-            System.out.println("Filter Property: " + filterProperty);
-            System.out.println(
-                    "Filter Property Value: " + filterPropertyValue);
-            System.out.println("Values: " + values);
-            System.out.println("Array Values: " + Arrays.toString(arrayValues));
+//            System.out.println("--------------------");
+//            System.out.println("Property: " + property);
+//            System.out.println("Filter Properties: " + filterPropertiesMap);
+//            System.out.println("Values: " + values);
+//            System.out.println("Array Values: " + Arrays.toString(arrayValues));
+//            System.out.println("--------------------");
             updateComboBox(arrayValues, comboBox);
         }
     }
+
+
+
     public static void updateComboBox(String[] array, JComboBox<String> comboBox) {
         comboBox.setModel(new DefaultComboBoxModel<>(array));
 
@@ -483,14 +487,23 @@ public class mainWindow extends JFrame {
         comboBox.setMaximumSize(dimension);
     }
 
-    private static Set<String> getUniqueValuesForVideo(String property, String filterProperty, String filterPropertyValue) {
-        return getUniqueValues(property, option ->
-                option.get(filterProperty).equals(filterPropertyValue) && option.get("ACODEC").equals("video only"));
+    private static Set<String> getUniqueValuesForVideo(String property, Map<String, String> filterProperties) {
+        return getUniqueValues(property, option -> {
+            boolean match = option.get("ACODEC").equals("video only");
+            for (Map.Entry<String, String> entry : filterProperties.entrySet()) {
+                match = match && option.get(entry.getKey()).equals(entry.getValue());
+            }
+            return match;
+        });
     }
 
-    private static Set<String> getUniqueValuesForAudio(String property, String filterProperty, String filterPropertyValue) {
-        return getUniqueValues(property, option ->
-                option.get(filterProperty).equals(filterPropertyValue) && option.get("VCODEC").equals("audio only"));
+    private static Set<String> getUniqueValuesForAudio(String property, Map<String, String> filterProperties) {
+        return getUniqueValues(property, option -> {
+            boolean match = option.get("VCODEC").equals("audio only");
+            for (Map.Entry<String, String> entry : filterProperties.entrySet()) {
+                match = match && option.get(entry.getKey()).equals(entry.getValue());
+            }
+            return match;
+        });
     }
-
 }

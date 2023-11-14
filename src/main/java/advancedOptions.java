@@ -74,23 +74,17 @@ public class advancedOptions {
         arrayVideoResolution =
                 getUniqueValues( "RESOLUTION", option -> option.get("ACODEC").equals("video only") )
                 .toArray(new String[0]);
-        // Sort the array using a custom comparator (sort in descending order using the second part of the string)
-        Arrays.sort(arrayVideoResolution, Comparator.comparingInt(s -> -1 * Integer.parseInt(s.split("x")[1])));
+        sortArrayValues("RESOLUTION", arrayVideoResolution);
 
         arrayVideoFPS =
                 getUniqueValues( "FPS", option -> option.get("ACODEC").equals("video only") )
                 .toArray(new String[0]);
-        // Sort the array using a custom comparator (sort in descending order)
-        Arrays.sort(arrayVideoFPS, Comparator.comparingInt(s -> -1 * Integer.parseInt(s)));
+        sortArrayValues("FPS", arrayVideoFPS);
 
         arrayVideoCodec =
                 getUniqueValues( "VCODEC", option -> option.get("ACODEC").equals("video only") )
                 .toArray(new String[0]);
-        // Sort the array using a custom comparator (sort by alphabetical order and then numerical order)
-        Arrays.sort(arrayVideoCodec,
-                Comparator.<String, String>comparing(s -> s.replaceAll("[^A-Za-z]", ""))
-                .thenComparing(s -> s.replaceAll("[^0-9]", ""),
-                Comparator.nullsLast(Comparator.naturalOrder())).reversed());
+        sortArrayValues("VCODEC", arrayVideoCodec);
 
 
         //Audio ------------------------------------------
@@ -102,24 +96,17 @@ public class advancedOptions {
         arrayAudioChannels =
                 getUniqueValues( "CH", option -> option.get("CH").matches("[0-9]"))
                 .toArray(new String[0]);
-        // Sort the array using a custom comparator (sort in descending order)
-        Arrays.sort(arrayAudioChannels, Comparator.comparingInt(s -> -1 * Integer.parseInt(s)));
+        sortArrayValues("CH", arrayAudioChannels);
 
         arrayAudioCodec =
                 getUniqueValues( "ACODEC", option -> option.get("CH").matches("[0-9]")
                                 && option.get("VCODEC").equals("audio only") ).toArray(new String[0]);
-        // Sort the array using a custom comparator (sort by alphabetical order and then numerical order)
-        Arrays.sort(arrayAudioCodec,
-                Comparator.<String, String>comparing(s -> s.replaceAll("[^A-Za-z]", ""))
-                .thenComparing(s -> s.replaceAll("[^0-9]", ""),
-                Comparator.nullsLast(Comparator.naturalOrder())).reversed());
+        sortArrayValues("ACODEC", arrayAudioCodec);
 
         arrayAudioASR =
                 getUniqueValues( "ASR", option -> option.get("CH").matches("[0-9]")
                                 && option.get("VCODEC").equals("audio only") ).toArray(new String[0]);
-        // Sort the array using a custom comparator (sort in descending order)
-        Arrays.sort(arrayAudioASR,
-                Comparator.comparingInt(s -> -1 * Integer.parseInt(s.replaceAll("k", ""))));
+        sortArrayValues("ASR", arrayAudioASR);
 
 
 
@@ -133,8 +120,8 @@ public class advancedOptions {
         mainWindow.updateComboBox( arrayAudioChannels, mainWindow.comboBoxAudioChannels );
         mainWindow.updateComboBox( arrayAudioCodec, mainWindow.comboBoxAudioCodec );
         mainWindow.updateComboBox( arrayAudioASR, mainWindow.comboBoxAudioASR );
-        mainWindow.doCascadeFilter("comboBoxVideoExt");
-        mainWindow.doCascadeFilter("comboBoxAudioExt");
+        mainWindow.doCascadeFilter(comboBoxVideoExt);
+        mainWindow.doCascadeFilter(comboBoxAudioExt);
     }
 
 
@@ -222,13 +209,6 @@ public class advancedOptions {
 
         for (String key : hashMap.keySet()) {
             Map<String, String> innerMap = hashMap.get(key);
-
-            System.out.println("innerMap: " + innerMap);
-            System.out.println("option1: " + option1 + ", value1: " + value1);
-            System.out.println("option2: " + option2 + ", value2: " + value2);
-            System.out.println("option3: " + option3 + ", value3: " + value3);
-            System.out.println("option4: " + option4 + ", value4: " + value4);
-            System.out.println("option5: " + option5 + ", value5: " + value5);
             // Check if conditions are met
             if (innerMap.containsKey(option1) && innerMap.containsKey(option2) && innerMap.containsKey(option3)
                     && innerMap.containsKey(option4) && innerMap.containsKey(option5)
@@ -241,5 +221,31 @@ public class advancedOptions {
             }
         }
         return resultKey;
+    }
+
+    public static void sortArrayValues(String property, String[] arrayValues) {
+        switch (property) {
+            case "RESOLUTION":
+                Arrays.sort(arrayValues, Comparator.comparingInt(s -> -1 * Integer.parseInt(s.split("x")[1])));
+                break;
+
+            case "FPS":
+            case "CH":
+                Arrays.sort(arrayValues, Comparator.comparingInt(s -> -1 * Integer.parseInt(s)));
+                break;
+
+            case "VCODEC":
+            case "ACODEC":
+                Arrays.sort(arrayValues,
+                        Comparator.<String, String>comparing(s -> s.replaceAll("[^A-Za-z]", ""))
+                                .thenComparing(s -> s.replaceAll("[^0-9]", ""),
+                                        Comparator.nullsLast(Comparator.naturalOrder())).reversed());
+                break;
+
+            case "ASR":
+                Arrays.sort(arrayValues,
+                        Comparator.comparingInt(s -> -1 * Integer.parseInt(s.replaceAll("k", ""))));
+                break;
+        }
     }
 }
