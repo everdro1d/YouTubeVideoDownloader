@@ -3,6 +3,7 @@ package main.java;
 import java.util.*;
 import java.util.function.Predicate;
 
+import static main.java.mainWindow.*;
 import static main.java.tableReaderFromConsole.scannerTableMap;
 
 public class advancedOptions {
@@ -123,7 +124,7 @@ public class advancedOptions {
 
 
         // Update the GUI
-        mainWindow.updateComboBox( arrayVideoExtensions, mainWindow.comboBoxVideoExt );
+        mainWindow.updateComboBox( arrayVideoExtensions, comboBoxVideoExt );
         mainWindow.updateComboBox( arrayVideoResolution, mainWindow.comboBoxVideoResolution );
         mainWindow.updateComboBox( arrayVideoCodec, mainWindow.comboBoxVideoCodec );
         mainWindow.updateComboBox( arrayVideoFPS, mainWindow.comboBoxVideoFPS );
@@ -132,6 +133,8 @@ public class advancedOptions {
         mainWindow.updateComboBox( arrayAudioChannels, mainWindow.comboBoxAudioChannels );
         mainWindow.updateComboBox( arrayAudioCodec, mainWindow.comboBoxAudioCodec );
         mainWindow.updateComboBox( arrayAudioASR, mainWindow.comboBoxAudioASR );
+        mainWindow.doCascadeFilter("comboBoxVideoExt");
+        mainWindow.doCascadeFilter("comboBoxAudioExt");
     }
 
 
@@ -155,18 +158,18 @@ public class advancedOptions {
             }
         } else {
             int keyVideo = getKey(tableMap,
-                    "EXT", arrayVideoExtensions[videoExt],
-                    "RESOLUTION", arrayVideoResolution[videoResolution],
-                    "ACODEC", "video only",
-                    "VCODEC", arrayVideoCodec[videoCodec],
-                    true
+                    "EXT", comboBoxVideoExt.getItemAt(videoExt),
+                    "RESOLUTION", comboBoxVideoResolution.getItemAt(videoResolution),
+                    "FPS", comboBoxVideoFPS.getItemAt(videoFPS),
+                    "VCODEC", comboBoxVideoCodec.getItemAt(videoCodec),
+                    "ACODEC", "video only"
             );
             int keyAudio = getKey(tableMap,
-                    "EXT", arrayAudioExtensions[audioExt],
-                    "CH", arrayAudioChannels[audioChannels],
-                    "ACODEC", arrayAudioCodec[audioCodec],
-                    "VCODEC", "audio only",
-                    false
+                    "EXT", comboBoxAudioExt.getItemAt(audioExt),
+                    "CH", comboBoxAudioChannels.getItemAt(audioChannels),
+                    "ASR", comboBoxAudioASR.getItemAt(audioASR),
+                    "ACODEC", comboBoxAudioCodec.getItemAt(audioCodec),
+                    "VCODEC", "audio only"
             );
 
             switch (videoAudio) {
@@ -213,38 +216,30 @@ public class advancedOptions {
             String option2, String value2,
             String option3, String value3,
             String option4, String value4,
-            boolean useResolution) {
+            String option5, String value5) {
 
-        int maxValue  = 0; // Initialize with a value lower than any possible value
         int resultKey = -1; // Initialize with an invalid key
-        String comparisonOption = useResolution ? "RESOLUTION" : "ASR";
 
         for (String key : hashMap.keySet()) {
             Map<String, String> innerMap = hashMap.get(key);
 
+            System.out.println("innerMap: " + innerMap);
+            System.out.println("option1: " + option1 + ", value1: " + value1);
+            System.out.println("option2: " + option2 + ", value2: " + value2);
+            System.out.println("option3: " + option3 + ", value3: " + value3);
+            System.out.println("option4: " + option4 + ", value4: " + value4);
+            System.out.println("option5: " + option5 + ", value5: " + value5);
             // Check if conditions are met
             if (innerMap.containsKey(option1) && innerMap.containsKey(option2) && innerMap.containsKey(option3)
+                    && innerMap.containsKey(option4) && innerMap.containsKey(option5)
                     && innerMap.get(option1).equals(value1) && innerMap.get(option2).equals(value2)
-                    && innerMap.get(option3).equals(value3) && innerMap.get(option4).equals(value4)) {
-
-                // Parse the resolution for comparison
-                // Parse the value for comparison
-                String comparisonValue = innerMap.get(comparisonOption);
-                int currentValue = useResolution ? calculateResolutionValue(comparisonValue) : Integer.parseInt(comparisonValue);
-
-
-                // Update resultKey if conditions are met and value is higher
-                if (currentValue > maxValue) {
-                    maxValue = currentValue;
-                    resultKey = Integer.parseInt(key);
-                }
+                    && innerMap.get(option3).equals(value3) && innerMap.get(option4).equals(value4)
+                    && innerMap.get(option5).equals(value5))
+            {
+                System.out.println("key: " + key);
+                resultKey = Integer.parseInt(key);
             }
         }
         return resultKey;
-    }
-
-    private static int calculateResolutionValue(String resolution) {
-        String[] resolutionParts = resolution.split("x");
-        return Integer.parseInt(resolutionParts[0]) * Integer.parseInt(resolutionParts[1]);
     }
 }
