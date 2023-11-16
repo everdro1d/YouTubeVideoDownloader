@@ -4,7 +4,7 @@ import java.util.*;
 
 import static java.util.Arrays.stream;
 
-public class tableReaderFromConsole {
+public class TableReaderFromConsole {
 
     public static void scannerTableMap(Scanner scanner) {
         if (!scanner.hasNextLine()) {
@@ -24,10 +24,10 @@ public class tableReaderFromConsole {
         scanner.close();
 
         //Get the table data in a HashMap
-        advancedOptions.tableMap = parseTableToMap(table);
+        AdvancedSettings.tableMap = parseTableToMap(table);
 
         //Print the table
-        //printTableMap(advancedOptions.tableMap);
+        //printTableMap(advancedSettings.tableMap);
     }
 
     public static Map<String, Map<String, String>> parseTableToMap(String[][] table) {

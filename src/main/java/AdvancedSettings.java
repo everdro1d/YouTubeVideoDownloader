@@ -3,15 +3,15 @@ package main.java;
 import java.util.*;
 import java.util.function.Predicate;
 
-import static main.java.mainWindow.*;
-import static main.java.tableReaderFromConsole.scannerTableMap;
+import static main.java.MainWindow.*;
+import static main.java.TableReaderFromConsole.scannerTableMap;
 
-public class advancedOptions {
+public class AdvancedSettings {
 
 
     protected static Map<String, Map<String, String>> tableMap; // the table of video options (--list-formats)
     protected static int videoAudio = 0; // 0 = video and audio, 1 = audio only, 2 = video only
-    protected static boolean advancedOptionsEnabled = false; // if the advanced options are enabled
+    protected static boolean advancedSettingsEnabled = false; // if the advanced options are enabled
     protected static volatile boolean getVideoOptions = false; // if the video options are enabled
     protected static int videoExt = 0; // the video format to download
     protected static int videoResolution = 0; // the video resolution to download
@@ -35,13 +35,13 @@ public class advancedOptions {
 
     public static void readVideoOptionsFromYT() {
         // get the video options from the URL
-        advancedOptionsEnabled = true;
+        advancedSettingsEnabled = true;
         getVideoOptions();
     }
 
     private static void getVideoOptions() {
-        String cmd = mainWorker.downloadBinary + "--list-formats " + mainWorker.rawURL;
-        System.out.println("command to run: " + cmd);
+        String cmd = MainWorker.downloadBinary + "--list-formats " + MainWorker.rawURL;
+        //System.out.println("command to run: " + cmd);
         try {
             new Thread(()->{
                 ProcessBuilder pb = new ProcessBuilder(cmd.split(" "));
@@ -51,7 +51,7 @@ public class advancedOptions {
                     Scanner scanner = new Scanner(p.getInputStream());
                     scannerTableMap(scanner);
                     p.waitFor();
-                    System.out.println("EOI");
+                    //System.out.println("EOI");
                     getVideoOptions = true;
                 } catch (Exception e) {
                     e.printStackTrace(System.out);
@@ -62,7 +62,7 @@ public class advancedOptions {
         }
     }
 
-    public static void setAdvancedOptions() {
+    public static void setadvancedSettings() {
         // set the advanced options comboBox arrays from the tableMap
 
 
@@ -111,36 +111,36 @@ public class advancedOptions {
 
 
         // Update the GUI
-        mainWindow.updateComboBox( arrayVideoExtensions, comboBoxVideoExt );
-        mainWindow.updateComboBox( arrayVideoResolution, mainWindow.comboBoxVideoResolution );
-        mainWindow.updateComboBox( arrayVideoCodec, mainWindow.comboBoxVideoCodec );
-        mainWindow.updateComboBox( arrayVideoFPS, mainWindow.comboBoxVideoFPS );
+        MainWindow.updateComboBox( arrayVideoExtensions, comboBoxVideoExt );
+        MainWindow.updateComboBox( arrayVideoResolution, MainWindow.comboBoxVideoResolution );
+        MainWindow.updateComboBox( arrayVideoCodec, MainWindow.comboBoxVideoCodec );
+        MainWindow.updateComboBox( arrayVideoFPS, MainWindow.comboBoxVideoFPS );
 
-        mainWindow.updateComboBox( arrayAudioExtensions, mainWindow.comboBoxAudioExt );
-        mainWindow.updateComboBox( arrayAudioChannels, mainWindow.comboBoxAudioChannels );
-        mainWindow.updateComboBox( arrayAudioCodec, mainWindow.comboBoxAudioCodec );
-        mainWindow.updateComboBox( arrayAudioASR, mainWindow.comboBoxAudioASR );
-        mainWindow.doCascadeFilter(comboBoxVideoExt);
-        mainWindow.doCascadeFilter(comboBoxAudioExt);
+        MainWindow.updateComboBox( arrayAudioExtensions, MainWindow.comboBoxAudioExt );
+        MainWindow.updateComboBox( arrayAudioChannels, MainWindow.comboBoxAudioChannels );
+        MainWindow.updateComboBox( arrayAudioCodec, MainWindow.comboBoxAudioCodec );
+        MainWindow.updateComboBox( arrayAudioASR, MainWindow.comboBoxAudioASR );
+        MainWindow.doCascadeFilter(comboBoxVideoExt);
+        MainWindow.doCascadeFilter(comboBoxAudioExt);
     }
 
 
-    public static String getAdvancedOptions() {
+    public static String getadvancedSettings() {
         StringBuilder output = new StringBuilder();
-        ArrayList<String> arrayListAdvancedOptions = new ArrayList<>();
-        arrayListAdvancedOptions.add("--restrict-filenames");
-        arrayListAdvancedOptions.add("-f");
+        ArrayList<String> arrayListadvancedSettings = new ArrayList<>();
+        arrayListadvancedSettings.add("--restrict-filenames");
+        arrayListadvancedSettings.add("-f");
 
-        if (!advancedOptionsEnabled) {
+        if (!advancedSettingsEnabled) {
             switch (videoAudio) {
                 case 0:
-                    arrayListAdvancedOptions.add("\"bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4] / bv*+ba/b\"");
+                    arrayListadvancedSettings.add("\"bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4] / bv*+ba/b\"");
                     break;
                 case 1:
-                    arrayListAdvancedOptions.add("\"bv[ext=mp4]\"");
+                    arrayListadvancedSettings.add("\"bv[ext=mp4]\"");
                     break;
                 case 2:
-                    arrayListAdvancedOptions.add("\"ba[ext=m4a]\"");
+                    arrayListadvancedSettings.add("\"ba[ext=m4a]\"");
                     break;
             }
         } else {
@@ -161,18 +161,18 @@ public class advancedOptions {
 
             switch (videoAudio) {
                 case 0: // video and audio
-                    arrayListAdvancedOptions.add(keyVideo + "+" + keyAudio);
+                    arrayListadvancedSettings.add(keyVideo + "+" + keyAudio);
                     break;
                 case 1: // video only
-                    arrayListAdvancedOptions.add(String.valueOf(keyVideo));
+                    arrayListadvancedSettings.add(String.valueOf(keyVideo));
                     break;
                 case 2: // audio only
-                    arrayListAdvancedOptions.add(String.valueOf(keyAudio));
+                    arrayListadvancedSettings.add(String.valueOf(keyAudio));
                     break;
             }
         }
 
-        for (String arrayListAdvancedOption : arrayListAdvancedOptions) {
+        for (String arrayListAdvancedOption : arrayListadvancedSettings) {
             // add the options to the cmd variable
             output.append(arrayListAdvancedOption).append(" ");
         }
