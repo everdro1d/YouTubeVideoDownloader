@@ -1,5 +1,6 @@
 package main.java;
 
+import javax.swing.*;
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -9,8 +10,6 @@ import static main.java.MainWorker.downloadBinary;
 import static main.java.TableReaderFromConsole.scannerTableMap;
 
 public class AdvancedSettings {
-
-
     protected static Map<String, Map<String, String>> tableMap; // the table of video options (--list-formats)
     protected static int videoAudio = 0; // 0 = video and audio, 1 = audio only, 2 = video only
     protected static boolean advancedSettingsEnabled = false; // if the advanced options are enabled
@@ -51,7 +50,17 @@ public class AdvancedSettings {
                     new Thread(new SyncPipe(p.getErrorStream(), System.err)).start();
                     Scanner scanner = new Scanner(p.getInputStream());
                     scannerTableMap(scanner);
-                    p.waitFor();
+                    int i = p.waitFor();
+                    if (i != 0) {
+                        SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(null,
+                                "An error occurred when retrieving settings." +
+                                        "\nPlease check that the URL is correct and try again.",
+                                "Error!", JOptionPane.ERROR_MESSAGE));
+
+                        advancedSettingsEnabled = false;
+                        MainWindow.checkBoxAdvancedSettings.setSelected(false);
+                        MainWorker.window.advancedSettingsEvent();
+                    }
                     getVideoOptions = true;
                 } catch (Exception e) {
                     e.printStackTrace(System.out);
@@ -131,7 +140,10 @@ public class AdvancedSettings {
         arrayListAdvancedSettings.add("--restrict-filenames");
         arrayListAdvancedSettings.add("--progress");
         arrayListAdvancedSettings.add("--newline");
-        arrayListAdvancedSettings.add("-f");
+        arrayListAdvancedSettings.add("--no-mtime");
+
+
+        arrayListAdvancedSettings.add("-f"); // must come before the video options
 
         if (!advancedSettingsEnabled) {
             switch (videoAudio) {

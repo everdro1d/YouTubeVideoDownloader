@@ -31,7 +31,7 @@ public class MainWindow extends JFrame {
             protected JPanel centerVerticalPanel;
                 protected JPanel centerVerticalPanelRow1;
                     protected JLabel validURLLabel;
-                    protected JCheckBox checkBoxAdvancedSettings;
+                    protected static JCheckBox checkBoxAdvancedSettings;
                 protected JPanel centerVerticalPanelRow2;
                     protected JPanel advancedSettingsPanelRow1;
                         // Video
@@ -66,7 +66,7 @@ public class MainWindow extends JFrame {
             protected JPanel westPanel;
     private final String titleText = "YouTube Video Downloader V2.0";
     private final String[] typeComboBoxOptions = {"Video + Audio", "Only Video", "Only Audio"};
-    protected static final int windowWidth = 820;
+    protected static final int windowWidth = 840;
     protected final int windowHeight = 245;
     protected final int windowHeightExpanded = 360;
     protected final int fontSize = 18;
@@ -89,7 +89,6 @@ public class MainWindow extends JFrame {
 
 
         frame.setVisible(true);
-        textField_URL.setText("https://www.youtube.com/watch?v=jNQXAC9IVRw"); //TODO remove this
     }
 
     private void initializeGUIComponents() {
@@ -169,6 +168,7 @@ public class MainWindow extends JFrame {
                                     validURL = MainWorker.validURL(MainWorker.rawURL);
                                 }
                                 validURLLabel.setText(validURL ? "URL is valid" : "URL is invalid");
+                                coloringModeChange();
 
                                 if (validURL) {
                                     checkBoxAdvancedSettings.setEnabled(true);
@@ -177,6 +177,7 @@ public class MainWindow extends JFrame {
                                     checkBoxAdvancedSettings.setEnabled(false);
                                     advancedSettingsPanelRow1.setVisible(false);
                                     advancedSettingsPanelRow2.setVisible(false);
+                                    advancedSettingsEvent();
                                 }
                             }
                         });
@@ -252,7 +253,7 @@ public class MainWindow extends JFrame {
 
                 //dependent on the layout of the centerVerticalPanelRow1
                 {
-                    //add a jlabel on the left side of the centerVerticalPanelRow1
+                    //add a JLabel on the left side of the centerVerticalPanelRow1
                     centerVerticalPanelRow1.add(Box.createRigidArea(new Dimension(20, 0)));
 
                     validURLLabel = new JLabel(validURL ? "URL is valid  " : "URL is invalid");
@@ -270,41 +271,7 @@ public class MainWindow extends JFrame {
                     checkBoxAdvancedSettings.setEnabled(false);
                         centerVerticalPanelRow1.add(checkBoxAdvancedSettings);
 
-                        checkBoxAdvancedSettings.addActionListener((e) -> {
-                            checkType();
-
-                            if (checkBoxAdvancedSettings.isSelected()) { // there are two identical if statements because of the way the code is structured
-                                AdvancedSettings.readVideoOptionsFromYT();
-
-                            } else {
-                                getVideoOptions = false;
-                                AdvancedSettings.advancedSettingsEnabled = false;
-                            }
-
-                            while (advancedSettingsEnabled) {
-                                frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-
-                                if (getVideoOptions) {
-                                    frame.setCursor(Cursor.getPredefinedCursor(Cursor.getDefaultCursor().getType()));
-                                    break;
-                                }
-                            }
-                            advancedSettingsPanelRow1.setVisible(checkBoxAdvancedSettings.isSelected());
-                            advancedSettingsPanelRow2.setVisible(checkBoxAdvancedSettings.isSelected());
-                            frame.pack();
-
-                            if (checkBoxAdvancedSettings.isSelected()) { // there are two identical if statements because of the way the code is structured
-                                frame.setMinimumSize(new Dimension(windowWidth, windowHeightExpanded));
-                                frame.setSize(new Dimension(windowWidth, windowHeightExpanded));
-
-                                advancedSettingsPanelRow2.setSize(advancedSettingsPanelRow1.getSize());
-                            } else {
-                                frame.setMinimumSize(new Dimension(windowWidth, windowHeight));
-                                frame.setSize(new Dimension(windowWidth, windowHeight));
-                            }
-
-                            setAdvancedSettings();
-                        });
+                        checkBoxAdvancedSettings.addActionListener((e) -> advancedSettingsEvent());
                 }
 
                 centerVerticalPanel.add(Box.createRigidArea(new Dimension(0, 20)));
@@ -515,9 +482,7 @@ public class MainWindow extends JFrame {
                 buttonFileChooser.setIcon(folderIcon);
                 southPanelRow1.add(buttonFileChooser);
 
-                buttonFileChooser.addActionListener((e) -> {
-                    MainWorker.filePath = MainWorker.openFileChooser();
-                });
+                buttonFileChooser.addActionListener((e) -> MainWorker.filePath = MainWorker.openFileChooser());
 
 
                 southPanelRow1.add(Box.createRigidArea(new Dimension(20, 0)));
@@ -557,6 +522,44 @@ public class MainWindow extends JFrame {
         }
     }
 
+    protected void advancedSettingsEvent() {
+        checkType();
+
+        if (checkBoxAdvancedSettings.isSelected()) { // there are two identical if statements because of the way the code is structured
+            AdvancedSettings.readVideoOptionsFromYT();
+        } else {
+            getVideoOptions = false;
+            AdvancedSettings.advancedSettingsEnabled = false;
+        }
+
+        while (advancedSettingsEnabled) {
+            frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+
+            if (getVideoOptions) {
+                frame.setCursor(Cursor.getPredefinedCursor(Cursor.getDefaultCursor().getType()));
+                break;
+            }
+        }
+        advancedSettingsPanelRow1.setVisible(checkBoxAdvancedSettings.isSelected());
+        advancedSettingsPanelRow2.setVisible(checkBoxAdvancedSettings.isSelected());
+        frame.pack();
+
+        if (checkBoxAdvancedSettings.isSelected()) { // there are two identical if statements because of the way the code is structured
+            frame.setMinimumSize(new Dimension(windowWidth, windowHeightExpanded));
+            frame.setSize(new Dimension(windowWidth, windowHeightExpanded));
+
+            advancedSettingsPanelRow2.setSize(advancedSettingsPanelRow1.getSize());
+        } else {
+            frame.setMinimumSize(new Dimension(windowWidth, windowHeight));
+            frame.setSize(new Dimension(windowWidth, windowHeight));
+            frame.setMaximumSize(new Dimension(windowWidth, windowHeight));
+        }
+
+        if (advancedSettingsEnabled) {
+            setAdvancedSettings();
+        }
+    }
+
     protected void coloringModeChange() {
         Color backgroundColor = new Color(darkMode ? 0x2B2B2B : 0xE7E7E7);
 
@@ -573,6 +576,12 @@ public class MainWindow extends JFrame {
         separatorNP1.setBackground(separatorNP1Color);
         separatorSP.setBackground(separatorSPColor);
 
+        if (darkMode) {
+            validURLLabel.setForeground(validURL ? new Color(0x0dc47d) : new Color(0xCE3737));
+        } else {
+            validURLLabel.setForeground(validURL ? new Color(0x007C4D) : new Color(0xad0c0c));
+        }
+
         centerVerticalPanelRow2.setBackground(advSettingsPanelColor);
         advancedSettingsPanelRow1.setBackground(advSettingsPanelColor);
         advancedSettingsPanelRow2.setBackground(advSettingsPanelColor);
@@ -580,11 +589,8 @@ public class MainWindow extends JFrame {
         if (WorkingPane.workingFrame != null) {
             WorkingPane.workingFrame.getContentPane().setBackground(backgroundColor);
             WorkingPane.panel.setBackground(backgroundColor);
-            //WorkingPane.panelRow2.setBackground(backgroundColor);
             WorkingPane.label1.setForeground(textColor);
             WorkingPane.labelMessage.setForeground(textColor);
-            //WorkingPane.buttonCancel.setForeground(textColor);
-            // WorkingPane.buttonCancel.setBackground(advSettingsPanelColor);
             WorkingPane.progressBar.setForeground(textColor);
             WorkingPane.progressBar.setBackground(separatorSPColor);
 

@@ -1,13 +1,4 @@
-/* TODO
- * 1. Add a way to select the download location
- * 2. Add a way to select the quality
- * 3. Add a way to select the format
- * 4. Create methods to do the following:
- *    -------------------------------
- *    a. take the options hashmap and pipe it to its comboboxes
- *    b. allow the user to select the options and update the advanced options array
- *    c. take the advanced options array and create a string to pass to the binary
- *
+/*
  */
 
 package main.java;
@@ -28,6 +19,7 @@ import static main.java.MainWindow.frame;
 import static main.java.WorkingPane.workingFrame;
 
 public class MainWorker {
+    protected static MainWindow window;
     protected static Thread downloadThread;
     public static String rawURL; // raw URL String from the text field
     protected static final String downloadBinary = "yt-dlp.exe "; // the name of the binary to run
@@ -51,14 +43,14 @@ public class MainWorker {
 
         EventQueue.invokeLater(() -> {
             try {
-                MainWindow window = new MainWindow();
+                window = new MainWindow();
                 window.coloringModeChange();
             } catch (Exception ex) {
                 ex.printStackTrace(System.out);
             }
         });
 
-        checkUpdate(); //TODO re-enable when done, this makes a 403 error
+        checkUpdate();
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             prefs.put("filePath", filePath);
@@ -142,9 +134,14 @@ public class MainWorker {
 
     protected static boolean validURL(String url) {
         // check if the URL is valid
-        if ( !(url.contains("youtube.com") || url.contains("youtu.be"))) {
+        if ( !(url.contains("youtube.com") || url.contains("youtu.be")) || (url.contains("list"))) {
             return false;
         }
+
+        if (!ytDLPValidatedURL(url)) {
+            return false;
+        }
+
         //check if the url is valid
         try {
             new java.net.URI(url);
@@ -154,17 +151,46 @@ public class MainWorker {
         }
     }
 
+    private static boolean ytDLPValidatedURL(String url) {
+        boolean valid = false;
+        String[] validURLs = {
+                "https://www.youtube.com/watch?v=",
+                "https://youtu.be/",
+                "https://www.youtube.com/shorts/"
+        };
+
+        String[] splitURL = url.split("[/=]");
+        String videoID = splitURL[splitURL.length-1];
+        if (videoID.length() == 11) {
+            for (String validURL : validURLs) {
+                if (url.contains(validURL)) {
+                    valid = true;
+                    break;
+                }
+            }
+        }
+
+        return valid;
+    }
+
     private static boolean checkURLDialog() {
         if ((rawURL == null) || !validURL(rawURL)) {
-            JOptionPane.showMessageDialog(null, "Please enter a valid YouTube URL.", "Error", JOptionPane.ERROR_MESSAGE);
-            return true;
+            if (rawURL != null && rawURL.contains("list")) {
+                JOptionPane.showMessageDialog(null, """
+                        Playlist downloading is not supported yet.
+                        If you are trying to download a single video, try removing:
+                        "&list=(whatever the rest of the url is here)".""", "Error", JOptionPane.ERROR_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(null, "Please enter a valid YouTube URL.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+            return false;
         }
-        return false;
+        return true;
     }
 
     public static void downloadButtonClicked() {
         // start download
-        if ( checkURLDialog() ) { return; }
+        if ( !checkURLDialog() ) { return; }
 
         if (filePath.isEmpty()) {
             filePath = openFileChooser();
@@ -222,7 +248,6 @@ public class MainWorker {
         while (scanner.hasNextLine()) {
             //Skip lines until after the download begins
             String s = scanner.nextLine();
-            System.out.println(s);
             if (s.contains("[info]") && s.contains("Downloading")) {
                 break;
             }
@@ -231,7 +256,6 @@ public class MainWorker {
         //OptionPanes to show the progress of the download
         while (scanner.hasNextLine()) {
             String s = scanner.nextLine();
-            System.out.println(s);
             if (s.contains("[download]")) {
                 setWorkingPaneMessage(workingPane, s);
             }

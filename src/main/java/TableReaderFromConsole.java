@@ -18,6 +18,11 @@ public class TableReaderFromConsole {
                 break;
             }
         }
+
+        if (!scanner.hasNextLine()) {
+            System.out.println("No output from process");
+            return;
+        }
         //Get the table from console
         String[][] table = parseTable(scanner);
 
@@ -152,11 +157,11 @@ public class TableReaderFromConsole {
         return table;
     }
 
-    public static void printTableMap(Map<String, Map<String, String>> tableMap) {
-        // Print the tableMap
-        for (Map.Entry<String, Map<String, String>> entry : tableMap.entrySet()) {
-            System.out.println(entry.getKey() + " : " + entry.getValue());
-        }
-    }
+//    public static void printTableMap(Map<String, Map<String, String>> tableMap) {
+//        // Print the tableMap
+//        for (Map.Entry<String, Map<String, String>> entry : tableMap.entrySet()) {
+//            System.out.println(entry.getKey() + " : " + entry.getValue());
+//        }
+//    }
 
 }

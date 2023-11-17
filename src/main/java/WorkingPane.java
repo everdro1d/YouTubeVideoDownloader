@@ -6,14 +6,11 @@ import java.awt.*;
 public class WorkingPane extends JFrame {
     protected static JFrame workingFrame;
     protected static JPanel panel;
-    //protected static JPanel panelRow2;
     protected static JLabel label1;
     protected static JLabel labelMessage;
     protected String message = "";
     protected static JProgressBar progressBar;
-    //protected static JButton buttonCancel;
     public WorkingPane() {
-        //TODO make the cancel button dispose of the frame and kill the process
         //TODO clean up the .part file if the process is killed
         workingFrame = new JFrame("Working...");
 
@@ -54,20 +51,6 @@ public class WorkingPane extends JFrame {
             panel.add(progressBar);
 
             panel.add(Box.createVerticalStrut(10));
-
-//            panelRow2 = new JPanel();
-//            panelRow2.setLayout(new FlowLayout(FlowLayout.RIGHT));
-//            panelRow2.setAlignmentX(Component.LEFT_ALIGNMENT);
-//            panel.add(panelRow2);
-//            {
-//                buttonCancel = new JButton("Cancel");
-//                buttonCancel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-//                panelRow2.add(buttonCancel);
-//            }
-//            buttonCancel.addActionListener(e -> {
-//                stopDownload();
-//                workingFrame.dispose();
-//            });
 
             panel.add(Box.createVerticalStrut(5));
         }
