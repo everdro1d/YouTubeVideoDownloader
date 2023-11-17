@@ -17,19 +17,25 @@ import com.formdev.flatlaf.FlatLightLaf;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
+import java.util.Arrays;
+import java.util.Scanner;
 import java.util.prefs.Preferences;
 
-import static main.java.AdvancedSettings.getadvancedSettings;
+import static main.java.AdvancedSettings.getAdvancedSettings;
 import static main.java.MainWindow.fontName;
 import static main.java.MainWindow.frame;
+import static main.java.WorkingPane.workingFrame;
 
 public class MainWorker {
+    protected static Thread downloadThread;
     public static String rawURL; // raw URL String from the text field
-    public static int videoAudio; // 0 = video and audio, 1 = audio only, 2 = video only
-    protected static final String downloadBinary = "src/main/libs/yt-dlp.exe "; // the path to the binary to run
+    protected static final String downloadBinary = "yt-dlp.exe "; // the name of the binary to run
+    protected static final String binaryPath = "src/main/libs/"; // the path to the binary to run
     protected static String filePath = ""; // the path to download the video to
     protected static boolean darkMode = false; // whether dark mode is enabled
     static Preferences prefs = Preferences.userNodeForPackage(MainWorker.class);
+
 
 
     public static void main(String[] args) {
@@ -52,7 +58,7 @@ public class MainWorker {
             }
         });
 
-        //checkUpdate(); //TODO re-enable when done, this makes a 403 error
+        checkUpdate(); //TODO re-enable when done, this makes a 403 error
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             prefs.put("filePath", filePath);
@@ -85,6 +91,10 @@ public class MainWorker {
                     frame.getRootPane().putClientProperty("JRootPane.titleBarBackground", new Color(0x2B2B2B));
                     frame.getRootPane().putClientProperty("JRootPane.titleBarForeground", new Color(0xbbbbbb));
                 }
+                if (workingFrame != null) {
+                    workingFrame.getRootPane().putClientProperty("JRootPane.titleBarBackground", new Color(0x2B2B2B));
+                    workingFrame.getRootPane().putClientProperty("JRootPane.titleBarForeground", new Color(0xbbbbbb));
+                }
             } catch (Exception ex) {
                 System.err.println("Could not set look and feel of application.");
             }
@@ -98,18 +108,25 @@ public class MainWorker {
                     frame.getRootPane().putClientProperty("JRootPane.titleBarBackground", new Color(0xe1e1e1));
                     frame.getRootPane().putClientProperty("JRootPane.titleBarForeground", Color.BLACK);
                 }
+                if (workingFrame != null) {
+                    workingFrame.getRootPane().putClientProperty("JRootPane.titleBarBackground", new Color(0xe1e1e1));
+                    workingFrame.getRootPane().putClientProperty("JRootPane.titleBarForeground", Color.BLACK);
+                }
             } catch (Exception ex) {
                 System.err.println("Could not set look and feel of application.");
             }
         }
+
     }
 
     public static void checkUpdate() {
         try {
             new Thread(()->{
+                ProcessBuilder pb = new ProcessBuilder(Arrays.asList(binaryPath+downloadBinary, "-U"));
+                pb.directory(new File(binaryPath));
                 Process p;
                 try {
-                    p = Runtime.getRuntime().exec(downloadBinary + "-U");
+                    p = pb.start();
                     new Thread(new SyncPipe(p.getErrorStream(), System.err)).start();
                     new Thread(new SyncPipe(p.getInputStream(), System.out)).start();
                     p.waitFor();
@@ -128,11 +145,13 @@ public class MainWorker {
         if ( !(url.contains("youtube.com") || url.contains("youtu.be"))) {
             return false;
         }
+        //check if the url is valid
         try {
-            (new java.net.URL(url)).openStream().close();
+            new java.net.URI(url);
             return true;
-        } catch (Exception ignored) { }
-        return false;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private static boolean checkURLDialog() {
@@ -153,43 +172,107 @@ public class MainWorker {
 
         String cmd = getCommand();
         download(cmd);
-
-        System.out.println("Download button clicked");
-        System.out.println("command to run: " + cmd);
     }
 
     public static String getCommand() {
         // the options to pass to the binary
-        String advancedSettings = getadvancedSettings();
+        String advancedSettings = getAdvancedSettings();
 
-        return downloadBinary + advancedSettings + "-o \"" + filePath + "\\%(title)s.%(ext)s\" " + "\"" + rawURL + "\"";
+        return binaryPath + downloadBinary + advancedSettings + "-o \"" + filePath + "\\%(title)s.%(ext)s\" " + "\"" + rawURL + "\"";
     }
 
-    public static void download(String cmd) { //TODO add a way to show the progress of the download
+    public static void download(String cmd) {
         // start download
         try {
-            new Thread(()->{
+            downloadThread = new Thread(()->{
+                ProcessBuilder pb = new ProcessBuilder(cmd.split(" "));
+                pb.directory(new File(binaryPath));
                 Process p;
                 try {
-                    p = Runtime.getRuntime().exec(cmd);
-                    //TODO make a working dialog - note from later: IF I EVER FIGURE OUT HOW TO DO IT, I WILL
-                    //show the dialog
-                    new Thread(new SyncPipe(p.getErrorStream(), System.err)).start();
-                    new Thread(new SyncPipe(p.getInputStream(), System.out)).start();
-                    p.waitFor();
-
-                    //dispose of the dialog
-
-                    //show a dialog saying the download is done
-                    JOptionPane.showMessageDialog(null, "Download Completed", "Finished!", JOptionPane.INFORMATION_MESSAGE);
-
+                    try {
+                        p = pb.start();
+                        new Thread(new SyncPipe(p.getErrorStream(), System.err)).start();
+                        try (Scanner scanner = new Scanner(p.getInputStream())) {
+                            downloadProgressPanes(scanner);
+                        }
+                        p.waitFor();
+                        System.out.println(p.exitValue());
+                    } catch (Exception e) {
+                        System.out.println("Download interrupted.");
+                        e.printStackTrace(System.out);
+                    }
                 } catch (Exception e) {
                     e.printStackTrace(System.out);
                 }
-            }).start();
+            });
+            downloadThread.start();
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
+    }
+
+    private static void downloadProgressPanes(Scanner scanner) {
+        WorkingPane workingPane = new WorkingPane();
+
+        if (!scanner.hasNextLine()) {
+            System.out.println("No output from process");
+            return;
+        }
+
+        while (scanner.hasNextLine()) {
+            //Skip lines until after the download begins
+            String s = scanner.nextLine();
+            System.out.println(s);
+            if (s.contains("[info]") && s.contains("Downloading")) {
+                break;
+            }
+        }
+
+        //OptionPanes to show the progress of the download
+        while (scanner.hasNextLine()) {
+            String s = scanner.nextLine();
+            System.out.println(s);
+            if (s.contains("[download]")) {
+                setWorkingPaneMessage(workingPane, s);
+            }
+
+            if (s.contains("[download] 100% of")) {
+                workingPane.setVisible(false);
+                workingFrame.dispose();
+                JOptionPane.showMessageDialog(null, "Download Completed", "Finished!", JOptionPane.INFORMATION_MESSAGE);
+                break;
+
+            } else if (s.contains("ERROR:")) {
+                workingPane.setVisible(false);
+                workingFrame.dispose();
+                JOptionPane.showMessageDialog(null, "An error occurred while downloading the video.:\n" + s, "Error!", JOptionPane.ERROR_MESSAGE);
+                break;
+
+            } else if (s.contains("has already been downloaded")) {
+                workingPane.setVisible(false);
+                workingFrame.dispose();
+                JOptionPane.showMessageDialog(null, "This video has already been downloaded.", "Error!", JOptionPane.ERROR_MESSAGE);
+                break;
+            }
+        }
+        workingFrame.dispose();
+        scanner.close();
+    }
+
+    private static void setWorkingPaneMessage(WorkingPane workingPane, String s) {
+        String[] split = s.split(" ");
+        String[] split2 = Arrays.copyOfRange(split, 1, split.length-2);
+        String message = String.join(" ", split2);
+        workingPane.setMessage(message);
+
+        if (message.contains("%")) {
+            String progress = message.split("%")[0].replace(".", "").replace(" ", "");
+            if (!progress.isEmpty()) {
+                int progressInt = Math.round(Float.parseFloat(progress) / 10);
+                workingPane.setProgress(progressInt);
+            }
+        }
+
     }
 
     public static String openFileChooser() {

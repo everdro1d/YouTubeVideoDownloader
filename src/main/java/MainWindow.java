@@ -162,8 +162,8 @@ public class MainWindow extends JFrame {
 
                         textField_URL.addKeyListener(new java.awt.event.KeyAdapter() {
                             public void keyReleased(java.awt.event.KeyEvent e) {
-                                MainWorker.rawURL = textField_URL.getText();
-                                if (MainWorker.rawURL == null || MainWorker.rawURL.isEmpty()) {
+                                MainWorker.rawURL = textField_URL.getText().trim();
+                                if (MainWorker.rawURL.isEmpty()) {
                                     validURL = false;
                                 } else {
                                     validURL = MainWorker.validURL(MainWorker.rawURL);
@@ -303,7 +303,7 @@ public class MainWindow extends JFrame {
                                 frame.setSize(new Dimension(windowWidth, windowHeight));
                             }
 
-                            setadvancedSettings();
+                            setAdvancedSettings();
                         });
                 }
 
@@ -565,6 +565,8 @@ public class MainWindow extends JFrame {
 
         Color advSettingsPanelColor = new Color(darkMode ? 0x303234 : 0xe0e0e0);
 
+        Color textColor = new Color(darkMode ? 0xbbbbbb : 0x000000);
+
 
         frame.getContentPane().setBackground(backgroundColor);
 
@@ -574,6 +576,19 @@ public class MainWindow extends JFrame {
         centerVerticalPanelRow2.setBackground(advSettingsPanelColor);
         advancedSettingsPanelRow1.setBackground(advSettingsPanelColor);
         advancedSettingsPanelRow2.setBackground(advSettingsPanelColor);
+
+        if (WorkingPane.workingFrame != null) {
+            WorkingPane.workingFrame.getContentPane().setBackground(backgroundColor);
+            WorkingPane.panel.setBackground(backgroundColor);
+            //WorkingPane.panelRow2.setBackground(backgroundColor);
+            WorkingPane.label1.setForeground(textColor);
+            WorkingPane.labelMessage.setForeground(textColor);
+            //WorkingPane.buttonCancel.setForeground(textColor);
+            // WorkingPane.buttonCancel.setBackground(advSettingsPanelColor);
+            WorkingPane.progressBar.setForeground(textColor);
+            WorkingPane.progressBar.setBackground(separatorSPColor);
+
+        }
     }
 
     private void comboBoxMaker(JComboBox<String> comboBox, int selectedIndex) {
@@ -696,18 +711,11 @@ public class MainWindow extends JFrame {
 
     private static void updateComboBoxByProperty(String property, Map<String, String> filterPropertiesMap, JComboBox<String> comboBox, String context) {
         if (property != null && filterPropertiesMap != null && !filterPropertiesMap.isEmpty()) {
-            Set<String> values;
-
-            switch (context) {
-                case "video":
-                    values = getUniqueValuesForVideo(property, filterPropertiesMap);
-                    break;
-                case "audio":
-                    values = getUniqueValuesForAudio(property, filterPropertiesMap);
-                    break;
-                default:
-                    throw new IllegalArgumentException("Invalid context: " + context);
-            }
+            Set<String> values = switch (context) {
+                case "video" -> getUniqueValuesForVideo(property, filterPropertiesMap);
+                case "audio" -> getUniqueValuesForAudio(property, filterPropertiesMap);
+                default -> throw new IllegalArgumentException("Invalid context: " + context);
+            };
 
             values.removeIf(value -> value.contains("only") || value.contains("ec"));
             String[] arrayValues = values.toArray(new String[0]);

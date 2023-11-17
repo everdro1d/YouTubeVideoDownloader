@@ -4,6 +4,8 @@ import java.util.*;
 import java.util.function.Predicate;
 
 import static main.java.MainWindow.*;
+import static main.java.MainWorker.binaryPath;
+import static main.java.MainWorker.downloadBinary;
 import static main.java.TableReaderFromConsole.scannerTableMap;
 
 public class AdvancedSettings {
@@ -40,8 +42,7 @@ public class AdvancedSettings {
     }
 
     private static void getVideoOptions() {
-        String cmd = MainWorker.downloadBinary + "--list-formats " + MainWorker.rawURL;
-        //System.out.println("command to run: " + cmd);
+        String cmd = binaryPath + downloadBinary + "--list-formats " + MainWorker.rawURL;
         try {
             new Thread(()->{
                 ProcessBuilder pb = new ProcessBuilder(cmd.split(" "));
@@ -51,7 +52,6 @@ public class AdvancedSettings {
                     Scanner scanner = new Scanner(p.getInputStream());
                     scannerTableMap(scanner);
                     p.waitFor();
-                    //System.out.println("EOI");
                     getVideoOptions = true;
                 } catch (Exception e) {
                     e.printStackTrace(System.out);
@@ -62,7 +62,7 @@ public class AdvancedSettings {
         }
     }
 
-    public static void setadvancedSettings() {
+    public static void setAdvancedSettings() {
         // set the advanced options comboBox arrays from the tableMap
 
 
@@ -125,22 +125,24 @@ public class AdvancedSettings {
     }
 
 
-    public static String getadvancedSettings() {
+    public static String getAdvancedSettings() {
         StringBuilder output = new StringBuilder();
-        ArrayList<String> arrayListadvancedSettings = new ArrayList<>();
-        arrayListadvancedSettings.add("--restrict-filenames");
-        arrayListadvancedSettings.add("-f");
+        ArrayList<String> arrayListAdvancedSettings = new ArrayList<>();
+        arrayListAdvancedSettings.add("--restrict-filenames");
+        arrayListAdvancedSettings.add("--progress");
+        arrayListAdvancedSettings.add("--newline");
+        arrayListAdvancedSettings.add("-f");
 
         if (!advancedSettingsEnabled) {
             switch (videoAudio) {
                 case 0:
-                    arrayListadvancedSettings.add("\"bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4] / bv*+ba/b\"");
+                    arrayListAdvancedSettings.add("\"bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4] / bv*+ba/b\"");
                     break;
                 case 1:
-                    arrayListadvancedSettings.add("\"bv[ext=mp4]\"");
+                    arrayListAdvancedSettings.add("\"bv[ext=mp4]\"");
                     break;
                 case 2:
-                    arrayListadvancedSettings.add("\"ba[ext=m4a]\"");
+                    arrayListAdvancedSettings.add("\"ba[ext=m4a]\"");
                     break;
             }
         } else {
@@ -161,18 +163,18 @@ public class AdvancedSettings {
 
             switch (videoAudio) {
                 case 0: // video and audio
-                    arrayListadvancedSettings.add(keyVideo + "+" + keyAudio);
+                    arrayListAdvancedSettings.add(keyVideo + "+" + keyAudio);
                     break;
                 case 1: // video only
-                    arrayListadvancedSettings.add(String.valueOf(keyVideo));
+                    arrayListAdvancedSettings.add(String.valueOf(keyVideo));
                     break;
                 case 2: // audio only
-                    arrayListadvancedSettings.add(String.valueOf(keyAudio));
+                    arrayListAdvancedSettings.add(String.valueOf(keyAudio));
                     break;
             }
         }
 
-        for (String arrayListAdvancedOption : arrayListadvancedSettings) {
+        for (String arrayListAdvancedOption : arrayListAdvancedSettings) {
             // add the options to the cmd variable
             output.append(arrayListAdvancedOption).append(" ");
         }
@@ -216,7 +218,6 @@ public class AdvancedSettings {
                     && innerMap.get(option3).equals(value3) && innerMap.get(option4).equals(value4)
                     && innerMap.get(option5).equals(value5))
             {
-                System.out.println("key: " + key);
                 resultKey = Integer.parseInt(key);
             }
         }
