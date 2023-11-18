@@ -5,7 +5,6 @@ import java.util.*;
 import java.util.function.Predicate;
 
 import static main.java.MainWindow.*;
-import static main.java.MainWorker.binaryPath;
 import static main.java.MainWorker.downloadBinary;
 import static main.java.TableReaderFromConsole.scannerTableMap;
 
@@ -41,7 +40,7 @@ public class AdvancedSettings {
     }
 
     private static void getVideoOptions() {
-        String cmd = binaryPath + downloadBinary + "--list-formats " + MainWorker.rawURL;
+        String cmd = downloadBinary + " --list-formats " + "\"" + MainWorker.rawURL + "\"";
         try {
             new Thread(()->{
                 ProcessBuilder pb = new ProcessBuilder(cmd.split(" "));

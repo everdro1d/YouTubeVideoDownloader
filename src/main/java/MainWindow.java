@@ -2,8 +2,10 @@ package main.java;
 
 import com.formdev.flatlaf.FlatClientProperties;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -211,8 +213,22 @@ public class MainWindow extends JFrame {
                     lightDarkModeButton.setBorderPainted(false);
                     lightDarkModeButton.setContentAreaFilled(false);
                     lightDarkModeButton.setAlignmentX(Component.RIGHT_ALIGNMENT);
-                    Icon sunIcon = new ImageIcon("src/main/resources/sunIcon.png");
-                    Icon moonIcon = new ImageIcon("src/main/resources/moonIcon.png");
+                    Icon sunIcon = null;
+                    Icon moonIcon = null;
+                    try (InputStream sunIconStream = this.getClass().getClassLoader().getResourceAsStream("main/resources/sunIcon.png");
+                         InputStream moonIconStream = this.getClass().getClassLoader().getResourceAsStream("main/resources/moonIcon.png")) {
+                        if (sunIconStream != null) {
+                            sunIcon = new ImageIcon(ImageIO.read(sunIconStream));
+                            lightDarkModeButton.setIcon(sunIcon);
+                        }
+                        if (moonIconStream != null) {
+                            moonIcon = new ImageIcon(ImageIO.read(moonIconStream));
+                            lightDarkModeButton.setSelectedIcon(moonIcon);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace(System.out);
+                    }
+
                     if (prefs.getBoolean("darkMode", false)) {
                         lightDarkModeButton.setSelectedIcon(sunIcon);
                         lightDarkModeButton.setIcon(moonIcon);
@@ -478,8 +494,14 @@ public class MainWindow extends JFrame {
                 buttonFileChooser.setFont(new Font(fontName, Font.PLAIN, fontSize+2));
                 buttonFileChooser.setPreferredSize(new Dimension(185, 40));
                 buttonFileChooser.setAlignmentX(Component.CENTER_ALIGNMENT);
-                Icon folderIcon = new ImageIcon("src/main/resources/folderIcon.png");
-                buttonFileChooser.setIcon(folderIcon);
+                try (InputStream folderIconStream = this.getClass().getClassLoader().getResourceAsStream("main/resources/folderIcon.png")) {
+                    if (folderIconStream != null) {
+                        Icon folderIcon = new ImageIcon(ImageIO.read(folderIconStream));
+                        buttonFileChooser.setIcon(folderIcon);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace(System.out);
+                }
                 southPanelRow1.add(buttonFileChooser);
 
                 buttonFileChooser.addActionListener((e) -> MainWorker.filePath = MainWorker.openFileChooser());
@@ -493,8 +515,14 @@ public class MainWindow extends JFrame {
                 buttonDownload.setFont(new Font(fontName, Font.PLAIN, fontSize+2));
                 buttonDownload.setPreferredSize(new Dimension(160, 40));
                 buttonDownload.setAlignmentX(Component.CENTER_ALIGNMENT);
-                Icon saveIcon = new ImageIcon("src/main/resources/saveIcon.png");
-                buttonDownload.setIcon(saveIcon);
+                try (InputStream saveIconStream = this.getClass().getClassLoader().getResourceAsStream("main/resources/saveIcon.png")) {
+                    if (saveIconStream != null) {
+                        Icon saveIcon = new ImageIcon(ImageIO.read(saveIconStream));
+                        buttonDownload.setIcon(saveIcon);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace(System.out);
+                }
                 southPanelRow1.add(buttonDownload);
 
                 buttonDownload.addActionListener((e) -> MainWorker.downloadButtonClicked());
@@ -717,11 +745,17 @@ public class MainWindow extends JFrame {
 
     private static void updateComboBoxByProperty(String property, Map<String, String> filterPropertiesMap, JComboBox<String> comboBox, String context) {
         if (property != null && filterPropertiesMap != null && !filterPropertiesMap.isEmpty()) {
-            Set<String> values = switch (context) {
-                case "video" -> getUniqueValuesForVideo(property, filterPropertiesMap);
-                case "audio" -> getUniqueValuesForAudio(property, filterPropertiesMap);
-                default -> throw new IllegalArgumentException("Invalid context: " + context);
-            };
+            Set<String> values;
+            switch (context) {
+                case "video":
+                    values = getUniqueValuesForVideo(property, filterPropertiesMap);
+                    break;
+                case "audio":
+                    values = getUniqueValuesForAudio(property, filterPropertiesMap);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Invalid context: " + context);
+            }
 
             values.removeIf(value -> value.contains("only") || value.contains("ec"));
             String[] arrayValues = values.toArray(new String[0]);

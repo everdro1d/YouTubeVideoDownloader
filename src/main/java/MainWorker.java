@@ -9,6 +9,10 @@ import com.formdev.flatlaf.FlatLightLaf;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Scanner;
 import java.util.prefs.Preferences;
@@ -22,8 +26,8 @@ public class MainWorker {
     protected static MainWindow window;
     protected static Thread downloadThread;
     public static String rawURL; // raw URL String from the text field
-    protected static final String downloadBinary = "yt-dlp.exe "; // the name of the binary to run
-    protected static final String binaryPath = "src/main/libs/"; // the path to the binary to run
+    protected static final String downloadBinary = "yt-dlp.exe"; // the name of the binary to run
+    protected static String binaryPath = "main/libs/"; // the path to the binary to run
     protected static String filePath = ""; // the path to download the video to
     protected static boolean darkMode = false; // whether dark mode is enabled
     static Preferences prefs = Preferences.userNodeForPackage(MainWorker.class);
@@ -31,6 +35,40 @@ public class MainWorker {
 
 
     public static void main(String[] args) {
+
+        String[] binaryFiles = {"ffmpeg.exe", "ffprobe.exe", downloadBinary};
+
+        for (String binaryFile : binaryFiles) {
+            try (InputStream binaryPathStream = MainWorker.class.getClassLoader().getResourceAsStream(binaryPath + binaryFile)) {
+                if (binaryPathStream == null) {
+                    System.err.println("Could not find binary file: " + binaryFile);
+                    continue;
+                }
+                Path outputPath = new File(binaryFile).toPath();
+
+                Files.copy(binaryPathStream, outputPath, StandardCopyOption.REPLACE_EXISTING);
+
+                String osName = System.getProperty("os.name").toLowerCase();
+                if (osName.contains("win")) {
+                    Files.setAttribute(outputPath, "dos:hidden", true);
+                }
+
+                Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                    File fileToDelete = new File(binaryFile);
+                    if (fileToDelete.exists()) {
+                        if (fileToDelete.delete()) {
+                            System.out.println("Temp file deleted successfully: " + binaryFile);
+                        } else {
+                            System.err.println("Failed to delete temp file: " + binaryFile);
+                        }
+                    }
+                }));
+            } catch (Exception e) {
+                e.printStackTrace(System.out);
+            }
+        }
+
+        System.out.println(binaryPath);
         FlatLightLaf.setup();
         FlatDarkLaf.setup();
 
@@ -114,8 +152,7 @@ public class MainWorker {
     public static void checkUpdate() {
         try {
             new Thread(()->{
-                ProcessBuilder pb = new ProcessBuilder(Arrays.asList(binaryPath+downloadBinary, "-U"));
-                pb.directory(new File(binaryPath));
+                ProcessBuilder pb = new ProcessBuilder(Arrays.asList(downloadBinary, "-U"));
                 Process p;
                 try {
                     p = pb.start();
@@ -176,10 +213,10 @@ public class MainWorker {
     private static boolean checkURLDialog() {
         if ((rawURL == null) || !validURL(rawURL)) {
             if (rawURL != null && rawURL.contains("list")) {
-                JOptionPane.showMessageDialog(null, """
-                        Playlist downloading is not supported yet.
-                        If you are trying to download a single video, try removing:
-                        "&list=(whatever the rest of the url is here)".""", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(null,
+                        "Playlist downloading is not supported yet." +
+                        "\nIf you are trying to download a single video, try removing:" +
+                        "\n\"&list=(whatever the rest of the url is here)\".", "Error", JOptionPane.ERROR_MESSAGE);
             } else {
                 JOptionPane.showMessageDialog(null, "Please enter a valid YouTube URL.", "Error", JOptionPane.ERROR_MESSAGE);
             }
@@ -204,7 +241,7 @@ public class MainWorker {
         // the options to pass to the binary
         String advancedSettings = getAdvancedSettings();
 
-        return binaryPath + downloadBinary + advancedSettings + "-o \"" + filePath + "\\%(title)s.%(ext)s\" " + "\"" + rawURL + "\"";
+        return downloadBinary + " " + advancedSettings + "-o \"" + filePath + "\\%(title)s.%(ext)s\" " + "\"" + rawURL + "\"";
     }
 
     public static void download(String cmd) {
@@ -212,7 +249,6 @@ public class MainWorker {
         try {
             downloadThread = new Thread(()->{
                 ProcessBuilder pb = new ProcessBuilder(cmd.split(" "));
-                pb.directory(new File(binaryPath));
                 Process p;
                 try {
                     try {

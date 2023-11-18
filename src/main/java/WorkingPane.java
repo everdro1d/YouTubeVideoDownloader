@@ -11,7 +11,6 @@ public class WorkingPane extends JFrame {
     protected String message = "";
     protected static JProgressBar progressBar;
     public WorkingPane() {
-        //TODO clean up the .part file if the process is killed
         workingFrame = new JFrame("Working...");
 
         workingFrame.setMinimumSize(new Dimension(355, 150));
