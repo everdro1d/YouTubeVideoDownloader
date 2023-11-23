@@ -1,5 +1,6 @@
 package main.java;
 
+import javax.swing.*;
 import java.util.*;
 
 import static java.util.Arrays.stream;
@@ -9,6 +10,7 @@ public class TableReaderFromConsole {
     public static void scannerTableMap(Scanner scanner) {
         if (!scanner.hasNextLine()) {
             System.out.println("No output from process");
+            JOptionPane.showMessageDialog(null, "No output from process", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
         while (scanner.hasNextLine()) {

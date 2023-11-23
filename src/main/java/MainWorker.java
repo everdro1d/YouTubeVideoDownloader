@@ -26,17 +26,26 @@ public class MainWorker {
     protected static MainWindow window;
     protected static Thread downloadThread;
     public static String rawURL; // raw URL String from the text field
-    protected static final String downloadBinary = "yt-dlp.exe"; // the name of the binary to run
+    public static String videoID; // the video ID from the URL
+    protected static String downloadBinary = ""; // the name of the binary to run
     protected static String binaryPath = "main/libs/"; // the path to the binary to run
     protected static String filePath = ""; // the path to download the video to
     protected static boolean darkMode = false; // whether dark mode is enabled
+    protected static boolean compatibilityMode = false; // if the compatability mode is enabled
     static Preferences prefs = Preferences.userNodeForPackage(MainWorker.class);
 
 
-
     public static void main(String[] args) {
+        String osName = System.getProperty("os.name").toLowerCase();
+        boolean windows = osName.contains("win");
+        if (!windows) {
+            System.err.println("This program is currently only compatible with Windows.");
+            JOptionPane.showMessageDialog(null, "This program is currently only compatible with Windows.", "Error", JOptionPane.ERROR_MESSAGE);
+            System.exit(1);
+        }
 
-        String[] binaryFiles = {"ffmpeg.exe", "ffprobe.exe", downloadBinary};
+        String[] binaryFiles = {"ffmpeg.exe", "ffprobe.exe", "yt-dlp.exe"};
+        downloadBinary = binaryFiles[binaryFiles.length-1];
 
         for (String binaryFile : binaryFiles) {
             try (InputStream binaryPathStream = MainWorker.class.getClassLoader().getResourceAsStream(binaryPath + binaryFile)) {
@@ -48,17 +57,12 @@ public class MainWorker {
 
                 Files.copy(binaryPathStream, outputPath, StandardCopyOption.REPLACE_EXISTING);
 
-                String osName = System.getProperty("os.name").toLowerCase();
-                if (osName.contains("win")) {
-                    Files.setAttribute(outputPath, "dos:hidden", true);
-                }
+                Files.setAttribute(outputPath, "dos:hidden", true);
 
                 Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                     File fileToDelete = new File(binaryFile);
                     if (fileToDelete.exists()) {
-                        if (fileToDelete.delete()) {
-                            System.out.println("Temp file deleted successfully: " + binaryFile);
-                        } else {
+                        if (!fileToDelete.delete()) {
                             System.err.println("Failed to delete temp file: " + binaryFile);
                         }
                     }
@@ -68,12 +72,12 @@ public class MainWorker {
             }
         }
 
-        System.out.println(binaryPath);
         FlatLightLaf.setup();
         FlatDarkLaf.setup();
 
         darkMode = prefs.getBoolean("darkMode", false);
         filePath = prefs.get("filePath", (System.getProperty("user.home") + "\\Downloads"));
+        compatibilityMode = prefs.getBoolean("compatibilityMode", false);
 
         lightDarkMode();
 
@@ -93,6 +97,7 @@ public class MainWorker {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             prefs.put("filePath", filePath);
             prefs.putBoolean("darkMode", darkMode);
+            prefs.putBoolean("compatibilityMode", compatibilityMode);
         }));
     }
 
@@ -169,14 +174,29 @@ public class MainWorker {
         }
     }
 
+    public static boolean containsAny(String[] array, String contains) {
+        for (String s : array) {
+            if (s.contains(contains)) {
+                return true;
+            }
+        }
+        return false;
+    }
     protected static boolean validURL(String url) {
         // check if the URL is valid
-        if ( !(url.contains("youtube.com") || url.contains("youtu.be")) || (url.contains("list"))) {
-            return false;
-        }
+        String[] validURLs = {
+                "https://www.youtube.com/watch?v=",
+                "https://youtu.be/",
+                "https://www.youtube.com/channel/",
 
-        if (!ytDLPValidatedURL(url)) {
-            return false;
+                "https://www.instagram.com/p/",
+                "https://www.instagram.com/reel/"
+        };
+
+        if (containsAny(validURLs, rawURL)) {
+            if (!validatedURL(url, validURLs)) {
+                return false;
+            }
         }
 
         //check if the url is valid
@@ -188,23 +208,31 @@ public class MainWorker {
         }
     }
 
-    private static boolean ytDLPValidatedURL(String url) {
+    private static boolean validatedURL(String url, String[] validURLs) {
         boolean valid = false;
-        String[] validURLs = {
-                "https://www.youtube.com/watch?v=",
-                "https://youtu.be/",
-                "https://www.youtube.com/shorts/"
-        };
-
-        String[] splitURL = url.split("[/=]");
-        String videoID = splitURL[splitURL.length-1];
-        if (videoID.length() == 11) {
-            for (String validURL : validURLs) {
-                if (url.contains(validURL)) {
-                    valid = true;
-                    break;
-                }
+        // check if the base URL is valid
+        for (String validURL : validURLs) {
+            if (url.contains(validURL)) {
+                valid = true;
+                break;
             }
+        }
+
+        String[] splitURL = url.split("[/=?&]");
+
+        // check if the video ID is valid
+        for (String s : splitURL) {
+            if (s.length() == 11) {
+                videoID = s;
+                valid = true;
+                break;
+            } else{
+                valid = false;
+            }
+        }
+
+        if (videoID.isEmpty()) {
+            return false;
         }
 
         return valid;
@@ -212,14 +240,7 @@ public class MainWorker {
 
     private static boolean checkURLDialog() {
         if ((rawURL == null) || !validURL(rawURL)) {
-            if (rawURL != null && rawURL.contains("list")) {
-                JOptionPane.showMessageDialog(null,
-                        "Playlist downloading is not supported yet." +
-                        "\nIf you are trying to download a single video, try removing:" +
-                        "\n\"&list=(whatever the rest of the url is here)\".", "Error", JOptionPane.ERROR_MESSAGE);
-            } else {
                 JOptionPane.showMessageDialog(null, "Please enter a valid YouTube URL.", "Error", JOptionPane.ERROR_MESSAGE);
-            }
             return false;
         }
         return true;

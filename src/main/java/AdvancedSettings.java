@@ -5,7 +5,7 @@ import java.util.*;
 import java.util.function.Predicate;
 
 import static main.java.MainWindow.*;
-import static main.java.MainWorker.downloadBinary;
+import static main.java.MainWorker.*;
 import static main.java.TableReaderFromConsole.scannerTableMap;
 
 public class AdvancedSettings {
@@ -13,24 +13,34 @@ public class AdvancedSettings {
     protected static int videoAudio = 0; // 0 = video and audio, 1 = audio only, 2 = video only
     protected static boolean advancedSettingsEnabled = false; // if the advanced options are enabled
     protected static volatile boolean getVideoOptions = false; // if the video options are enabled
+    protected static boolean recode = false; // if recode is enabled
     protected static int videoExt = 0; // the video format to download
     protected static int videoResolution = 0; // the video resolution to download
     protected static int videoCodec = 0; // the video codec to download
     protected static int videoFPS = 0; // the video FPS to download
+    protected static int videoVBR = 0; // the video VBR to download
+
     protected static int audioExt = 0; // the audio format to download
     protected static int audioChannels = 0; // the audio channels to download
     protected static int audioCodec = 0; // the audio codec to download
+    protected static int audioABR = 0; // the audio sample rate to download
     protected static int audioASR = 0; // the audio sample rate to download
+
+    protected static int recodeExt = 0; // the recode format to download
+
     protected static String[] arrayVideoExtensions = new String[] {""};
     protected static String[] arrayVideoResolution = new String[] {""};
     protected static String[] arrayVideoCodec = new String[] {""};
     protected static String[] arrayVideoFPS = new String[] {""};
+    protected static String[] arrayVideoVBR = new String[] {""};
 
     protected static String[] arrayAudioExtensions = new String[] {""};
     protected static String[] arrayAudioChannels = new String[] {""};
     protected static String[] arrayAudioCodec = new String[] {""};
-
+    protected static String[] arrayAudioABR = new String[] {""};
     protected static String[] arrayAudioASR = new String[] {""};
+
+    protected static String[] arrayRecodeExt = new String[] {""};
 
 
     public static void readVideoOptionsFromYT() {
@@ -40,7 +50,7 @@ public class AdvancedSettings {
     }
 
     private static void getVideoOptions() {
-        String cmd = downloadBinary + " --list-formats " + "\"" + MainWorker.rawURL + "\"";
+        String cmd = downloadBinary + " --list-formats " + "\"" + rawURL + "\"";
         try {
             new Thread(()->{
                 ProcessBuilder pb = new ProcessBuilder(cmd.split(" "));
@@ -89,6 +99,11 @@ public class AdvancedSettings {
                 .toArray(new String[0]);
         sortArrayValues("FPS", arrayVideoFPS);
 
+        arrayVideoVBR =
+                getUniqueValues( "VBR", option -> option.get("ACODEC").equals("video only") )
+                .toArray(new String[0]);
+        sortArrayValues("VBR", arrayVideoVBR);
+
         arrayVideoCodec =
                 getUniqueValues( "VCODEC", option -> option.get("ACODEC").equals("video only") )
                 .toArray(new String[0]);
@@ -111,23 +126,42 @@ public class AdvancedSettings {
                                 && option.get("VCODEC").equals("audio only") ).toArray(new String[0]);
         sortArrayValues("ACODEC", arrayAudioCodec);
 
+        arrayAudioABR =
+                getUniqueValues( "ABR", option -> option.get("CH").matches("[0-9]")
+                                && option.get("VCODEC").equals("audio only") ).toArray(new String[0]);
+        sortArrayValues("ABR", arrayAudioABR);
+
         arrayAudioASR =
                 getUniqueValues( "ASR", option -> option.get("CH").matches("[0-9]")
                                 && option.get("VCODEC").equals("audio only") ).toArray(new String[0]);
         sortArrayValues("ASR", arrayAudioASR);
 
 
+        //Recode ------------------------------------------
+        if (videoAudio == 0 || videoAudio == 1) {
+            arrayRecodeExt = new String[]{"avi", "flv", "gif", "mkv", "mov", "mp4", "webm"};
+
+        } else if (videoAudio == 2) {
+            arrayRecodeExt = new String[]{"aac", "aiff", "alac", "flac", "m4a", "mka", "mp3", "ogg", "opus", "vorbis", "wav"};
+        }
+        sortArrayValues("RECODE", arrayRecodeExt);
+
 
         // Update the GUI
         MainWindow.updateComboBox( arrayVideoExtensions, comboBoxVideoExt );
         MainWindow.updateComboBox( arrayVideoResolution, MainWindow.comboBoxVideoResolution );
-        MainWindow.updateComboBox( arrayVideoCodec, MainWindow.comboBoxVideoCodec );
         MainWindow.updateComboBox( arrayVideoFPS, MainWindow.comboBoxVideoFPS );
+        MainWindow.updateComboBox( arrayVideoVBR, MainWindow.comboBoxVideoVBR );
+        MainWindow.updateComboBox( arrayVideoCodec, MainWindow.comboBoxVideoCodec );
 
         MainWindow.updateComboBox( arrayAudioExtensions, MainWindow.comboBoxAudioExt );
         MainWindow.updateComboBox( arrayAudioChannels, MainWindow.comboBoxAudioChannels );
-        MainWindow.updateComboBox( arrayAudioCodec, MainWindow.comboBoxAudioCodec );
+        MainWindow.updateComboBox( arrayAudioABR, MainWindow.comboBoxAudioABR );
         MainWindow.updateComboBox( arrayAudioASR, MainWindow.comboBoxAudioASR );
+        MainWindow.updateComboBox( arrayAudioCodec, MainWindow.comboBoxAudioCodec );
+
+        MainWindow.updateComboBox( arrayRecodeExt, MainWindow.comboBoxRecodeExt );
+
         MainWindow.doCascadeFilter(comboBoxVideoExt);
         MainWindow.doCascadeFilter(comboBoxAudioExt);
     }
@@ -141,21 +175,29 @@ public class AdvancedSettings {
         arrayListAdvancedSettings.add("--newline");
         arrayListAdvancedSettings.add("--no-mtime");
 
-
-        arrayListAdvancedSettings.add("-f"); // must come before the video options
+        if (recode) {
+            arrayListAdvancedSettings.add("--recode \"" + arrayRecodeExt[recodeExt] + "\"");
+        }
 
         if (!advancedSettingsEnabled) {
             switch (videoAudio) {
                 case 0:
-                    arrayListAdvancedSettings.add("\"bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4] / bv*+ba/b\"");
+                    arrayListAdvancedSettings.add("-f");
+                    arrayListAdvancedSettings.add(
+                            "\"(bv[ext=mp4]" + (compatibilityMode ? "[vcodec~='^((he|a)vc|h26[45])']" : "") + "+ba[ext=m4a]) / (b[ext=mp4]) / (bv+ba/b)\"");
                     break;
                 case 1:
-                    arrayListAdvancedSettings.add("\"bv[ext=mp4]\"");
+                    arrayListAdvancedSettings.add("-f");
+                    arrayListAdvancedSettings.add(
+                            "\"(bv[ext=mp4]" + (compatibilityMode ? "[vcodec~='^((he|a)vc|h26[45])'])" : ")") + " / bv\"");
                     break;
                 case 2:
-                    arrayListAdvancedSettings.add("\"ba[ext=m4a]\"");
+                    arrayListAdvancedSettings.add("-x");
+                    arrayListAdvancedSettings.add(
+                            "--audio-format \"m4a/best\" --audio-quality 0");
                     break;
             }
+
         } else {
             int keyVideo = getKey(tableMap,
                     "EXT", comboBoxVideoExt.getItemAt(videoExt),
@@ -167,7 +209,7 @@ public class AdvancedSettings {
             int keyAudio = getKey(tableMap,
                     "EXT", comboBoxAudioExt.getItemAt(audioExt),
                     "CH", comboBoxAudioChannels.getItemAt(audioChannels),
-                    "ASR", comboBoxAudioASR.getItemAt(audioASR),
+                    "ABR", comboBoxAudioABR.getItemAt(audioABR),
                     "ACODEC", comboBoxAudioCodec.getItemAt(audioCodec),
                     "VCODEC", "audio only"
             );
@@ -181,6 +223,7 @@ public class AdvancedSettings {
                     break;
                 case 2: // audio only
                     arrayListAdvancedSettings.add(String.valueOf(keyAudio));
+
                     break;
             }
         }
@@ -189,6 +232,10 @@ public class AdvancedSettings {
             // add the options to the cmd variable
             output.append(arrayListAdvancedOption).append(" ");
         }
+        if (compatibilityMode) {
+            output.append("--recode-video \"mp4>mkv/m4a>aac\" ");
+        }
+
 
         return output.toString();
     }
@@ -240,12 +287,10 @@ public class AdvancedSettings {
             case "RESOLUTION":
                 Arrays.sort(arrayValues, Comparator.comparingInt(s -> -1 * Integer.parseInt(s.split("x")[1])));
                 break;
-
             case "FPS":
             case "CH":
                 Arrays.sort(arrayValues, Comparator.comparingInt(s -> -1 * Integer.parseInt(s)));
                 break;
-
             case "VCODEC":
             case "ACODEC":
                 Arrays.sort(arrayValues,
@@ -253,10 +298,15 @@ public class AdvancedSettings {
                                 .thenComparing(s -> s.replaceAll("[^0-9]", ""),
                                         Comparator.nullsLast(Comparator.naturalOrder())).reversed());
                 break;
-
+            case "VBR":
+            case "ABR":
             case "ASR":
                 Arrays.sort(arrayValues,
-                        Comparator.comparingInt(s -> -1 * Integer.parseInt(s.replaceAll("k", ""))));
+                        Comparator.comparingInt(s -> -1 * Integer.parseInt(s.replaceAll("[^0-9]", ""))));
+                break;
+            case "RECODE":
+                Arrays.sort(arrayValues,
+                        Comparator.comparing(s -> s.replaceAll("[^A-Za-z]", "")));
                 break;
         }
     }
