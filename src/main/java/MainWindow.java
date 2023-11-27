@@ -183,12 +183,7 @@ public class MainWindow extends JFrame {
                                 validURLLabel.setText(validURL ? "URL is valid" : "URL is invalid");
                                 coloringModeChange();
 
-                                if (validURL && containsAny( new String[] {
-                                        "https://www.youtube.com/watch?v=",
-                                        "https://youtu.be/",
-                                        "https://www.youtube.com/shorts/"
-                                    }, rawURL))
-                                {
+                                if (validURL && !compatibilityMode) {
                                     checkBoxAdvancedSettings.setEnabled(true);
                                 } else {
                                     checkBoxAdvancedSettings.setSelected(false);
@@ -196,7 +191,7 @@ public class MainWindow extends JFrame {
                                     advancedSettingsPanelRow1.setVisible(false);
                                     advancedSettingsPanelRow2.setVisible(false);
                                     advancedSettingsPanelRow3.setVisible(false);
-                                    advancedSettingsEvent();
+                                    advancedSettingsEvent(true);
                                 }
                             }
                         });
@@ -308,7 +303,11 @@ public class MainWindow extends JFrame {
                             checkBoxCompatibility.setSelected(false);
                             compatibilityMode = false;
                             checkBoxCompatibility.setEnabled(!checkBoxAdvancedSettings.isSelected());
-                            advancedSettingsEvent();
+                            advancedSettingsEvent(containsAny(new String[]{
+                                    "https://www.youtube.com/watch?v=",
+                                    "https://youtu.be/",
+                                    "https://www.youtube.com/shorts/"
+                            }, rawURL));
                         });
 
                     centerVerticalPanelRow1.add(Box.createRigidArea(new Dimension(10, 0)));
@@ -323,20 +322,21 @@ public class MainWindow extends JFrame {
 
                     if (prefs.getBoolean("compatibilityMode", false)) {
                         checkBoxCompatibility.setSelected(compatibilityMode);
+                        checkBoxAdvancedSettings.setSelected(!compatibilityMode);
                     }
                         checkBoxCompatibility.addActionListener((e) -> {
+
                             compatibilityMode = checkBoxCompatibility.isSelected();
-                            checkBoxAdvancedSettings.setSelected(false);
-                            checkBoxAdvancedSettings.setEnabled(validURL && !checkBoxCompatibility.isSelected() &&
-                                    containsAny( new String[] {
-                                            "https://www.youtube.com/watch?v=",
-                                            "https://youtu.be/",
-                                            "https://www.youtube.com/shorts/"
-                                    }, rawURL));
-                            advancedSettingsPanelRow1.setVisible(false);
-                            advancedSettingsPanelRow2.setVisible(false);
-                            advancedSettingsPanelRow3.setVisible(false);
-                            advancedSettingsEvent();
+                            if (compatibilityMode) {
+                                checkBoxAdvancedSettings.setSelected(false);
+                                checkBoxAdvancedSettings.setEnabled(false);
+                                advancedSettingsPanelRow1.setVisible(false);
+                                advancedSettingsPanelRow2.setVisible(false);
+                                advancedSettingsPanelRow3.setVisible(false);
+                                advancedSettingsEvent(true);
+                            } else {
+                                checkBoxAdvancedSettings.setEnabled(validURL && !checkBoxCompatibility.isSelected());
+                            }
                         });
 
                 }
@@ -680,10 +680,11 @@ public class MainWindow extends JFrame {
         }
     }
 
-    protected void advancedSettingsEvent() {
+    protected void advancedSettingsEvent( boolean youtube ) {
         checkType();
 
-        if (checkBoxAdvancedSettings.isSelected()) { // there are two identical if statements because of the way the code is structured
+        if (checkBoxAdvancedSettings.isSelected() && youtube) {
+            // there are two identical if statements because of the way the code is structured
             AdvancedSettings.readVideoOptionsFromYT();
         } else {
             getVideoOptions = false;
@@ -698,8 +699,10 @@ public class MainWindow extends JFrame {
         }
         frame.setCursor(Cursor.getPredefinedCursor(Cursor.getDefaultCursor().getType()));
 
-        advancedSettingsPanelRow1.setVisible(checkBoxAdvancedSettings.isSelected());
-        advancedSettingsPanelRow2.setVisible(checkBoxAdvancedSettings.isSelected());
+        if (youtube) {
+            advancedSettingsPanelRow1.setVisible(checkBoxAdvancedSettings.isSelected());
+            advancedSettingsPanelRow2.setVisible(checkBoxAdvancedSettings.isSelected());
+        }
         advancedSettingsPanelRow3.setVisible(checkBoxAdvancedSettings.isSelected());
         frame.pack();
 
@@ -865,11 +868,16 @@ public class MainWindow extends JFrame {
 
 
         //Recode ------------------------------------------
-        if (videoAudio == 0 || videoAudio == 1) {
-            arrayRecodeExt = new String[]{"avi", "flv", "gif", "mkv", "mov", "mp4", "webm"};
-
-        } else if (videoAudio == 2) {
-            arrayRecodeExt = new String[]{"aac", "aiff", "alac", "flac", "m4a", "mka", "mp3", "ogg", "opus", "vorbis", "wav"};
+        switch (videoAudio) {
+            case 0:
+                arrayRecodeExt = arrayVARecodeExt;
+                break;
+            case 1:
+                arrayRecodeExt = arrayVORecodeExt;
+                break;
+            case 2:
+                arrayRecodeExt = arrayAORecodeExt;
+                break;
         }
         sortArrayValues("RECODE", arrayRecodeExt);
 

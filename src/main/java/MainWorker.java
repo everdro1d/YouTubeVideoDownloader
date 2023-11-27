@@ -174,9 +174,9 @@ public class MainWorker {
         }
     }
 
-    public static boolean containsAny(String[] array, String contains) {
-        for (String s : array) {
-            if (s.contains(contains)) {
+    public static boolean containsAny(String[] matchingArray, String testString) {
+        for (String s : matchingArray) {
+            if (testString.contains(s)) {
                 return true;
             }
         }
@@ -255,6 +255,7 @@ public class MainWorker {
         }
 
         String cmd = getCommand();
+        System.out.println(cmd);
         download(cmd);
     }
 
@@ -299,6 +300,8 @@ public class MainWorker {
 
         if (!scanner.hasNextLine()) {
             System.out.println("No output from process");
+            workingFrame.dispose();
+            JOptionPane.showMessageDialog(null, "No output from process.", "Error!", JOptionPane.ERROR_MESSAGE);
             return;
         }
 

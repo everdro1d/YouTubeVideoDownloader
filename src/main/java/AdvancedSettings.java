@@ -39,7 +39,9 @@ public class AdvancedSettings {
     protected static String[] arrayAudioCodec = new String[] {""};
     protected static String[] arrayAudioABR = new String[] {""};
     protected static String[] arrayAudioASR = new String[] {""};
-
+    protected static String[] arrayVARecodeExt = new String[] {"avi", "flv", "mkv", "mov", "mp4", "webm"};
+    protected static String[] arrayVORecodeExt = new String[] {"avi", "flv", "mkv", "gif", "mov", "mp4", "webm"};
+    protected static String[] arrayAORecodeExt = new String[] {"aac", "aiff", "flac", "m4a", "mka", "mp3", "ogg", "opus", "wav"};
     protected static String[] arrayRecodeExt = new String[] {""};
 
 
@@ -68,7 +70,7 @@ public class AdvancedSettings {
 
                         advancedSettingsEnabled = false;
                         MainWindow.checkBoxAdvancedSettings.setSelected(false);
-                        MainWorker.window.advancedSettingsEvent();
+                        MainWorker.window.advancedSettingsEvent(true);
                     }
                     getVideoOptions = true;
                 } catch (Exception e) {
@@ -138,11 +140,16 @@ public class AdvancedSettings {
 
 
         //Recode ------------------------------------------
-        if (videoAudio == 0 || videoAudio == 1) {
-            arrayRecodeExt = new String[]{"avi", "flv", "gif", "mkv", "mov", "mp4", "webm"};
-
-        } else if (videoAudio == 2) {
-            arrayRecodeExt = new String[]{"aac", "aiff", "alac", "flac", "m4a", "mka", "mp3", "ogg", "opus", "vorbis", "wav"};
+        switch (videoAudio) {
+            case 0:
+                arrayRecodeExt = arrayVARecodeExt;
+                break;
+            case 1:
+                arrayRecodeExt = arrayVORecodeExt;
+                break;
+            case 2:
+                arrayRecodeExt = arrayAORecodeExt;
+                break;
         }
         sortArrayValues("RECODE", arrayRecodeExt);
 
@@ -192,9 +199,12 @@ public class AdvancedSettings {
                             "\"(bv[ext=mp4]" + (compatibilityMode ? "[vcodec~='^((he|a)vc|h26[45])'])" : ")") + " / bv\"");
                     break;
                 case 2:
-                    arrayListAdvancedSettings.add("-x");
+                    arrayListAdvancedSettings.add("--embed-thumbnail");
+                    arrayListAdvancedSettings.add("--convert-thumbnails \"png\"");
+
+                    arrayListAdvancedSettings.add("-f");
                     arrayListAdvancedSettings.add(
-                            "--audio-format \"m4a/best\" --audio-quality 0");
+                            "\"(ba[ext=m4a]) / ba\"" );
                     break;
             }
 
@@ -214,6 +224,8 @@ public class AdvancedSettings {
                     "VCODEC", "audio only"
             );
 
+
+            arrayListAdvancedSettings.add("-f");
             switch (videoAudio) {
                 case 0: // video and audio
                     arrayListAdvancedSettings.add(keyVideo + "+" + keyAudio);
@@ -223,7 +235,6 @@ public class AdvancedSettings {
                     break;
                 case 2: // audio only
                     arrayListAdvancedSettings.add(String.valueOf(keyAudio));
-
                     break;
             }
         }
@@ -233,7 +244,7 @@ public class AdvancedSettings {
             output.append(arrayListAdvancedOption).append(" ");
         }
         if (compatibilityMode) {
-            output.append("--recode-video \"mp4>mkv/m4a>aac\" ");
+            output.append("--recode \"mp4>mkv/m4a>aac\" ");
         }
 
 
