@@ -60,7 +60,7 @@ public class AdvancedSettings {
                     Process p = pb.start();
                     new Thread(new SyncPipe(p.getErrorStream(), System.err)).start();
                     Scanner scanner = new Scanner(p.getInputStream());
-                    scannerTableMap(scanner);
+                    scannerTableMap(scanner, p);
                     int i = p.waitFor();
                     if (i != 0) {
                         SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(null,
@@ -181,6 +181,9 @@ public class AdvancedSettings {
         arrayListAdvancedSettings.add("--progress");
         arrayListAdvancedSettings.add("--newline");
         arrayListAdvancedSettings.add("--no-mtime");
+        if (debug) {
+            arrayListAdvancedSettings.add("--verbose");
+        }
 
         if (recode) {
             arrayListAdvancedSettings.add("--recode \"" + arrayRecodeExt[recodeExt] + "\"");
@@ -191,12 +194,12 @@ public class AdvancedSettings {
                 case 0:
                     arrayListAdvancedSettings.add("-f");
                     arrayListAdvancedSettings.add(
-                            "\"(bv[ext=mp4]" + (compatibilityMode ? "[vcodec~='^((he|a)vc|h26[45])']" : "") + "+ba[ext=m4a]) / (b[ext=mp4]) / (bv+ba/b)\"");
+                            "\"(bv[ext=mp4][height<=1080]" + (compatibilityMode ? "[vcodec~='^((he|a)vc|h26[45])']" : "[vcodec!*=vp09]") + "+ba[ext=m4a]) / (b[ext=mp4][vcodec!*=vp09]) / (bv+ba/b)\"");
                     break;
                 case 1:
                     arrayListAdvancedSettings.add("-f");
                     arrayListAdvancedSettings.add(
-                            "\"(bv[ext=mp4]" + (compatibilityMode ? "[vcodec~='^((he|a)vc|h26[45])'])" : ")") + " / bv\"");
+                            "\"(bv[ext=mp4][height<=1080]" + (compatibilityMode ? "[vcodec~='^((he|a)vc|h26[45])'])" : "[vcodec!*=vp09])") + " / bv\"");
                     break;
                 case 2:
                     arrayListAdvancedSettings.add("--embed-thumbnail");
@@ -242,9 +245,6 @@ public class AdvancedSettings {
         for (String arrayListAdvancedOption : arrayListAdvancedSettings) {
             // add the options to the cmd variable
             output.append(arrayListAdvancedOption).append(" ");
-        }
-        if (compatibilityMode) {
-            output.append("--recode \"mp4>mkv/m4a>aac\" ");
         }
 
 

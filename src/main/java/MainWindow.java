@@ -100,6 +100,7 @@ public class MainWindow extends JFrame {
 
         initializeGUIComponents();
 
+        textField_URL.getKeyListeners()[0].keyReleased(null);
 
         frame.setVisible(true);
     }
@@ -165,7 +166,7 @@ public class MainWindow extends JFrame {
                         northPanelRow1.add(labelURL);
 
                         //add a new text field in the center of the north panel underneath the title
-                        textField_URL = new JTextField();
+                        textField_URL = new JTextField(rawURL);
                         textField_URL.setFont(new Font(fontName, Font.PLAIN, fontSize));
                         textField_URL.setHorizontalAlignment(SwingConstants.LEFT);
                         textField_URL.setAlignmentX(Component.CENTER_ALIGNMENT);

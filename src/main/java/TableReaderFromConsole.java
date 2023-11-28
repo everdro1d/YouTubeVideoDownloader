@@ -7,15 +7,21 @@ import static java.util.Arrays.stream;
 
 public class TableReaderFromConsole {
 
-    public static void scannerTableMap(Scanner scanner) {
+    public static void scannerTableMap(Scanner scanner, Process p) {
         if (!scanner.hasNextLine()) {
             System.out.println("No output from process");
-            JOptionPane.showMessageDialog(null, "No output from process", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "No output from process.\nTableReader", "Error!", JOptionPane.ERROR_MESSAGE);
+            for (String binaryFile : MainWorker.binaryFiles) {
+                MainWorker.closeProcess(p, binaryFile);
+            }
             return;
         }
         while (scanner.hasNextLine()) {
             //Skip lines until the line containing "ID" is found
             String s = scanner.nextLine();
+            if (MainWorker.debug) {
+                System.out.println(s);
+            }
             if (s.contains("[info] Available formats for")) {
                 break;
             }
@@ -23,6 +29,10 @@ public class TableReaderFromConsole {
 
         if (!scanner.hasNextLine()) {
             System.out.println("No output from process");
+            JOptionPane.showMessageDialog(null, "No output from process. Found ID.\nTableReader", "Error!", JOptionPane.ERROR_MESSAGE);
+            for (String binaryFile : MainWorker.binaryFiles) {
+                MainWorker.closeProcess(p, binaryFile);
+            }
             return;
         }
         //Get the table from console
@@ -34,7 +44,10 @@ public class TableReaderFromConsole {
         AdvancedSettings.tableMap = parseTableToMap(table);
 
         //Print the table
-        //printTableMap(advancedSettings.tableMap);
+        if (MainWorker.debug) {
+            printTableMap(AdvancedSettings.tableMap);
+        }
+
     }
 
     public static Map<String, Map<String, String>> parseTableToMap(String[][] table) {
@@ -159,11 +172,11 @@ public class TableReaderFromConsole {
         return table;
     }
 
-//    public static void printTableMap(Map<String, Map<String, String>> tableMap) {
-//        // Print the tableMap
-//        for (Map.Entry<String, Map<String, String>> entry : tableMap.entrySet()) {
-//            System.out.println(entry.getKey() + " : " + entry.getValue());
-//        }
-//    }
+    public static void printTableMap(Map<String, Map<String, String>> tableMap) {
+        // Print the tableMap
+        for (Map.Entry<String, Map<String, String>> entry : tableMap.entrySet()) {
+            System.out.println(entry.getKey() + " : " + entry.getValue());
+        }
+    }
 
 }
