@@ -74,9 +74,13 @@ public class WorkingPane extends JFrame {
                     for (String binaryFile : binaryFiles) {
                         closeProcess(null, binaryFile);
                     }
+                    downloadStatus = "Canceled - User Input";
                     workingFrame.dispose();
                     JOptionPane.showMessageDialog(null, "Download was cancelled.", "Cancelled", JOptionPane.INFORMATION_MESSAGE);
-                    System.out.println(downloadStarted);
+                    if (debug) {
+                        System.out.println("Download was cancelled.");
+                        System.out.println("Download started: " + downloadStarted);
+                    }
                     if (downloadStarted) {
                         int delFiles = JOptionPane.showConfirmDialog(null, "Save download progress to resume later?", "Cancelled", JOptionPane.YES_NO_OPTION);
                         if (delFiles == JOptionPane.NO_OPTION) {
@@ -97,7 +101,7 @@ public class WorkingPane extends JFrame {
                                         break;
                                     } catch (IOException e1) {
                                         System.out.println("Failed to delete file: " + pathToDelete.getFileName());
-                                        e1.printStackTrace(System.out);
+                                        e1.printStackTrace(System.err);
                                     }
                                 }
                             }
@@ -106,8 +110,6 @@ public class WorkingPane extends JFrame {
                 });
 
             }
-
-
             panel.add(Box.createVerticalStrut(5));
         }
         workingFrame.setVisible(true);

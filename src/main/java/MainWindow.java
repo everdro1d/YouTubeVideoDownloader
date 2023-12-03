@@ -2,10 +2,8 @@ package main.java;
 
 import com.formdev.flatlaf.FlatClientProperties;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -20,6 +18,7 @@ public class MainWindow extends JFrame {
             protected JPanel northPanel;
                 protected JPanel northPanelBorder1;
                     protected JPanel northPanelWestBorder;
+                        protected JButton historyButton;
                     protected JPanel northPanelEastBorder;
                         protected JToggleButton lightDarkModeButton;
                     protected JPanel northPanelRow1;
@@ -123,7 +122,24 @@ public class MainWindow extends JFrame {
                 {
                     //adds a new label in the west of the northPanelBorder1
                     //this is just to make the title look centered
-                    northPanelWestBorder.add(Box.createRigidArea(new Dimension(70, 0)));
+                    northPanelWestBorder.add(Box.createRigidArea(new Dimension(20, 0))); //TotalWidth = 70
+
+                    // add a history button in the west of the northPanelWestBorder
+                    historyButton = new JButton();
+                    historyButton.setBorderPainted(false);
+                    historyButton.setContentAreaFilled(false);
+                    historyButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+                    historyButton.setEnabled(logHistory);
+                    historyButton.setIcon(
+                            getIcon(darkMode ? "main/resources/historyIconDark.png" : "main/resources/historyIcon.png")
+                    );
+                    northPanelWestBorder.add(historyButton);
+
+                    historyButton.addActionListener((e) -> {
+                        HistoryWindow historyWindow = new HistoryWindow(frame);
+                        historyWindow.setVisible(true);
+                    });
+
                 }
                 // add a new JPanel in the center of the northPanelBorder1
                 northPanelRow1 = new JPanel();
@@ -226,29 +242,13 @@ public class MainWindow extends JFrame {
                     lightDarkModeButton.setBorderPainted(false);
                     lightDarkModeButton.setContentAreaFilled(false);
                     lightDarkModeButton.setAlignmentX(Component.RIGHT_ALIGNMENT);
-                    Icon sunIcon = null;
-                    Icon moonIcon = null;
-                    try (InputStream sunIconStream = this.getClass().getClassLoader().getResourceAsStream("main/resources/sunIcon.png");
-                         InputStream moonIconStream = this.getClass().getClassLoader().getResourceAsStream("main/resources/moonIcon.png")) {
-                        if (sunIconStream != null) {
-                            sunIcon = new ImageIcon(ImageIO.read(sunIconStream));
-                            lightDarkModeButton.setIcon(sunIcon);
-                        }
-                        if (moonIconStream != null) {
-                            moonIcon = new ImageIcon(ImageIO.read(moonIconStream));
-                            lightDarkModeButton.setSelectedIcon(moonIcon);
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace(System.out);
-                    }
 
-                    if (prefs.getBoolean("darkMode", false)) {
-                        lightDarkModeButton.setSelectedIcon(sunIcon);
-                        lightDarkModeButton.setIcon(moonIcon);
-                    } else {
-                        lightDarkModeButton.setSelectedIcon(moonIcon);
-                        lightDarkModeButton.setIcon(sunIcon);
-                    }
+                    Icon sunIcon = getIcon("main/resources/sunIcon.png");
+                    Icon moonIcon = getIcon("main/resources/moonIcon.png");
+
+                    lightDarkModeButton.setSelectedIcon(darkMode ? sunIcon : moonIcon);
+                    lightDarkModeButton.setIcon(darkMode ? moonIcon : sunIcon);
+
                     northPanelEastBorder.add(lightDarkModeButton, BorderLayout.EAST);
 
                     lightDarkModeButton.addActionListener((e) -> {
@@ -340,6 +340,7 @@ public class MainWindow extends JFrame {
                             }
                         });
 
+                    //TODO #5 add a logHistory checkbox to the right of the compatibility checkbox
                 }
 
                 centerVerticalPanel.add(Box.createRigidArea(new Dimension(0, 20)));
@@ -625,14 +626,7 @@ public class MainWindow extends JFrame {
                 buttonFileChooser.setFont(new Font(fontName, Font.PLAIN, fontSize+2));
                 buttonFileChooser.setPreferredSize(new Dimension(185, 40));
                 buttonFileChooser.setAlignmentX(Component.CENTER_ALIGNMENT);
-                try (InputStream folderIconStream = this.getClass().getClassLoader().getResourceAsStream("main/resources/folderIcon.png")) {
-                    if (folderIconStream != null) {
-                        Icon folderIcon = new ImageIcon(ImageIO.read(folderIconStream));
-                        buttonFileChooser.setIcon(folderIcon);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace(System.out);
-                }
+                buttonFileChooser.setIcon(getIcon("main/resources/folderIcon.png"));
                 southPanelRow1.add(buttonFileChooser);
 
                 buttonFileChooser.addActionListener((e) -> MainWorker.filePath = MainWorker.openFileChooser());
@@ -646,14 +640,7 @@ public class MainWindow extends JFrame {
                 buttonDownload.setFont(new Font(fontName, Font.PLAIN, fontSize+2));
                 buttonDownload.setPreferredSize(new Dimension(160, 40));
                 buttonDownload.setAlignmentX(Component.CENTER_ALIGNMENT);
-                try (InputStream saveIconStream = this.getClass().getClassLoader().getResourceAsStream("main/resources/saveIcon.png")) {
-                    if (saveIconStream != null) {
-                        Icon saveIcon = new ImageIcon(ImageIO.read(saveIconStream));
-                        buttonDownload.setIcon(saveIcon);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace(System.out);
-                }
+                buttonDownload.setIcon(getIcon("main/resources/downloadIcon.png"));
                 southPanelRow1.add(buttonDownload);
 
                 buttonDownload.addActionListener((e) -> MainWorker.downloadButtonClicked());
@@ -727,6 +714,7 @@ public class MainWindow extends JFrame {
     }
 
     protected void coloringModeChange() {
+        // Colors
         Color backgroundColor = new Color(darkMode ? 0x2B2B2B : 0xE7E7E7);
 
         Color separatorNP1Color = new Color(darkMode ? 0x46494b : 0xdcdcdc);
@@ -736,23 +724,35 @@ public class MainWindow extends JFrame {
 
         Color textColor = new Color(darkMode ? 0xbbbbbb : 0x000000);
 
-
-        frame.getContentPane().setBackground(backgroundColor);
-
-        separatorNP1.setBackground(separatorNP1Color);
-        separatorSP.setBackground(separatorSPColor);
-
+        // darkMode if() dependent colors
         if (darkMode) {
+            // Valid URL Label colors
             validURLLabel.setForeground(validURL ? new Color(0x0dc47d) : new Color(0xCE3737));
         } else {
+            // Valid URL Label colors
             validURLLabel.setForeground(validURL ? new Color(0x007C4D) : new Color(0xad0c0c));
         }
 
+
+        // Main Panel colors
+        frame.getContentPane().setBackground(backgroundColor);
+
+        // Separator colors
+        separatorNP1.setBackground(separatorNP1Color);
+        separatorSP.setBackground(separatorSPColor);
+
+        historyButton.setIcon(
+                getIcon(darkMode ? "main/resources/historyIconDark.png" : "main/resources/historyIcon.png")
+        );
+
+
+        // Advanced Settings Panel colors
         centerVerticalPanelRow2.setBackground(advSettingsPanelColor);
         advancedSettingsPanelRow1.setBackground(advSettingsPanelColor);
         advancedSettingsPanelRow2.setBackground(advSettingsPanelColor);
         advancedSettingsPanelRow3.setBackground(advSettingsPanelColor);
 
+        // Working Pane colors
         if (WorkingPane.workingFrame != null) {
             WorkingPane.workingFrame.getContentPane().setBackground(backgroundColor);
             WorkingPane.panel.setBackground(backgroundColor);

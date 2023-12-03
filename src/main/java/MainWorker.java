@@ -6,6 +6,7 @@ package main.java;
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
@@ -24,6 +25,7 @@ import static main.java.MainWindow.frame;
 import static main.java.WorkingPane.workingFrame;
 
 public class MainWorker {
+    //public static final String version = "1.2.0"; // the version of the program TODO create update checking
     protected static MainWindow window;
     protected static Thread downloadThread;
     private static Process globalDefaultProcess;
@@ -32,6 +34,7 @@ public class MainWorker {
     protected static String downloadBinary = ""; // the name of the binary to run
     protected static int downloadCount = 0;
     protected static int downloadMax = 1;
+    public static String downloadStatus = "";
     protected static boolean downloadStarted = false;
     protected static String[] binaryFiles = {"yt-dlp.exe", "ffmpeg.exe", "ffprobe.exe"};
     protected static String binaryPath = "main/libs/"; // the path to the binary to run
@@ -39,10 +42,47 @@ public class MainWorker {
     public static boolean debug = false; // whether debug mode is enabled
     protected static boolean darkMode = false; // whether dark mode is enabled
     protected static boolean compatibilityMode = false; // if the compatability mode is enabled
+    protected static boolean logHistory = true; // whether to log the download history
     static Preferences prefs = Preferences.userNodeForPackage(MainWorker.class);
 
 
     public static void main(String[] args) {
+        checkCLArgs(args);
+        checkOSCompatability();
+
+        // binary temp file operations
+        copyBinaryTempFiles();
+
+        // set look and feel
+        FlatLightLaf.setup();
+        FlatDarkLaf.setup();
+
+        // load preferences
+        prefs();
+
+        // set UI elements
+        lightDarkMode();
+        uiManager();
+
+        // start main window
+        EventQueue.invokeLater(() -> {
+            try {
+                window = new MainWindow();
+                window.coloringModeChange();
+            } catch (Exception ex) {
+                ex.printStackTrace(System.err);
+            }
+        });
+
+        // check for updates ( disable in debug mode )
+        if (!debug) {
+            checkUpdate();
+        } else {
+            System.out.println("Debug enabled, update check skipped.");
+        }
+    }
+
+    private static void checkCLArgs(String[] args) {
         if (args.length > 0) {
             String arg = args[0];
             if (arg.equals("debug")) {
@@ -51,11 +91,14 @@ public class MainWorker {
             } else {
                 System.out.println(
                         "Unknown argument: " + arg +
-                        "\nValid arguments: debug" +
-                        "\nContinuing without arguments."
+                                "\nValid arguments: debug" +
+                                "\nContinuing without arguments."
                 );
             }
         }
+    }
+
+    private static void checkOSCompatability() {
         String osName = System.getProperty("os.name").toLowerCase();
         boolean windows = osName.contains("win");
         if (!windows) {
@@ -63,7 +106,9 @@ public class MainWorker {
             JOptionPane.showMessageDialog(null, "This program is currently only compatible with Windows.", "Error", JOptionPane.ERROR_MESSAGE);
             System.exit(1);
         }
+    }
 
+    private static void copyBinaryTempFiles() {
         downloadBinary = binaryFiles[0];
 
         for (String binaryFile : binaryFiles) {
@@ -92,45 +137,32 @@ public class MainWorker {
                                     System.err.println("Deleted temp file: " + binaryFile);
                                 }
                             } catch (Exception e) {
-                                e.printStackTrace(System.out);
+                                e.printStackTrace(System.err);
                             }
                         }
                     }
                 }));
             } catch (Exception e) {
-                e.printStackTrace(System.out);
+                e.printStackTrace(System.err);
             }
         }
+    }
 
-        FlatLightLaf.setup();
-        FlatDarkLaf.setup();
-
+    private static void prefs() {
+        // load preferences
         darkMode = prefs.getBoolean("darkMode", false);
         filePath = prefs.get("filePath", (System.getProperty("user.home") + "\\Downloads"));
         compatibilityMode = prefs.getBoolean("compatibilityMode", false);
+        logHistory = prefs.getBoolean("logHistory", true);
 
-        lightDarkMode();
-
-        uiManager();
-
-        EventQueue.invokeLater(() -> {
-            try {
-                window = new MainWindow();
-                window.coloringModeChange();
-            } catch (Exception ex) {
-                ex.printStackTrace(System.out);
-            }
-        });
-
-        checkUpdate();
-
+        // save preferences on exit
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             prefs.put("filePath", filePath);
             prefs.putBoolean("darkMode", darkMode);
             prefs.putBoolean("compatibilityMode", compatibilityMode);
+            prefs.putBoolean("logHistory", logHistory);
         }));
     }
-
     private static void uiManager() {
         UIManager.put("Component.arc", 10);
         UIManager.put("TextComponent.arc", 10);
@@ -196,11 +228,11 @@ public class MainWorker {
                     p.waitFor();
                     System.out.println(p.exitValue());
                 } catch (Exception e) {
-                    e.printStackTrace(System.out);
+                    e.printStackTrace(System.err);
                 }
             }).start();
         } catch (Exception e) {
-            e.printStackTrace(System.out);
+            e.printStackTrace(System.err);
         }
     }
 
@@ -212,30 +244,41 @@ public class MainWorker {
         }
         return false;
     }
+
     protected static boolean validURL(String url) {
-        // check if the URL is valid
-        String[] validURLs = {
-                "https://www.youtube.com/watch?v=",
-                "https://youtu.be/",
-                "https://www.youtube.com/channel/",
+        if (url.isEmpty()) {
+            return false;
+        }
+        if (url.length() < 11) { // too short to be a valid URL with/or a video ID
+            return false;
+        } else if (url.length() == 11) { // if URL contains only the video ID
+            videoID = url;
+        } else { // if the URL is longer than 11 characters
 
-                "https://www.instagram.com/p/",
-                "https://www.instagram.com/reel/"
-        };
+            // check if the URL is valid
+            String[] validURLs = {
+                    "www.youtube.com/watch?v=",
+                    "youtu.be/",
+                    "www.youtube.com/channel/",
 
-        if (containsAny(validURLs, rawURL)) {
-            if (!validatedURL(url, validURLs)) {
+                    "www.instagram.com/p/",
+                    "www.instagram.com/reel/"
+            };
+
+            if (containsAny(validURLs, rawURL)) {
+                if (!validatedURL(url, validURLs)) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+
+            //check if the url is valid
+            try { new java.net.URI(url); } catch (Exception e) {
                 return false;
             }
         }
-
-        //check if the url is valid
-        try {
-            new java.net.URI(url);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
+        return true;
     }
 
     private static boolean validatedURL(String url, String[] validURLs) {
@@ -268,8 +311,8 @@ public class MainWorker {
         return valid;
     }
 
-    private static boolean checkURLDialog() {
-        if ((rawURL == null) || !validURL(rawURL)) {
+    private static boolean checkURLDialog(boolean show) {
+        if ((rawURL == null) || !validURL(rawURL) || show) {
                 JOptionPane.showMessageDialog(null, "Please enter a valid YouTube URL.", "Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }
@@ -280,7 +323,7 @@ public class MainWorker {
         downloadStarted = false;
         downloadCount = 0;
         // start download
-        if ( !checkURLDialog() ) { return; }
+        if ( !checkURLDialog(false) ) { return; }
 
         if (filePath.isEmpty()) {
             filePath = openFileChooser();
@@ -315,26 +358,26 @@ public class MainWorker {
                         try (Scanner scanner = new Scanner(p.getInputStream())) {
                             downloadProgressPanes(scanner, p);
                         }
-                        //Thread.sleep(200);
                         p.waitFor();
 
                         System.out.println(p.exitValue());
                     } catch (Exception e) {
-                        e.printStackTrace(System.out);
+                        e.printStackTrace(System.err);
                     }
                 } catch (Exception e) {
-                    e.printStackTrace(System.out);
+                    e.printStackTrace(System.err);
                 }
             });
             downloadThread.start();
         } catch (Exception e) {
-            e.printStackTrace(System.out);
+            e.printStackTrace(System.err);
         }
     }
 
     private static void downloadProgressPanes(Scanner scanner, Process p) {
         WorkingPane workingPane = new WorkingPane();
 
+        boolean doDownload = true;
         boolean downloadComplete = false;
         boolean downloadChecked = false;
 
@@ -345,112 +388,136 @@ public class MainWorker {
         if (!scanner.hasNextLine()) {
             System.out.println("No output from process");
             workingFrame.dispose();
-            JOptionPane.showMessageDialog(null, "No output from process.\nDownloadPP", "Error!", JOptionPane.ERROR_MESSAGE);
+            System.err.println("[ERROR] No output from process.");
             for (String binaryFile : binaryFiles) {
                 closeProcess(p, binaryFile);
             }
-            return;
+            doDownload = false;
         }
 
-        while (scanner.hasNextLine()) {
-            //Skip lines until after the download begins
-            String s = scanner.nextLine();
-            if (debug) {
-                System.out.println(s);
-            }
-            if (s.contains("[info]") && s.contains("Downloading")) {
-
-                break;
-            }
-        }
-
-
-        //OptionPanes to show the progress of the download
-        while (scanner.hasNextLine()) {
-            String s = scanner.nextLine();
-            if (debug) {
-                System.out.println(s);
-            }
-            if (s.contains("[download]")) {
-                setWorkingPaneMessage(workingPane, s);
-                downloadStarted = true;
-
-                if (s.contains("Destination:")) {
-                    downloadComplete = false;
+        if (doDownload) {
+            while (scanner.hasNextLine()) {
+                //Skip lines until after the download begins
+                String s = scanner.nextLine();
+                if (debug) {
+                    System.out.println(s);
+                }
+                if (s.contains("[info]") && s.contains("Downloading")) {
+                    break;
                 }
             }
 
-            if (!downloadChecked) {
-                if (s.contains("Deleting")) {
-                    delCount++;
-                }
-                if (s.contains("[download] 100% of")) {
-                    downloadComplete = true;
-                    downloadCount++;
-                }
-                if (downloadComplete && (downloadCount == downloadMax)) {
-                    if (videoAudio == 0) {
-                        workingPane.setTitle("Merging...");
-                        workingPane.setMessage(" Merging audio and video...");
-                        workingPane.setProgress(-1);
-                        if (recode) {
-                            workingPane.setTitle("Recoding...");
-                            workingPane.setMessage(
-                                    " Recoding to " + ((arrayRecodeExt.length >= recodeExt) ?
-                                            arrayRecodeExt[recodeExt] :
-                                            "[FORMAT ERROR]") +
-                                            "..." +
-                                    "\nNote: recoding can take a while.");
-                        }
-                    } else {
-                        if (recode) {
-                            switch (videoAudio) {
-                                case 1:
-                                    workingPane.setTitle("Recoding Video...");
-                                    break;
-                                case 2:
-                                    workingPane.setTitle("Recoding Audio...");
-                                    break;
-                            }
-                            workingPane.setMessage(
-                                    " Recoding to " + ((arrayRecodeExt.length >= recodeExt) ?
-                                            arrayRecodeExt[recodeExt] :
-                                            "[FORMAT ERROR]") +
-                                            "..." +
-                                    "\nNote: recoding can take a while.");
-                            workingPane.setProgress(-1);
 
-                        }
+            //OptionPanes to show the progress of the download
+            while (scanner.hasNextLine()) {
+                String s = scanner.nextLine();
+                if (debug) {
+                    System.out.println(s);
+                }
+                if (s.contains("[download]")) {
+                    setWorkingPaneMessage(workingPane, s);
+                    downloadStarted = true;
+
+                    if (s.contains("Destination:")) {
+                        downloadComplete = false;
                     }
-                    if (delCount == delMax) {
+                }
+
+                if (!downloadChecked) {
+                    if (s.contains("Deleting")) {
+                        delCount++;
+                    }
+                    if (s.contains("[download] 100% of")) {
+                        downloadComplete = true;
+                        downloadCount++;
+                    }
+                    if (downloadComplete && (downloadCount == downloadMax)) {
+                        if (videoAudio == 0) {
+                            workingPane.setTitle("Merging...");
+                            workingPane.setMessage(" Merging audio and video...");
+                            workingPane.setProgress(-1);
+                            if (recode) {
+                                workingPane.setTitle("Recoding...");
+                                workingPane.setMessage(
+                                        " Recoding to " + ((arrayRecodeExt.length >= recodeExt) ?
+                                                arrayRecodeExt[recodeExt] :
+                                                "[FORMAT ERROR]") +
+                                                "..." +
+                                                "\nNote: recoding can take a while.");
+                            }
+                        } else {
+                            if (recode) {
+                                switch (videoAudio) {
+                                    case 1:
+                                        workingPane.setTitle("Recoding Video...");
+                                        break;
+                                    case 2:
+                                        workingPane.setTitle("Recoding Audio...");
+                                        break;
+                                }
+                                workingPane.setMessage(
+                                        " Recoding to " + ((arrayRecodeExt.length >= recodeExt) ?
+                                                arrayRecodeExt[recodeExt] :
+                                                "[FORMAT ERROR]") +
+                                                "..." +
+                                                "\nNote: recoding can take a while.");
+                                workingPane.setProgress(-1);
+
+                            }
+                        }
+                        if (delCount == delMax) {
+                            workingPane.setVisible(false);
+                            workingFrame.dispose();
+                            JOptionPane.showMessageDialog(null, "Download Completed", "Finished!", JOptionPane.INFORMATION_MESSAGE);
+                            downloadChecked = true;
+                            downloadStatus = "Completed - Success";
+                        }
+                    } else if (s.contains("ERROR:")) {
                         workingPane.setVisible(false);
                         workingFrame.dispose();
-                        JOptionPane.showMessageDialog(null, "Download Completed", "Finished!", JOptionPane.INFORMATION_MESSAGE);
+                        JOptionPane.showMessageDialog(null, "An error occurred while downloading the video.:\n" + s, "Error!", JOptionPane.ERROR_MESSAGE);
+                        for (String binaryFile : binaryFiles) {
+                            closeProcess(p, binaryFile);
+                        }
                         downloadChecked = true;
-                    }
-                } else if (s.contains("ERROR:")) {
-                    workingPane.setVisible(false);
-                    workingFrame.dispose();
-                    JOptionPane.showMessageDialog(null, "An error occurred while downloading the video.:\n" + s, "Error!", JOptionPane.ERROR_MESSAGE);
-                    for (String binaryFile : binaryFiles) {
-                        closeProcess(p, binaryFile);
-                    }
-                    downloadChecked = true;
+                        downloadStatus = "Stopped - Fatal Error";
 
-                } else if (s.contains("has already been downloaded") && !s.contains(".part")) {
-                    workingPane.setVisible(false);
-                    workingFrame.dispose();
-                    JOptionPane.showMessageDialog(null, "This video has already been downloaded.", "Error!", JOptionPane.ERROR_MESSAGE);
-                    for (String binaryFile : binaryFiles) {
-                        closeProcess(p, binaryFile);
+                    } else if (s.contains("has already been downloaded") && !s.contains(".part")) {
+                        workingPane.setVisible(false);
+                        workingFrame.dispose();
+                        JOptionPane.showMessageDialog(null, "This video has already been downloaded.", "Error!", JOptionPane.ERROR_MESSAGE);
+                        for (String binaryFile : binaryFiles) {
+                            closeProcess(p, binaryFile);
+                        }
+                        downloadChecked = true;
+                        downloadStatus = "Stopped - Already Exists";
                     }
-                    downloadChecked = true;
                 }
             }
         }
 
         workingFrame.dispose();
         scanner.close();
+
+        if (logHistory) {
+            // log download history
+            HistoryLogger historyLogger = new HistoryLogger();
+            String[] data = {rawURL, downloadStatus, getCurrentTime()};
+            historyLogger.logHistory(data);
+            System.out.println("Logged download history.");
+        } else if (!downloadStatus.equals("Canceled - User Input")) {
+            System.out.println("Showing Dialog");
+            checkURLDialog(true);
+        }
+    }
+
+    private static String getCurrentTime() {
+        return java.time.LocalDateTime.now()
+                .toString()
+                .replace("T", " ")
+                .replace("Z", "")
+                .split("\\.")[0]
+                ;
     }
 
     private static void setWorkingPaneMessage(WorkingPane workingPane, String s) {
@@ -495,7 +562,23 @@ public class MainWorker {
             }
             System.out.println("Closed task: " + binaryFile);
         } catch (IOException e) {
-            e.printStackTrace(System.out);
+            e.printStackTrace(System.err);
         }
     }
+
+    public static Icon getIcon(String pathFromSrc) {
+        Icon icon = null;
+        try (InputStream iconStream = MainWorker.class.getClassLoader().getResourceAsStream(pathFromSrc)) {
+            if (iconStream != null) {
+                icon = new ImageIcon(ImageIO.read(iconStream));
+            }
+        } catch (Exception e) {
+            e.printStackTrace(System.err);
+        }
+        if (icon == null) {
+            System.err.println("[ERROR] Could not find icon file at: " + pathFromSrc);
+        }
+        return icon;
+    }
+
 }
