@@ -18,7 +18,7 @@ public class WorkingPane extends JFrame {
     protected static JLabel labelMessage;
     protected String message = "";
     protected static JProgressBar progressBar;
-    protected static JButton buttonCancel;
+    protected static JButton cancelButton;
     public WorkingPane() {
         workingFrame = new JFrame("Working...");
 
@@ -36,7 +36,7 @@ public class WorkingPane extends JFrame {
             panel.add(Box.createVerticalStrut(5));
 
             label1 = new JLabel(" Working...");
-            label1.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+            label1.setFont(new Font(MainWindow.fontName, Font.PLAIN, 18));
             label1.setAlignmentX(Component.LEFT_ALIGNMENT);
             label1.setHorizontalTextPosition(JLabel.LEFT);
             panel.add(label1);
@@ -44,7 +44,7 @@ public class WorkingPane extends JFrame {
             panel.add(Box.createVerticalStrut(10));
 
             labelMessage = new JLabel(" Please wait...");
-            labelMessage.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+            labelMessage.setFont(new Font(MainWindow.fontName, Font.PLAIN, 14));
             labelMessage.setAlignmentX(Component.LEFT_ALIGNMENT);
             labelMessage.setHorizontalTextPosition(JLabel.LEFT);
             panel.add(labelMessage);
@@ -52,7 +52,7 @@ public class WorkingPane extends JFrame {
             panel.add(Box.createVerticalStrut(10));
 
             progressBar = new JProgressBar(JProgressBar.HORIZONTAL, 0, 100);
-            progressBar.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+            progressBar.setFont(new Font(MainWindow.fontName, Font.PLAIN, 14));
             progressBar.setAlignmentX(Component.LEFT_ALIGNMENT);
             progressBar.setPreferredSize(new Dimension(300, 20));
             progressBar.putClientProperty("JProgressBar.largeHeight", Boolean.TRUE);
@@ -66,17 +66,20 @@ public class WorkingPane extends JFrame {
             panelRow2.setAlignmentX(Component.LEFT_ALIGNMENT);
             panel.add(panelRow2);
             {
-                buttonCancel = new JButton("Cancel");
-                buttonCancel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-                panelRow2.add(buttonCancel);
+                cancelButton = new JButton("Cancel");
+                cancelButton.setFont(new Font(MainWindow.fontName, Font.PLAIN, 14));
+                panelRow2.add(cancelButton);
 
-                buttonCancel.addActionListener(e -> {
+                cancelButton.addActionListener(e -> {
                     for (String binaryFile : binaryFiles) {
                         closeProcess(null, binaryFile);
                     }
+
                     downloadStatus = "Canceled - User Input";
-                    workingFrame.dispose();
+                    closeWorkingPane();
+
                     JOptionPane.showMessageDialog(null, "Download was cancelled.", "Cancelled", JOptionPane.INFORMATION_MESSAGE);
+
                     if (debug) {
                         System.out.println("Download was cancelled.");
                         System.out.println("Download started: " + downloadStarted);
@@ -87,7 +90,7 @@ public class WorkingPane extends JFrame {
                             // an array of all files with .part extension
                             String[] partFiles = new File(filePath).list((dir, name) -> name.endsWith(".ytdl") || name.contains(".part"));
                             if (partFiles == null) {
-                                System.out.println("No files to delete.");
+                                if (debug) System.out.println("No files to delete.");
                                 return;
                             }
 
@@ -97,22 +100,26 @@ public class WorkingPane extends JFrame {
                                 for (int tries = 0; tries < 5; tries++) {
                                     try {
                                         Files.delete(pathToDelete);
-                                        System.out.println("Deleted file: " + pathToDelete.getFileName());
+                                        if (debug) System.out.println("Deleted file: " + pathToDelete.getFileName());
                                         break;
                                     } catch (IOException e1) {
-                                        System.out.println("Failed to delete file: " + pathToDelete.getFileName());
-                                        e1.printStackTrace(System.err);
+                                        System.err.println("[ERROR] Failed to delete file: " + pathToDelete.getFileName());
+                                        if (debug) e1.printStackTrace(System.err);
                                     }
                                 }
                             }
                         }
                     }
                 });
-
             }
             panel.add(Box.createVerticalStrut(5));
         }
         workingFrame.setVisible(true);
+    }
+
+    public void closeWorkingPane() {
+        MainWindow.downloadButton.setEnabled(true);
+        workingFrame.dispose();
     }
 
 

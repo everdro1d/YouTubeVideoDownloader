@@ -70,7 +70,8 @@ public class MainWorker {
                 window = new MainWindow();
                 window.coloringModeChange();
             } catch (Exception ex) {
-                ex.printStackTrace(System.err);
+                if (debug) ex.printStackTrace(System.err);
+                System.err.println("Failed to start main window.");
             }
         });
 
@@ -89,7 +90,7 @@ public class MainWorker {
                 System.out.println("Debug mode enabled.");
                 debug = true;
             } else {
-                System.out.println(
+                System.err.println(
                         "Unknown argument: " + arg +
                                 "\nValid arguments: debug" +
                                 "\nContinuing without arguments."
@@ -137,13 +138,13 @@ public class MainWorker {
                                     System.err.println("Deleted temp file: " + binaryFile);
                                 }
                             } catch (Exception e) {
-                                e.printStackTrace(System.err);
+                                if (debug) e.printStackTrace(System.err);
                             }
                         }
                     }
                 }));
             } catch (Exception e) {
-                e.printStackTrace(System.err);
+                if (debug) e.printStackTrace(System.err);
             }
         }
     }
@@ -226,13 +227,14 @@ public class MainWorker {
                     new Thread(new SyncPipe(p.getErrorStream(), System.err)).start();
                     new Thread(new SyncPipe(p.getInputStream(), System.out)).start();
                     p.waitFor();
-                    System.out.println(p.exitValue());
+                    if (debug) System.out.println(p.exitValue());
+
                 } catch (Exception e) {
-                    e.printStackTrace(System.err);
+                    if (debug) e.printStackTrace(System.err);
                 }
             }).start();
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            if (debug) e.printStackTrace(System.err);
         }
     }
 
@@ -330,9 +332,7 @@ public class MainWorker {
         }
 
         String cmd = getCommand();
-        if (debug) {
-            System.out.println(cmd);
-        }
+        if (debug) System.out.println(cmd);
 
         download(cmd);
     }
@@ -359,23 +359,24 @@ public class MainWorker {
                             downloadProgressPanes(scanner, p);
                         }
                         p.waitFor();
-
-                        System.out.println(p.exitValue());
+                        if (debug) System.out.println(p.exitValue());
                     } catch (Exception e) {
-                        e.printStackTrace(System.err);
+                        if (debug) e.printStackTrace(System.err);
                     }
                 } catch (Exception e) {
-                    e.printStackTrace(System.err);
+                    if (debug) e.printStackTrace(System.err);
                 }
             });
             downloadThread.start();
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            if (debug) e.printStackTrace(System.err);
         }
     }
 
     private static void downloadProgressPanes(Scanner scanner, Process p) {
         WorkingPane workingPane = new WorkingPane();
+
+        MainWindow.downloadButton.setEnabled(false);
 
         boolean doDownload = true;
         boolean downloadComplete = false;
@@ -386,8 +387,7 @@ public class MainWorker {
         downloadMax = (videoAudio == 0) ? 2 : 1;
 
         if (!scanner.hasNextLine()) {
-            System.out.println("No output from process");
-            workingFrame.dispose();
+            workingPane.closeWorkingPane();
             System.err.println("[ERROR] No output from process.");
             for (String binaryFile : binaryFiles) {
                 closeProcess(p, binaryFile);
@@ -399,9 +399,7 @@ public class MainWorker {
             while (scanner.hasNextLine()) {
                 //Skip lines until after the download begins
                 String s = scanner.nextLine();
-                if (debug) {
-                    System.out.println(s);
-                }
+                if (debug) System.out.println(s);
                 if (s.contains("[info]") && s.contains("Downloading")) {
                     break;
                 }
@@ -411,9 +409,9 @@ public class MainWorker {
             //OptionPanes to show the progress of the download
             while (scanner.hasNextLine()) {
                 String s = scanner.nextLine();
-                if (debug) {
-                    System.out.println(s);
-                }
+
+                if (debug) System.out.println(s);
+
                 if (s.contains("[download]")) {
                     setWorkingPaneMessage(workingPane, s);
                     downloadStarted = true;
@@ -427,11 +425,14 @@ public class MainWorker {
                     if (s.contains("Deleting")) {
                         delCount++;
                     }
-                    if (s.contains("[download] 100% of")) {
+                    if (s.contains("[download] 100% of") || !s.contains("ETA")) {
                         downloadComplete = true;
+                        System.out.println("Download Complete");
                         downloadCount++;
                     }
-                    if (downloadComplete && (downloadCount == downloadMax)) {
+                    if (debug) System.out.println("Downloads: " + downloadCount + " / " + downloadMax +
+                                "\n Deletes: " + delCount + " / " + delMax);
+                    if (downloadComplete && (downloadCount >= downloadMax)) {
                         if (videoAudio == 0) {
                             workingPane.setTitle("Merging...");
                             workingPane.setMessage(" Merging audio and video...");
@@ -465,16 +466,16 @@ public class MainWorker {
 
                             }
                         }
-                        if (delCount == delMax) {
+                        if ((delMax == 1 && !recode) || (delCount == delMax)) {
                             workingPane.setVisible(false);
-                            workingFrame.dispose();
+                            workingPane.closeWorkingPane();
                             JOptionPane.showMessageDialog(null, "Download Completed", "Finished!", JOptionPane.INFORMATION_MESSAGE);
                             downloadChecked = true;
                             downloadStatus = "Completed - Success";
                         }
                     } else if (s.contains("ERROR:")) {
                         workingPane.setVisible(false);
-                        workingFrame.dispose();
+                        workingPane.closeWorkingPane();
                         JOptionPane.showMessageDialog(null, "An error occurred while downloading the video.:\n" + s, "Error!", JOptionPane.ERROR_MESSAGE);
                         for (String binaryFile : binaryFiles) {
                             closeProcess(p, binaryFile);
@@ -484,7 +485,7 @@ public class MainWorker {
 
                     } else if (s.contains("has already been downloaded") && !s.contains(".part")) {
                         workingPane.setVisible(false);
-                        workingFrame.dispose();
+                        workingPane.closeWorkingPane();
                         JOptionPane.showMessageDialog(null, "This video has already been downloaded.", "Error!", JOptionPane.ERROR_MESSAGE);
                         for (String binaryFile : binaryFiles) {
                             closeProcess(p, binaryFile);
@@ -496,18 +497,33 @@ public class MainWorker {
             }
         }
 
-        workingFrame.dispose();
+        workingPane.closeWorkingPane();
         scanner.close();
 
         if (logHistory) {
             // log download history
             HistoryLogger historyLogger = new HistoryLogger();
-            String[] data = {rawURL, downloadStatus, getCurrentTime()};
+            String[] data = { rawURL, downloadStatus, getVideoAudioStatus(), getCurrentTime() };
             historyLogger.logHistory(data);
-            System.out.println("Logged download history.");
+            if (debug) System.out.println("Logged download history: \n" + Arrays.toString(data));
         } else if (!downloadStatus.equals("Canceled - User Input")) {
-            System.out.println("Showing Dialog");
+            // if the download was canceled by the user, don't show the dialog
+            // if the download was canceled by the program, show the dialog
+            if (debug) System.out.println("Skipped logging download history. Showing Dialog.");
             checkURLDialog(true);
+        }
+    }
+
+    private static String getVideoAudioStatus() {
+        switch (videoAudio) {
+            case 0:
+                return "Video and Audio";
+            case 1:
+                return "Video";
+            case 2:
+                return "Audio";
+            default:
+                return "Unknown";
         }
     }
 
@@ -516,8 +532,9 @@ public class MainWorker {
                 .toString()
                 .replace("T", " ")
                 .replace("Z", "")
-                .split("\\.")[0]
-                ;
+                .split("\\.")[0];
+        // 2021-08-01T18:00:00.000Z
+        // 2021-08-01 18:00:00
     }
 
     private static void setWorkingPaneMessage(WorkingPane workingPane, String s) {
@@ -560,9 +577,9 @@ public class MainWorker {
             if (p != null && p.isAlive()) {
                 p.destroy();
             }
-            System.out.println("Closed task: " + binaryFile);
+            if (debug) System.out.println("Closed task: " + binaryFile);
         } catch (IOException e) {
-            e.printStackTrace(System.err);
+            if (debug) e.printStackTrace(System.err);
         }
     }
 
@@ -573,7 +590,7 @@ public class MainWorker {
                 icon = new ImageIcon(ImageIO.read(iconStream));
             }
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            if (debug) e.printStackTrace(System.err);
         }
         if (icon == null) {
             System.err.println("[ERROR] Could not find icon file at: " + pathFromSrc);

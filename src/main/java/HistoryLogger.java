@@ -1,6 +1,5 @@
 //TODO #1 allow user to change history file path
 //TODO #2 sort by status needs to fix the order of the status
-//TODO #3 add pages to the history list
 //TODO #4 add opening link from history list in default browser
 //TODO #5 add logHistory toggle checkBox in MainWindow
 
@@ -29,9 +28,7 @@ public class HistoryLogger {
 
     public HistoryLogger() {
         historyFilePath = getHistoryFilePath();
-        if (MainWorker.debug) {
-            System.out.println("History File Path: " + historyFilePath);
-        }
+        if (MainWorker.debug) System.out.println("History File Path: " + historyFilePath);
         this.historyList = new ArrayList<>();
         loadHistoryFromFile();
     }
@@ -39,9 +36,9 @@ public class HistoryLogger {
     public void logHistory(String[] data) {
         try (FileWriter writer = new FileWriter(historyFilePath, true)) {
             // Append data to the file
-            writer.write(data[0] + "," + data[1] + "," + data[2]  + System.lineSeparator());
+            writer.write(data[0] + "," + data[1] + "," + data[2] + "," + data[3] + System.lineSeparator());
         } catch (IOException e) {
-            e.printStackTrace(System.err);
+            if (MainWorker.debug) e.printStackTrace(System.err);
         }
 
         // Update the in-memory history list
@@ -53,47 +50,39 @@ public class HistoryLogger {
     }
 
     public void clearHistory() {
-        if (MainWorker.debug) {
-            System.out.println("Clearing history file: " + historyFilePath);
-        }
+        if (MainWorker.debug) System.out.println("Clearing history file: " + historyFilePath);
 
         // Check if the history file is in use or locked
         if (isFileInUse(Paths.get(historyFilePath))) {
             System.err.println("[ERROR] History file is in use.");
             return;
         } else {
-            if (MainWorker.debug) {
-                System.out.println("History file is not in use.");
-            }
+            if (MainWorker.debug) System.out.println("History file is not in use.");
         }
 
         // Clear the history file
         try {
             Files.write(Paths.get(historyFilePath), new byte[0]);
-            if (MainWorker.debug) {
-                System.out.println("History file cleared successfully.");
-            }
+            if (MainWorker.debug) System.out.println("History file cleared successfully.");
         } catch (IOException e) {
             System.err.println("[ERROR] Failed to clear history file:");
-            e.printStackTrace(System.err);
+            if (MainWorker.debug) e.printStackTrace(System.err);
         }
 
         // Clear the in-memory history list
         historyList.clear();
-        if (MainWorker.debug) {
-            System.out.println("Cleared in-memory history list.");
-        }
+        if (MainWorker.debug) System.out.println("Cleared in-memory history list.");
     }
 
     public void setHistoryFile(ArrayList<String[]> historyList) {
         clearHistory();
 
-        int date = 2;
-        sortHistoryList(historyList, date, false);
+        int date = 3, type = 2;
+        sortHistoryList(historyList, date, type, false);
         for (String[] data : historyList) {
             logHistory(data);
         }
-        System.out.println("Set history list file.");
+        if (MainWorker.debug) System.out.println("Set history file.");
     }
 
     private void loadHistoryFromFile() {
@@ -105,22 +94,21 @@ public class HistoryLogger {
                 // Split the line into a String array
                 String[] data = line.split(",");
                 historyList.add(data);
-                System.out.println("Added to in-memory history list: " + data[0] + " " + data[1] + " " + data[2]);
             }
         } catch (IOException e) {
-            e.printStackTrace(System.err);
+            if (MainWorker.debug) e.printStackTrace(System.err);
         } finally {
             if (reader != null) {
                 try {
                     reader.close();
                 } catch (IOException e) {
                     System.err.println("[ERROR] Failed to close history file reader.");
-                    e.printStackTrace(System.err);
+                    if (MainWorker.debug) e.printStackTrace(System.err);
                 }
             }
         }
-        int date = 2;
-        sortHistoryList(historyList, date, false);
+        int date = 3, type = 2;
+        sortHistoryList(historyList, date, type, false);
     }
 
     public static String getHistoryFilePath() {
@@ -129,15 +117,13 @@ public class HistoryLogger {
         try {
             jarPath = Paths.get(HistoryLogger.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParent().toString();
         } catch (URISyntaxException e) {
-            e.printStackTrace(System.err);
+            if (MainWorker.debug) e.printStackTrace(System.err);
             System.err.println("[ERROR] Failed to get jar path.");
             return "";
         }
 
         historyFilePath = jarPath + "\\" + historyFileName;
-        if (MainWorker.debug) {
-            System.out.println("History File Default Path: " + historyFilePath);
-        }
+        if (MainWorker.debug) System.out.println("History File Default Path: " + historyFilePath);
 
         //TODO #1 allow user to change history file path
 
@@ -147,11 +133,9 @@ public class HistoryLogger {
             try {
                 Files.createFile(filePath);
                 Files.setAttribute(filePath, "dos:hidden", true);
-                if (MainWorker.debug) {
-                    System.out.println("Created history file at: " + historyFilePath);
-                }
+                if (MainWorker.debug) System.out.println("Created history file at: " + historyFilePath);
             } catch (IOException e) {
-                e.printStackTrace(System.err);
+                if (MainWorker.debug) e.printStackTrace(System.err);
                 System.err.println("[ERROR] Failed to create history file.");
             }
         }
@@ -162,27 +146,29 @@ public class HistoryLogger {
     /**
      * Sorts the history list by the specified sort type. If there are multiple entries with the same sort type, they will be sorted by date using ascending.
      * @param historyList the history list to sort
-     * @param sortType sort by:<p> <tab> 0 = url, 1 = status, 2 = date
+     * @param primarySortType sort by:<p> <tab> 0 = url, 1 = status, 2 = type, 3 = date
+     * @param secondarySortType sort by:<p> <tab> 0 = url, 1 = status, 2 = type, 3 = date
      * @param ascending whether to sort in ascending or descending order
      */
-    public void sortHistoryList(ArrayList<String[]> historyList, int sortType, boolean ascending) {
+    public void sortHistoryList(ArrayList<String[]> historyList, int primarySortType, int secondarySortType, boolean ascending) {
         if (MainWorker.debug) {
-            System.out.println("Sorting history list by column at index: " + sortType + " in " + (ascending ? "ascending" : "descending") + " order.");
+            System.out.println("Sorting history list by column at index: " + primarySortType + " in " + (ascending ? "ascending" : "descending") + " order.");
         }
         historyList.sort((o1, o2) -> {
-            int result, same = 0, url = 0, date = 2;
-            result = o1[sortType].compareTo(o2[sortType]); //
+            int result, same = 0;
+            result = o1[primarySortType].compareTo(o2[primarySortType]);
 
             if (result == same) {
-                // sort by date or if the date is the same, then sort by url
-                result = o1[date].compareTo(o2[date]);     // sort by date
-                if (result == same) {                     // if the date is the same
-                    result = o1[url].compareTo(o2[url]); // sort by url
-                }
+                // sort by secondary sort column if the primary sort column is the same
+                result = o1[secondarySortType].compareTo(o2[secondarySortType]);
             }
             return result;
         });
 
+        if (primarySortType == 2) {
+            // sort in ascending order if the primary sort column is type
+            ascending = !ascending;
+        }
         if (!ascending) { // ascending is default
             // reverse the list
             Collections.reverse(historyList);

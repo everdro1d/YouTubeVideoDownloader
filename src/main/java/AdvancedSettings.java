@@ -74,11 +74,11 @@ public class AdvancedSettings {
                     }
                     getVideoOptions = true;
                 } catch (Exception e) {
-                    e.printStackTrace(System.err);
+                    if (MainWorker.debug) e.printStackTrace(System.err);
                 }
             }).start();
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            if (MainWorker.debug) e.printStackTrace(System.err);
         }
     }
 

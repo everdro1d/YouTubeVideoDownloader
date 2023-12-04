@@ -9,7 +9,7 @@ public class TableReaderFromConsole {
 
     public static void scannerTableMap(Scanner scanner, Process p) {
         if (!scanner.hasNextLine()) {
-            System.out.println("No output from process");
+            System.err.println("[ERROR] No output from process");
             JOptionPane.showMessageDialog(null, "No output from process.\nTableReader", "Error!", JOptionPane.ERROR_MESSAGE);
             for (String binaryFile : MainWorker.binaryFiles) {
                 MainWorker.closeProcess(p, binaryFile);
@@ -19,16 +19,14 @@ public class TableReaderFromConsole {
         while (scanner.hasNextLine()) {
             //Skip lines until the line containing "ID" is found
             String s = scanner.nextLine();
-            if (MainWorker.debug) {
-                System.out.println(s);
-            }
+            if (MainWorker.debug) System.out.println(s);
             if (s.contains("[info] Available formats for")) {
                 break;
             }
         }
 
         if (!scanner.hasNextLine()) {
-            System.out.println("No output from process");
+            System.err.println("[ERROR] No output from process");
             JOptionPane.showMessageDialog(null, "No output from process. Found ID.\nTableReader", "Error!", JOptionPane.ERROR_MESSAGE);
             for (String binaryFile : MainWorker.binaryFiles) {
                 MainWorker.closeProcess(p, binaryFile);
@@ -44,10 +42,7 @@ public class TableReaderFromConsole {
         AdvancedSettings.tableMap = parseTableToMap(table);
 
         //Print the table
-        if (MainWorker.debug) {
-            printTableMap(AdvancedSettings.tableMap);
-        }
-
+        if (MainWorker.debug) printTableMap(AdvancedSettings.tableMap);
     }
 
     public static Map<String, Map<String, String>> parseTableToMap(String[][] table) {

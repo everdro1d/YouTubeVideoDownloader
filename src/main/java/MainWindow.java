@@ -71,15 +71,15 @@ public class MainWindow extends JFrame {
             protected JPanel southPanel;
                 protected CustomSeparator separatorSP;
                 protected JPanel southPanelRow1;
-                    protected JButton buttonFileChooser;
-                    protected JButton buttonDownload;
+                    protected JButton fileChooserButton;
+                    protected static JButton downloadButton;
             protected JPanel eastPanel;
             protected JPanel westPanel;
     private final String titleText = "YouTube Video Downloader V2.0";
     private final String[] typeComboBoxOptions = {"Video + Audio", "Only Video", "Only Audio"};
     protected static final int windowWidth = 840;
     protected final int windowHeight = 245;
-    protected int windowWidthExpanded = 960;
+    protected int windowWidthExpanded = 980;
     protected int windowHeightExpanded = 360;
     protected final int fontSize = 18;
     protected static final String fontName = "Tahoma";
@@ -622,28 +622,28 @@ public class MainWindow extends JFrame {
                 southPanel.add(southPanelRow1, BorderLayout.SOUTH);
             {
                 //add a new FileChooser button in the center of the southPanel
-                buttonFileChooser = new JButton("Choose Folder");
-                buttonFileChooser.setFont(new Font(fontName, Font.PLAIN, fontSize+2));
-                buttonFileChooser.setPreferredSize(new Dimension(185, 40));
-                buttonFileChooser.setAlignmentX(Component.CENTER_ALIGNMENT);
-                buttonFileChooser.setIcon(getIcon("main/resources/folderIcon.png"));
-                southPanelRow1.add(buttonFileChooser);
+                fileChooserButton = new JButton("Choose Folder");
+                fileChooserButton.setFont(new Font(fontName, Font.PLAIN, fontSize+2));
+                fileChooserButton.setPreferredSize(new Dimension(185, 40));
+                fileChooserButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+                fileChooserButton.setIcon(getIcon("main/resources/folderIcon.png"));
+                southPanelRow1.add(fileChooserButton);
 
-                buttonFileChooser.addActionListener((e) -> MainWorker.filePath = MainWorker.openFileChooser());
+                fileChooserButton.addActionListener((e) -> MainWorker.filePath = MainWorker.openFileChooser());
 
 
                 southPanelRow1.add(Box.createRigidArea(new Dimension(20, 0)));
 
 
                 // add a new button in the center of the southPanel
-                buttonDownload = new JButton("Download");
-                buttonDownload.setFont(new Font(fontName, Font.PLAIN, fontSize+2));
-                buttonDownload.setPreferredSize(new Dimension(160, 40));
-                buttonDownload.setAlignmentX(Component.CENTER_ALIGNMENT);
-                buttonDownload.setIcon(getIcon("main/resources/downloadIcon.png"));
-                southPanelRow1.add(buttonDownload);
+                downloadButton = new JButton("Download");
+                downloadButton.setFont(new Font(fontName, Font.PLAIN, fontSize+2));
+                downloadButton.setPreferredSize(new Dimension(160, 40));
+                downloadButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+                downloadButton.setIcon(getIcon("main/resources/downloadIcon.png"));
+                southPanelRow1.add(downloadButton);
 
-                buttonDownload.addActionListener((e) -> MainWorker.downloadButtonClicked());
+                downloadButton.addActionListener((e) -> MainWorker.downloadButtonClicked());
 
 
                 southPanelRow1.add(Box.createRigidArea(new Dimension(20, 0)));

@@ -20,7 +20,8 @@ class SyncPipe implements Runnable
         }
         catch (Exception e)
         {
-            e.printStackTrace(System.out);
+            if (MainWorker.debug) e.printStackTrace(System.out);
+            System.err.println("Error in SyncPipe: " + e.getMessage());
         }
     }
     private final OutputStream oStream_;
