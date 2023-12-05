@@ -13,7 +13,12 @@ public class AdvancedSettings {
     protected static int videoAudio = 0; // 0 = video and audio, 1 = audio only, 2 = video only
     protected static boolean advancedSettingsEnabled = false; // if the advanced options are enabled
     protected static volatile boolean getVideoOptions = false; // if the video options are enabled
+
     protected static boolean recode = false; // if recode is enabled
+    protected static boolean writeThumbnail = false; // if write thumbnail is enabled
+    protected static boolean embedThumbnail = false; // if embed thumbnail is enabled
+    protected static boolean addMetadata = false; // if add metadata is enabled
+
     protected static int videoExt = 0; // the video format to download
     protected static int videoResolution = 0; // the video resolution to download
     protected static int videoCodec = 0; // the video codec to download
@@ -42,7 +47,10 @@ public class AdvancedSettings {
     protected static String[] arrayVARecodeExt = new String[] {"avi", "flv", "mkv", "mov", "mp4", "webm"};
     protected static String[] arrayVORecodeExt = new String[] {"avi", "flv", "mkv", "gif", "mov", "mp4", "webm"};
     protected static String[] arrayAORecodeExt = new String[] {"aac", "aiff", "flac", "m4a", "mka", "mp3", "ogg", "opus", "wav"};
-    protected static String[] arrayRecodeExt = new String[] {""};
+    protected static String[] arrayRecodeExt = new String[] {""}; // gets set depending on the videoAudio variable
+
+    protected static String[] arrayEmbedThumbnailSupported = new String[] // supported formats for embed thumbnail
+            {"mp3", "mkv", "mka", "ogg", "opus", "flac", "m4a", "mp4", "m4v", "mov"};
 
 
     public static void readVideoOptionsFromYT() {
@@ -53,30 +61,28 @@ public class AdvancedSettings {
 
     private static void getVideoOptions() {
         String cmd = downloadBinary + " --list-formats " + "\"" + rawURL + "\"";
-        try {
-            new Thread(()->{
-                ProcessBuilder pb = new ProcessBuilder(cmd.split(" "));
-                try {
-                    Process p = pb.start();
-                    new Thread(new SyncPipe(p.getErrorStream(), System.err)).start();
-                    Scanner scanner = new Scanner(p.getInputStream());
-                    scannerTableMap(scanner, p);
-                    int i = p.waitFor();
-                    if (i != 0) {
-                        SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(null,
-                                "An error occurred when retrieving settings." +
-                                        "\nPlease check that the URL is correct and try again.",
-                                "Error!", JOptionPane.ERROR_MESSAGE));
+        new Thread(()-> videoOptionsProcess(cmd.split(" "))).start();
+    }
 
-                        advancedSettingsEnabled = false;
-                        MainWindow.checkBoxAdvancedSettings.setSelected(false);
-                        MainWorker.window.advancedSettingsEvent(true);
-                    }
-                    getVideoOptions = true;
-                } catch (Exception e) {
-                    if (MainWorker.debug) e.printStackTrace(System.err);
-                }
-            }).start();
+    private static void videoOptionsProcess(String[] cmd) {
+        ProcessBuilder pb = new ProcessBuilder(cmd);
+        try {
+            Process p = pb.start();
+            new Thread(new SyncPipe(p.getErrorStream(), System.err)).start();
+            Scanner scanner = new Scanner(p.getInputStream());
+            scannerTableMap(scanner, p);
+            int i = p.waitFor();
+            if (i != 0) {
+                SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(null,
+                        "An error occurred when retrieving settings." +
+                                "\nPlease check that the URL is correct and try again.",
+                        "Error!", JOptionPane.ERROR_MESSAGE));
+
+                advancedSettingsEnabled = false;
+                MainWindow.checkBoxAdvancedSettings.setSelected(false);
+                MainWorker.window.advancedSettingsEvent(true);
+            }
+            getVideoOptions = true;
         } catch (Exception e) {
             if (MainWorker.debug) e.printStackTrace(System.err);
         }
@@ -190,6 +196,10 @@ public class AdvancedSettings {
         }
 
         if (!advancedSettingsEnabled) {
+            arrayListAdvancedSettings.add("--embed-thumbnail");
+            arrayListAdvancedSettings.add("--convert-thumbnails \"png\"");
+            arrayListAdvancedSettings.add("--add-metadata");
+
             switch (videoAudio) {
                 case 0:
                     arrayListAdvancedSettings.add("-f");
@@ -202,9 +212,6 @@ public class AdvancedSettings {
                             "\"(bv[ext=mp4][height<=1080]" + (compatibilityMode ? "[vcodec~='^((he|a)vc|h26[45])'])" : "[vcodec!*=vp09])") + " / bv\"");
                     break;
                 case 2:
-                    arrayListAdvancedSettings.add("--embed-thumbnail");
-                    arrayListAdvancedSettings.add("--convert-thumbnails \"png\"");
-
                     arrayListAdvancedSettings.add("-f");
                     arrayListAdvancedSettings.add(
                             "\"(ba[ext=m4a]) / ba\"" );
@@ -212,6 +219,19 @@ public class AdvancedSettings {
             }
 
         } else {
+            if (writeThumbnail) {
+                if (embedThumbnail) {
+                    arrayListAdvancedSettings.add("--embed-thumbnail");
+                    arrayListAdvancedSettings.add("--convert-thumbnails \"png\"");
+                } else {
+                    arrayListAdvancedSettings.add("--write-thumbnail");
+                }
+            }
+
+            if (addMetadata) {
+                arrayListAdvancedSettings.add("--add-metadata");
+            }
+
             int keyVideo = getKey(tableMap,
                     "EXT", comboBoxVideoExt.getItemAt(videoExt),
                     "RESOLUTION", comboBoxVideoResolution.getItemAt(videoResolution),

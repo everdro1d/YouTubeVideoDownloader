@@ -27,7 +27,6 @@ import static main.java.WorkingPane.workingFrame;
 public class MainWorker {
     //public static final String version = "1.2.0"; // the version of the program TODO create update checking
     protected static MainWindow window;
-    protected static Thread downloadThread;
     private static Process globalDefaultProcess;
     public static String rawURL = ""; // raw URL String from the text field
     public static String videoID; // the video ID from the URL
@@ -218,21 +217,19 @@ public class MainWorker {
     }
 
     public static void checkUpdate() {
-        try {
-            new Thread(()->{
-                ProcessBuilder pb = new ProcessBuilder(Arrays.asList(downloadBinary, "-U"));
-                Process p;
-                try {
-                    p = pb.start();
-                    new Thread(new SyncPipe(p.getErrorStream(), System.err)).start();
-                    new Thread(new SyncPipe(p.getInputStream(), System.out)).start();
-                    p.waitFor();
-                    if (debug) System.out.println(p.exitValue());
+        new Thread(MainWorker::updateProcess).start();
+    }
 
-                } catch (Exception e) {
-                    if (debug) e.printStackTrace(System.err);
-                }
-            }).start();
+    private static void updateProcess() {
+        ProcessBuilder pb = new ProcessBuilder(Arrays.asList(downloadBinary, "-U"));
+        Process p;
+        try {
+            p = pb.start();
+            new Thread(new SyncPipe(p.getErrorStream(), System.err)).start();
+            new Thread(new SyncPipe(p.getInputStream(), System.out)).start();
+            p.waitFor();
+            if (debug) System.out.println(p.exitValue());
+
         } catch (Exception e) {
             if (debug) e.printStackTrace(System.err);
         }
@@ -315,7 +312,7 @@ public class MainWorker {
 
     private static boolean checkURLDialog(boolean show) {
         if ((rawURL == null) || !validURL(rawURL) || show) {
-                JOptionPane.showMessageDialog(null, "Please enter a valid YouTube URL.", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(null, "Please check the link or enter a valid URL.", "Error! Media not found.", JOptionPane.ERROR_MESSAGE);
             return false;
         }
         return true;
@@ -346,28 +343,24 @@ public class MainWorker {
 
     public static void download(String cmd) {
         // start download
+        new Thread(() -> downloadProcess(cmd.split(" "))).start();
+    }
+    private static void downloadProcess(String[] cmd) {
+        ProcessBuilder pb = new ProcessBuilder(cmd);
+        Process p;
         try {
-            downloadThread = new Thread(()->{
-                ProcessBuilder pb = new ProcessBuilder(cmd.split(" "));
-                Process p;
-                try {
-                    try {
-                        p = pb.start();
-                        globalDefaultProcess = p;
-                        new Thread(new SyncPipe(p.getErrorStream(), System.err)).start();
-                        try (Scanner scanner = new Scanner(p.getInputStream())) {
-                            downloadProgressPanes(scanner, p);
-                        }
-                        p.waitFor();
-                        if (debug) System.out.println(p.exitValue());
-                    } catch (Exception e) {
-                        if (debug) e.printStackTrace(System.err);
-                    }
-                } catch (Exception e) {
-                    if (debug) e.printStackTrace(System.err);
+            try {
+                p = pb.start();
+                globalDefaultProcess = p;
+                new Thread(new SyncPipe(p.getErrorStream(), System.err)).start();
+                try (Scanner scanner = new Scanner(p.getInputStream())) {
+                    downloadProgressPanes(scanner, p);
                 }
-            });
-            downloadThread.start();
+                p.waitFor();
+                if (debug) System.out.println(p.exitValue());
+            } catch (Exception e) {
+                if (debug) e.printStackTrace(System.err);
+            }
         } catch (Exception e) {
             if (debug) e.printStackTrace(System.err);
         }
@@ -385,6 +378,11 @@ public class MainWorker {
         int delCount = 0;
         int delMax = (videoAudio == 0) ? 2 : 1;
         downloadMax = (videoAudio == 0) ? 2 : 1;
+        if (recode) { // account for recoding operations
+            downloadMax += 1;
+            delMax += 1;
+        }
+
 
         if (!scanner.hasNextLine()) {
             workingPane.closeWorkingPane();
@@ -404,7 +402,6 @@ public class MainWorker {
                     break;
                 }
             }
-
 
             //OptionPanes to show the progress of the download
             while (scanner.hasNextLine()) {
@@ -428,11 +425,11 @@ public class MainWorker {
                     if (s.contains("[download] 100% of") || !s.contains("ETA")) {
                         downloadComplete = true;
                         System.out.println("Download Complete");
-                        downloadCount++;
+                        downloadCount = Math.min(downloadCount + 1, downloadMax);
                     }
                     if (debug) System.out.println("Downloads: " + downloadCount + " / " + downloadMax +
                                 "\n Deletes: " + delCount + " / " + delMax);
-                    if (downloadComplete && (downloadCount >= downloadMax)) {
+                    if (downloadComplete && (downloadCount == downloadMax)) {
                         if (videoAudio == 0) {
                             workingPane.setTitle("Merging...");
                             workingPane.setMessage(" Merging audio and video...");
@@ -444,7 +441,7 @@ public class MainWorker {
                                                 arrayRecodeExt[recodeExt] :
                                                 "[FORMAT ERROR]") +
                                                 "..." +
-                                                "\nNote: recoding can take a while.");
+                                                "\nNote: Recoding can take a while.");
                             }
                         } else {
                             if (recode) {
@@ -466,7 +463,9 @@ public class MainWorker {
 
                             }
                         }
-                        if ((delMax == 1 && !recode) || (delCount == delMax)) {
+
+                        // if the download is complete, but the process is still running, wait for it to finish
+                        if ((delMax == 1 && !recode) || ((delCount == delMax) && delMax != 1)) {
                             workingPane.setVisible(false);
                             workingPane.closeWorkingPane();
                             JOptionPane.showMessageDialog(null, "Download Completed", "Finished!", JOptionPane.INFORMATION_MESSAGE);
@@ -501,16 +500,23 @@ public class MainWorker {
         scanner.close();
 
         if (logHistory) {
+            // check if the download was canceled by the user
+            if (!downloadStatus.equals("Canceled - User Input")) {
+                // if the download was canceled by the program (error from process, likely by an invalid url),
+                // show the dialog and skip logging download history
+                if (debug) System.out.println("Error from process. Skipped logging download history. Showing Dialog.");
+                checkURLDialog(true);
+                return;
+            }
+
             // log download history
             HistoryLogger historyLogger = new HistoryLogger();
             String[] data = { rawURL, downloadStatus, getVideoAudioStatus(), getCurrentTime() };
             historyLogger.logHistory(data);
             if (debug) System.out.println("Logged download history: \n" + Arrays.toString(data));
-        } else if (!downloadStatus.equals("Canceled - User Input")) {
-            // if the download was canceled by the user, don't show the dialog
-            // if the download was canceled by the program, show the dialog
-            if (debug) System.out.println("Skipped logging download history. Showing Dialog.");
-            checkURLDialog(true);
+
+        } else if (debug) {
+            System.out.println("Skipped logging download history.");
         }
     }
 
@@ -519,11 +525,11 @@ public class MainWorker {
             case 0:
                 return "Video and Audio";
             case 1:
-                return "Video";
+                return "Video Only";
             case 2:
-                return "Audio";
+                return "Audio Only";
             default:
-                return "Unknown";
+                return "Unknown Type";
         }
     }
 
@@ -538,11 +544,13 @@ public class MainWorker {
     }
 
     private static void setWorkingPaneMessage(WorkingPane workingPane, String s) {
+        int dC = Math.max(1, Math.min(downloadCount, downloadMax));
+
         String[] split = s.split(" ");
         String[] split2 = Arrays.copyOfRange(split, 1, split.length-2);
         String message = String.join(" ", split2);
         workingPane.setMessage(" " + message);
-        workingPane.setCTitle(" Working...   (" + (downloadCount + 1) + "/" + downloadMax + ")");
+        workingPane.setCTitle(" Working...   (" + (dC) + "/" + downloadMax + ")");
 
         if (message.contains("%")) {
             String progress = message.split("%")[0].replace(".", "").replace(" ", "");
@@ -597,5 +605,4 @@ public class MainWorker {
         }
         return icon;
     }
-
 }

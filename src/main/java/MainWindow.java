@@ -34,6 +34,7 @@ public class MainWindow extends JFrame {
                     protected JLabel validURLLabel;
                     protected static JCheckBox checkBoxAdvancedSettings;
                     protected static JCheckBox checkBoxCompatibility;
+                    protected static JCheckBox checkBoxLogHistory;
 
                 protected JPanel centerVerticalPanelRow2;
                     protected JPanel advancedSettingsPanelRow1;
@@ -68,6 +69,10 @@ public class MainWindow extends JFrame {
                         protected static JCheckBox checkBoxRecode;
                         protected JLabel labelRecodeBox;
                         protected static JComboBox<String> comboBoxRecodeExt;
+                        protected static JCheckBox checkBoxWriteThumbnail;
+                        protected static JCheckBox checkBoxEmbedThumbnail;
+                        protected static JCheckBox checkBoxMetadata;
+
             protected JPanel southPanel;
                 protected CustomSeparator separatorSP;
                 protected JPanel southPanelRow1;
@@ -121,14 +126,18 @@ public class MainWindow extends JFrame {
                 northPanelBorder1.add(northPanelWestBorder, BorderLayout.WEST);
                 {
                     //adds a new label in the west of the northPanelBorder1
-                    //this is just to make the title look centered
-                    northPanelWestBorder.add(Box.createRigidArea(new Dimension(20, 0))); //TotalWidth = 70
+                    //this is just to make the title look centered           TotalWidthOfPanel = 70
+                    northPanelWestBorder.add(Box.createRigidArea(new Dimension(20, 0)));
+
+                    //create Y spacing
+                    northPanelWestBorder.add(Box.createRigidArea(new Dimension(0, 10)));
 
                     // add a history button in the west of the northPanelWestBorder
                     historyButton = new JButton();
                     historyButton.setBorderPainted(false);
                     historyButton.setContentAreaFilled(false);
                     historyButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+                    historyButton.setAlignmentY(Component.BOTTOM_ALIGNMENT);
                     historyButton.setEnabled(logHistory);
                     historyButton.setIcon(
                             getIcon(darkMode ? "main/resources/historyIconDark.png" : "main/resources/historyIcon.png")
@@ -235,13 +244,17 @@ public class MainWindow extends JFrame {
 
                 // add a new JPanel in the east of the northPanelBorder1
                 northPanelEastBorder = new JPanel();
-                northPanelEastBorder.setLayout(new BoxLayout(northPanelEastBorder, BoxLayout.X_AXIS));
+                northPanelEastBorder.setLayout(new BoxLayout(northPanelEastBorder, BoxLayout.Y_AXIS));
                 northPanelBorder1.add(northPanelEastBorder, BorderLayout.EAST);
                 {
+                    //create Y spacing
+                    northPanelEastBorder.add(Box.createRigidArea(new Dimension(0, 10)));
+
                     lightDarkModeButton = new JToggleButton();
                     lightDarkModeButton.setBorderPainted(false);
                     lightDarkModeButton.setContentAreaFilled(false);
                     lightDarkModeButton.setAlignmentX(Component.RIGHT_ALIGNMENT);
+                    lightDarkModeButton.setAlignmentY(Component.CENTER_ALIGNMENT);
 
                     Icon sunIcon = getIcon("main/resources/sunIcon.png");
                     Icon moonIcon = getIcon("main/resources/moonIcon.png");
@@ -314,7 +327,6 @@ public class MainWindow extends JFrame {
                     centerVerticalPanelRow1.add(Box.createRigidArea(new Dimension(10, 0)));
 
                     //add a compatability checkbox to the right of the advanced settings checkbox
-
                     checkBoxCompatibility = new JCheckBox("Compatibility Mode");
                     checkBoxCompatibility.setFont(new Font(fontName, Font.PLAIN, fontSize));
                     checkBoxCompatibility.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -340,7 +352,22 @@ public class MainWindow extends JFrame {
                             }
                         });
 
-                    //TODO #5 add a logHistory checkbox to the right of the compatibility checkbox
+                    centerVerticalPanelRow1.add(Box.createRigidArea(new Dimension(10, 0)));
+
+                    checkBoxLogHistory = new JCheckBox("Log History");
+                    checkBoxLogHistory.setFont(new Font(fontName, Font.PLAIN, fontSize));
+                    checkBoxLogHistory.setAlignmentX(Component.CENTER_ALIGNMENT);
+                    checkBoxLogHistory.setEnabled(true);
+                        centerVerticalPanelRow1.add(checkBoxLogHistory);
+
+                    if (prefs.getBoolean("logHistory", true)) {
+                        checkBoxLogHistory.setSelected(logHistory);
+                        historyButton.setEnabled(logHistory);
+                    }
+                        checkBoxLogHistory.addActionListener((e) -> {
+                            logHistory = checkBoxLogHistory.isSelected();
+                            historyButton.setEnabled(logHistory);
+                        });
                 }
 
                 centerVerticalPanel.add(Box.createRigidArea(new Dimension(0, 20)));
@@ -375,10 +402,13 @@ public class MainWindow extends JFrame {
                         advancedSettingsPanelRow1.add(comboBoxVideoExt);
                         comboBoxVideoExt.addActionListener((e) -> {
                             videoExt = comboBoxVideoExt.getSelectedIndex();
-                            if (videoAudio == 0) {
+
+                            if (videoAudio == 0) { // sets the audio extension to the same as the video extension
                                 comboBoxAudioExt.setSelectedIndex(videoExt);
                             }
+
                             doCascadeFilter(comboBoxVideoExt);
+                            checkEmbedThumbnailSupported();
                         });
 
 
@@ -478,6 +508,7 @@ public class MainWindow extends JFrame {
                         comboBoxAudioExt.addActionListener((e) -> {
                             audioExt = comboBoxAudioExt.getSelectedIndex();
                             doCascadeFilter(comboBoxAudioExt);
+                            checkEmbedThumbnailSupported();
                         });
 
 
@@ -571,13 +602,14 @@ public class MainWindow extends JFrame {
                             recode = checkBoxRecode.isSelected();
                             labelRecodeBox.setEnabled(recode);
                             comboBoxRecodeExt.setEnabled(recode);
+                            checkEmbedThumbnailSupported();
                         });
 
 
-                        advancedSettingsPanelRow3.add(Box.createRigidArea(new Dimension(30, 0)));
+                        advancedSettingsPanelRow3.add(Box.createRigidArea(new Dimension(5, 0)));
 
 
-                        labelRecodeBox = new JLabel("Recode to: ");
+                        labelRecodeBox = new JLabel("to: ");
                         labelRecodeBox.setFont(new Font(fontName, Font.PLAIN, fontSize));
                         labelRecodeBox.setAlignmentX(Component.LEFT_ALIGNMENT);
                         labelRecodeBox.setEnabled(false);
@@ -593,7 +625,49 @@ public class MainWindow extends JFrame {
                         comboBoxRecodeExt.setEnabled(false);
                         advancedSettingsPanelRow3.add(comboBoxRecodeExt);
 
-                        comboBoxRecodeExt.addActionListener((e) -> recodeExt = comboBoxRecodeExt.getSelectedIndex());
+                        comboBoxRecodeExt.addActionListener((e) -> {
+                            recodeExt = comboBoxRecodeExt.getSelectedIndex();
+                            checkEmbedThumbnailSupported();
+                        });
+
+
+                        advancedSettingsPanelRow3.add(Box.createRigidArea(new Dimension(25, 0)));
+
+
+                        //add a new checkbox for thumbnail writing TODO maybe allow converting with combobox
+                        checkBoxWriteThumbnail = new JCheckBox("Write Thumbnail");
+                        checkBoxWriteThumbnail.setFont(new Font(fontName, Font.PLAIN, fontSize));
+                        checkBoxWriteThumbnail.setAlignmentX(Component.LEFT_ALIGNMENT);
+                        advancedSettingsPanelRow3.add(checkBoxWriteThumbnail);
+
+                        checkBoxWriteThumbnail.addActionListener((e) -> {
+                            writeThumbnail = checkBoxWriteThumbnail.isSelected();
+                            checkEmbedThumbnailSupported();
+                        });
+
+
+                        advancedSettingsPanelRow3.add(Box.createRigidArea(new Dimension(10, 0)));
+
+
+                        //add a new checkbox for thumbnail embedding (needs writeThumbnail to be enabled)
+                        checkBoxEmbedThumbnail = new JCheckBox("Embed Thumbnail");
+                        checkBoxEmbedThumbnail.setFont(new Font(fontName, Font.PLAIN, fontSize));
+                        checkBoxEmbedThumbnail.setAlignmentX(Component.LEFT_ALIGNMENT);
+                        checkBoxEmbedThumbnail.setEnabled(false);
+                        advancedSettingsPanelRow3.add(checkBoxEmbedThumbnail);
+
+                        checkBoxEmbedThumbnail.addActionListener((e) -> embedThumbnail = checkBoxEmbedThumbnail.isSelected());
+
+
+                        advancedSettingsPanelRow3.add(Box.createRigidArea(new Dimension(10, 0)));
+
+
+                        checkBoxMetadata = new JCheckBox("Embed Metadata");
+                        checkBoxMetadata.setFont(new Font(fontName, Font.PLAIN, fontSize));
+                        checkBoxMetadata.setAlignmentX(Component.LEFT_ALIGNMENT);
+                        advancedSettingsPanelRow3.add(checkBoxMetadata);
+
+                        checkBoxMetadata.addActionListener((e) -> addMetadata = checkBoxMetadata.isSelected());
                     }
 
                     centerVerticalPanelRow2.add(Box.createRigidArea(new Dimension(0, 10)));
@@ -1047,5 +1121,34 @@ public class MainWindow extends JFrame {
             }
             return match;
         });
+    }
+
+    protected static void checkEmbedThumbnailSupported() {
+        String ext = "";
+        if (recode) {
+            ext = arrayRecodeExt[recodeExt];
+        } else {
+            switch(videoAudio) {
+                case 0:
+                case 1:
+                    ext = arrayVideoExtensions[videoExt];
+                    break;
+                case 2:
+                    ext = arrayAudioExtensions[audioExt];
+                    break;
+            }
+        }
+
+        if ( ext.isEmpty() ) {
+            System.err.println("[ERROR] Failed to get extension while checking for thumbnail embedding support.");
+            return;
+        }
+
+        if (writeThumbnail && containsAny(arrayEmbedThumbnailSupported, ext) ) {
+            checkBoxEmbedThumbnail.setEnabled(true);
+        } else {
+            checkBoxEmbedThumbnail.setSelected(false);
+            checkBoxEmbedThumbnail.setEnabled(false);
+        }
     }
 }

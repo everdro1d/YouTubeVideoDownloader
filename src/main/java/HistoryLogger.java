@@ -1,8 +1,3 @@
-//TODO #1 allow user to change history file path
-//TODO #2 sort by status needs to fix the order of the status
-//TODO #4 add opening link from history list in default browser
-//TODO #5 add logHistory toggle checkBox in MainWindow
-
 package main.java;
 
 import java.io.BufferedReader;
@@ -18,7 +13,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collections;
-
 
 public class HistoryLogger {
     public static final String historyFileName = "history.txt";
@@ -43,6 +37,7 @@ public class HistoryLogger {
 
         // Update the in-memory history list
         historyList.add(data);
+        HistoryWindow.historyList = getHistory();
     }
 
     public ArrayList<String[]> getHistory() {
@@ -71,10 +66,13 @@ public class HistoryLogger {
 
         // Clear the in-memory history list
         historyList.clear();
-        if (MainWorker.debug) System.out.println("Cleared in-memory history list.");
+        HistoryWindow.historyList.clear();
+        if (MainWorker.debug) System.out.println("Cleared in-memory history lists.");
     }
 
     public void setHistoryFile(ArrayList<String[]> historyList) {
+        if (MainWorker.debug) System.out.println("Setting history file: " + historyFilePath);
+
         clearHistory();
 
         int date = 3, type = 2;
@@ -124,8 +122,6 @@ public class HistoryLogger {
 
         historyFilePath = jarPath + "\\" + historyFileName;
         if (MainWorker.debug) System.out.println("History File Default Path: " + historyFilePath);
-
-        //TODO #1 allow user to change history file path
 
         Path filePath = Paths.get(historyFilePath);
         // check if history file exists

@@ -1,3 +1,7 @@
+//TODO #4 add opening link from history list in default browser
+//TODO #6 add sounds for modal dialogs *on click off dialog
+//TODO #7 add right click menu to history list & text area
+
 package main.java;
 
 import javax.swing.*;
@@ -17,7 +21,7 @@ public class HistoryWindow extends JDialog {
                 protected DefaultTableModel tableModel;
                 protected DefaultTableCellRenderer cellRenderer;
                 protected JTable historyTable;
-                public ArrayList<String[]> historyList;
+                public static ArrayList<String[]> historyList;
                 protected String[] columnNames = {"URL", "Status", "Type", "Date"};
                 protected int sortModeCol = 3;
                 protected int selectedRow;
@@ -54,10 +58,7 @@ public class HistoryWindow extends JDialog {
 
 
         historyList = new HistoryLogger().getHistory();
-        if (MainWorker.debug) {
-            System.out.println("History List:");
-            System.out.println(historyList);
-        }
+        if (MainWorker.debug) printHistoryList();
 
         this.setSize(940, 500);
         this.setResizable(false);
@@ -180,6 +181,7 @@ public class HistoryWindow extends JDialog {
                     clearButton.setAlignmentX(Component.CENTER_ALIGNMENT);
                     buttonPanel.add(clearButton);
                     clearButton.addActionListener(e -> {
+                        if (MainWorker.debug) System.out.println("Clear button pressed.");
                         HistoryLogger historyLogger = new HistoryLogger();
                         historyLogger.clearHistory();
                         setHistoryTable();
@@ -193,36 +195,9 @@ public class HistoryWindow extends JDialog {
                     removeButton.setAlignmentX(Component.CENTER_ALIGNMENT);
                     buttonPanel.add(removeButton);
                     removeButton.addActionListener(e -> {
+                        if (MainWorker.debug) System.out.println("Remove button pressed.");
                         selectedRow = historyTable.getSelectedRow();
-                        if (selectedRow == -1) {
-                            // show an error dialog if no row is selected
-                            JOptionPane.showMessageDialog(this,
-                                    "No row selected. Please select a row and try again.",
-                                    "Error", JOptionPane.ERROR_MESSAGE);
-                        } else {
-                            HistoryLogger historyLogger = new HistoryLogger();
-
-                            // calculate the actual index of the selected row in the full history list
-                            int pageNum = Integer.parseInt(labelPageNumber.getText());
-                            int maxRows = 25; // Maximum number of rows per page
-                            int actualIndex = selectedRow + (pageNum - 1) * maxRows;
-
-                            // remove the selected row from the full history list
-                            if (actualIndex < historyList.size()) {
-                                historyList.remove(actualIndex);
-                                historyLogger.setHistoryFile(historyList);
-                            }
-
-                            // remove the selected row from the table
-                            if (selectedRow != -1) {
-                                tableModel.removeRow(selectedRow);
-                            }
-
-                            // update the table view
-                            setTablePage(pageNum);
-
-                            scrollPane.getVerticalScrollBar().setEnabled(historyTable.getRowCount() > 13);
-                        }
+                        removeHistoryRow(selectedRow);
                     });
 
                     // create Y spacing
@@ -315,6 +290,49 @@ public class HistoryWindow extends JDialog {
         }
     }
 
+    private void removeHistoryRow(int selectedRow) {
+        if (selectedRow == -1) {
+            // show an error dialog if no row is selected
+            JOptionPane.showMessageDialog(this,
+                    "No row selected. Please select a row and try again.",
+                    "Error", JOptionPane.ERROR_MESSAGE);
+
+        } else {
+            HistoryLogger historyLogger = new HistoryLogger();
+
+            // calculate the actual index of the selected row in the full history list
+            int pageNum = Integer.parseInt(labelPageNumber.getText());
+            int maxRows = 25; // Maximum number of rows per page
+            int actualIndex = selectedRow + (pageNum - 1) * maxRows;
+
+            // remove the selected row from the full history list
+            if (actualIndex < historyList.size()) {
+                historyList.remove(actualIndex);
+
+                // copy historyList to tempList
+                ArrayList<String[]> tempList = new ArrayList<>(historyList);
+                historyLogger.setHistoryFile(tempList);
+            }
+
+            // update the table view
+            setTablePage(pageNum);
+
+            scrollPane.getVerticalScrollBar().setEnabled(historyTable.getRowCount() > 13);
+        }
+    }
+
+    private void printHistoryList() {
+        System.out.println("History List:");
+        for (String[] data : historyList) {
+            System.out.println(
+                    columnNames[0] + ": " + data[0] +
+                            " | " + columnNames[1] + ": " + data[1] +
+                            " | " + columnNames[2] + ": " + data[2] +
+                            " | " + columnNames[2] + ": " + data[3]
+            );
+        }
+    }
+
     private void sortHistoryList(int col, boolean[] ascending) {
         HistoryLogger historyLogger = new HistoryLogger();
 
@@ -378,27 +396,17 @@ public class HistoryWindow extends JDialog {
             tableModel.addRow(historyList.get(i));
         }
 
-        // repaint the table headers
-        historyTable.getTableHeader().repaint();
+        // repaint the table
+        historyTable.repaint();
 
         // enable/disable the scroll bar
         scrollPane.getVerticalScrollBar().setEnabled(historyTable.getRowCount() > 13);
         scrollPane.getVerticalScrollBar().setValue(0);
     }
 
-//    private ArrayList<String[]> getPageAsList(TableModel tableModel) {
-//        ArrayList<String[]> tableList = new ArrayList<>();
-//        for (int i = 0; i < tableModel.getRowCount(); i++) {
-//            String[] data = new String[3];
-//            for (int j = 0; j < tableModel.getColumnCount(); j++) {
-//                data[j] = (String) tableModel.getValueAt(i, j);
-//            }
-//            tableList.add(data);
-//        }
-//        return tableList;
-//    }
-
     public void setHistoryTable() {
+        if (MainWorker.debug) System.out.println("Setting History Table.");
+
         if (historyList.isEmpty()) {
             tableModel.setRowCount(0);
             if (MainWorker.debug) System.out.println("List is empty. No data to display.");
@@ -406,18 +414,9 @@ public class HistoryWindow extends JDialog {
             // sort the history list by date
             int date = 3;
             sortHistoryList(date, new boolean[]{false});
-
-            if (MainWorker.debug) System.out.println("History List:");
         }
         for (String[] data : historyList) {
-            if (MainWorker.debug) {
-                System.out.println(
-                        columnNames[0] + ": " + data[0] +
-                                " | " + columnNames[1] + ": " + data[1] +
-                                " | " + columnNames[2] + ": " + data[2] +
-                                " | " + columnNames[2] + ": " + data[3]
-                );
-            }
+            if (MainWorker.debug) printHistoryList();
 
             if (data != null) {
                 tableModel.addRow(data);
