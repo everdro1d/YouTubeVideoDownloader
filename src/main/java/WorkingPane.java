@@ -70,7 +70,7 @@ public class WorkingPane extends JFrame {
                 cancelButton.setFont(new Font(MainWindow.fontName, Font.PLAIN, 14));
                 panelRow2.add(cancelButton);
 
-                cancelButton.addActionListener(e -> {
+                cancelButton.addActionListener(e -> { // TODO add confirm dialog for cancel when recoding is in progress
                     for (String binaryFile : binaryFiles) {
                         closeProcess(null, binaryFile);
                     }
@@ -84,7 +84,8 @@ public class WorkingPane extends JFrame {
                         System.out.println("Download was cancelled.");
                         System.out.println("Download started: " + downloadStarted);
                     }
-                    if (downloadStarted) {
+
+                    if (downloadStarted && !(downloadCount == downloadMax)) {
                         int delFiles = JOptionPane.showConfirmDialog(null, "Save download progress to resume later?", "Cancelled", JOptionPane.YES_NO_OPTION);
                         if (delFiles == JOptionPane.NO_OPTION) {
                             // an array of all files with .part extension
@@ -133,6 +134,7 @@ public class WorkingPane extends JFrame {
 
     public void setProgress(int i) {
         if (i < 0 || i > 100) {
+            if (progressBar.isIndeterminate()) return;
             progressBar.setIndeterminate(true);
             progressBar.setStringPainted(false);
             return;

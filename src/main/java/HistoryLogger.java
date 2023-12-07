@@ -18,6 +18,12 @@ public class HistoryLogger {
     public static final String historyFileName = "history.txt";
     public static String historyFilePath;
     private final ArrayList<String[]> historyList;
+    public static final String[] columnNames = {"Title", "URL", "Status", "Type", "Date"};
+    public static final int colTitle = 0;
+    public static final int colUrl = 1;
+    public static final int colStatus = 2;
+    public static final int colType = 3;
+    public static final int colDate = 4;
 
 
     public HistoryLogger() {
@@ -30,7 +36,13 @@ public class HistoryLogger {
     public void logHistory(String[] data) {
         try (FileWriter writer = new FileWriter(historyFilePath, true)) {
             // Append data to the file
-            writer.write(data[0] + "," + data[1] + "," + data[2] + "," + data[3] + System.lineSeparator());
+            writer.write(
+                    data[colTitle] + ","
+                    + data[colUrl] + ","
+                    + data[colStatus] + ","
+                    + data[colType] + ","
+                    + data[colDate] +
+                    System.lineSeparator());
         } catch (IOException e) {
             if (MainWorker.debug) e.printStackTrace(System.err);
         }
@@ -75,8 +87,7 @@ public class HistoryLogger {
 
         clearHistory();
 
-        int date = 3, type = 2;
-        sortHistoryList(historyList, date, type, false);
+        sortHistoryList(historyList, colDate, colType, false);
         for (String[] data : historyList) {
             logHistory(data);
         }
@@ -105,8 +116,7 @@ public class HistoryLogger {
                 }
             }
         }
-        int date = 3, type = 2;
-        sortHistoryList(historyList, date, type, false);
+        sortHistoryList(historyList, colDate, colType, false);
     }
 
     public static String getHistoryFilePath() {
@@ -142,13 +152,14 @@ public class HistoryLogger {
     /**
      * Sorts the history list by the specified sort type. If there are multiple entries with the same sort type, they will be sorted by date using ascending.
      * @param historyList the history list to sort
-     * @param primarySortType sort by:<p> <tab> 0 = url, 1 = status, 2 = type, 3 = date
-     * @param secondarySortType sort by:<p> <tab> 0 = url, 1 = status, 2 = type, 3 = date
+     * @param primarySortType sort by:<p> <tab> 0 = title, 1 = url, 2 = status, 3 = type, 4 = date
+     * @param secondarySortType sort by:<p> <tab> 0 = title, 1 = url, 2 = status, 3 = type, 4 = date
      * @param ascending whether to sort in ascending or descending order
      */
     public void sortHistoryList(ArrayList<String[]> historyList, int primarySortType, int secondarySortType, boolean ascending) {
         if (MainWorker.debug) {
-            System.out.println("Sorting history list by column at index: " + primarySortType + " in " + (ascending ? "ascending" : "descending") + " order.");
+            System.out.println("Sorting history list by column at index: " + primarySortType + " in "
+                    + (ascending ? "ascending" : "descending") + " order.");
         }
         historyList.sort((o1, o2) -> {
             int result, same = 0;

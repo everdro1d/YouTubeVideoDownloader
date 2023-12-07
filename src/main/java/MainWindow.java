@@ -3,7 +3,11 @@ package main.java;
 import com.formdev.flatlaf.FlatClientProperties;
 
 import javax.swing.*;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.event.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -12,8 +16,8 @@ import static main.java.AdvancedSettings.*;
 import static main.java.MainWorker.*;
 
 public class MainWindow extends JFrame {
+    protected static HistoryWindow historyWindow;
     protected static JFrame frame;
-
         protected JPanel mainPanel;
             protected JPanel northPanel;
                 protected JPanel northPanelBorder1;
@@ -25,7 +29,8 @@ public class MainWindow extends JFrame {
                         protected JLabel labelTitle;
                         protected CustomSeparator separatorNP1;
                         protected JLabel labelURL;
-                        protected JTextField textField_URL;
+                        protected static JTextField textField_URL;
+                        protected static JPopupMenu textFieldPopupMenu;
                         protected boolean validURL;
                         protected JComboBox<String> comboBoxType;
             protected JPanel centerVerticalPanel;
@@ -145,7 +150,7 @@ public class MainWindow extends JFrame {
                     northPanelWestBorder.add(historyButton);
 
                     historyButton.addActionListener((e) -> {
-                        HistoryWindow historyWindow = new HistoryWindow(frame);
+                        historyWindow = new HistoryWindow(frame);
                         historyWindow.setVisible(true);
                     });
 
@@ -198,13 +203,24 @@ public class MainWindow extends JFrame {
                         textField_URL.setColumns(28);
                         northPanelRow1.add(textField_URL);
 
-                        textField_URL.addKeyListener(new java.awt.event.KeyAdapter() {
-                            public void keyReleased(java.awt.event.KeyEvent e) {
-                                MainWorker.rawURL = textField_URL.getText().trim();
-                                if (MainWorker.rawURL.isEmpty()) {
+                        textField_URL.addKeyListener(new KeyAdapter() {
+                            public void keyReleased(KeyEvent e) {
+                                rawURL = textField_URL.getText().trim();
+                                if (rawURL.isEmpty()) {
                                     validURL = false;
                                 } else {
-                                    validURL = MainWorker.validURL(MainWorker.rawURL);
+                                    validURL = validURL(rawURL);
+                                    if (validURL) {
+                                        //find the char index of the videoID add 11 to get the end of the video ID
+                                        int videoIDStart = rawURL.indexOf(videoID);
+                                        int videoIDEnd = videoIDStart + 11;
+                                        //cut off the URL to the end of the video ID
+                                        rawURL = rawURL.substring(0, videoIDEnd);
+
+                                        textField_URL.setText(rawURL);
+
+                                        if (debug) System.out.println("RawURL: " + rawURL);
+                                    }
                                 }
                                 validURLLabel.setText(validURL ? "URL is valid" : "URL is invalid");
                                 coloringModeChange();
@@ -221,6 +237,22 @@ public class MainWindow extends JFrame {
                                 }
                             }
                         });
+
+                        textField_URL.addMouseListener(new MouseAdapter() {
+                            @Override
+                            public void mouseClicked(MouseEvent e) {
+                                textField_URL.requestFocusInWindow();
+
+                                if (SwingUtilities.isRightMouseButton(e)) {
+                                    if (MainWorker.debug) System.out.println("Right click on URL text field");
+                                    textFieldPopupMenu.show(e.getComponent(), e.getX(), e.getY());
+                                } else if (SwingUtilities.isLeftMouseButton(e)) {
+                                    if (MainWorker.debug) System.out.println("Left click on URL text field");
+                                    textFieldPopupMenu.setVisible(false);
+                                }
+                            }
+                        });
+
 
                         northPanelRow1.add(Box.createRigidArea(new Dimension(10, 0)));
 
@@ -602,7 +634,15 @@ public class MainWindow extends JFrame {
                             recode = checkBoxRecode.isSelected();
                             labelRecodeBox.setEnabled(recode);
                             comboBoxRecodeExt.setEnabled(recode);
+
                             checkEmbedThumbnailSupported();
+
+                            if (videoAudio != 2) {
+                                checkBoxMetadata.setSelected(false);
+                                checkBoxMetadata.setEnabled(!recode);
+                            } else {
+                                checkBoxMetadata.setEnabled(true);
+                            }
                         });
 
 
@@ -667,7 +707,16 @@ public class MainWindow extends JFrame {
                         checkBoxMetadata.setAlignmentX(Component.LEFT_ALIGNMENT);
                         advancedSettingsPanelRow3.add(checkBoxMetadata);
 
-                        checkBoxMetadata.addActionListener((e) -> addMetadata = checkBoxMetadata.isSelected());
+                        checkBoxMetadata.addActionListener((e) -> {
+                            addMetadata = checkBoxMetadata.isSelected();
+
+                            if (videoAudio != 2) {
+                                checkBoxRecode.setSelected(false);
+                                checkBoxRecode.setEnabled(!addMetadata);
+                            } else {
+                                checkBoxRecode.setEnabled(true);
+                            }
+                        });
                     }
 
                     centerVerticalPanelRow2.add(Box.createRigidArea(new Dimension(0, 10)));
@@ -740,12 +789,83 @@ public class MainWindow extends JFrame {
         {
             westPanel.add(Box.createRigidArea(new Dimension(20, 0)));
         }
+
+        textFieldPopupMenu = new JPopupMenu();
+        {
+            String[] menuItems = {"Cut", "Copy", "Paste", "Delete", "Select All"};
+            ActionListener[] actions = {
+                    (e) -> {
+                        textField_URL.cut();
+                        requestFocusAndSimulateKeyEvent();
+                    },
+                    (e) -> {
+                        textField_URL.copy();
+                        requestFocusAndSimulateKeyEvent();
+                    },
+                    (e) -> {
+                        textField_URL.paste();
+                        requestFocusAndSimulateKeyEvent();
+                    },
+                    (e) -> {
+                        textField_URL.setText("");
+                        requestFocusAndSimulateKeyEvent();
+                    },
+                    (e) -> {
+                        textField_URL.selectAll();
+                        textField_URL.requestFocus();
+                    }
+            };
+
+            for (int i = 0; i < menuItems.length; i++) {
+                JMenuItem menuItem = new JMenuItem(menuItems[i]);
+                menuItem.addActionListener(actions[i]);
+                textFieldPopupMenu.add(menuItem);
+                menuItem.setEnabled(false);
+                menuItem.setFont(new Font(fontName, Font.PLAIN, 14));
+            }
+
+            //check if the text field is empty
+            textFieldPopupMenu.addPopupMenuListener(new PopupMenuListener() {
+                @Override
+                public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                    //enable/disable the select all menu item based on whether there is text in the text field
+                    textFieldPopupMenu.getComponent( 4 ).setEnabled( !textField_URL.getText().isEmpty() );
+
+                    //enable/disable the paste menu item based on whether the clipboard contains text
+                    for (DataFlavor flavor : Toolkit.getDefaultToolkit().getSystemClipboard().getAvailableDataFlavors()) {
+                        if (flavor.equals(DataFlavor.stringFlavor)) {
+                            textFieldPopupMenu.getComponent( 2 ).setEnabled(true);
+                            break;
+                        } else {
+                            textFieldPopupMenu.getComponent( 2 ).setEnabled(false);
+                        }
+                    }
+
+                    //enable/disable the cut, copy, delete menu items based on whether there is text selected
+                    boolean isTextSelected = textField_URL.getSelectedText() != null;
+                    textFieldPopupMenu.getComponent( 0 ).setEnabled(isTextSelected);
+                    textFieldPopupMenu.getComponent( 1 ).setEnabled(isTextSelected);
+                    textFieldPopupMenu.getComponent( 3 ).setEnabled(isTextSelected);
+                }
+
+                @Override
+                public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {}
+                @Override
+                public void popupMenuCanceled(PopupMenuEvent e) {}
+            });
+        }
+
+    }
+
+    private static void requestFocusAndSimulateKeyEvent() {
+        textField_URL.requestFocusInWindow();
+        simulateKeyEvent(textField_URL);
     }
 
     protected void advancedSettingsEvent( boolean youtube ) {
         checkType();
 
-        if (checkBoxAdvancedSettings.isSelected() && youtube) {
+        if (checkBoxAdvancedSettings.isSelected() && youtube && !compatibilityMode) {
             // there are two identical if statements because of the way the code is structured
             AdvancedSettings.readVideoOptionsFromYT();
         } else {
@@ -787,6 +907,7 @@ public class MainWindow extends JFrame {
         }
     }
 
+    //TODO make colors global?
     protected void coloringModeChange() {
         // Colors
         Color backgroundColor = new Color(darkMode ? 0x2B2B2B : 0xE7E7E7);
@@ -958,7 +1079,27 @@ public class MainWindow extends JFrame {
 
         updateComboBox(arrayRecodeExt, comboBoxRecodeExt);
 
+
+        // clear the checkboxes
+        checkBoxRecode.setSelected(false);
+        checkBoxWriteThumbnail.setSelected(false);
+        checkBoxEmbedThumbnail.setSelected(false);
+        checkBoxMetadata.setSelected(false);
+
+        // clear the checkbox variables
+        recode = checkBoxRecode.isSelected();
+        writeThumbnail = checkBoxWriteThumbnail.isSelected();
+        embedThumbnail = checkBoxEmbedThumbnail.isSelected();
+        addMetadata = checkBoxMetadata.isSelected();
+
+        // mutually exclusive checkboxes
+        checkBoxRecode.setEnabled(!addMetadata);
+        checkBoxMetadata.setEnabled(!recode);
+
+        // dependent components
         labelRecodeBox.setEnabled(recode);
+        comboBoxRecodeExt.setEnabled(recode);
+        checkEmbedThumbnailSupported();
     }
 
     //Additive filters for the combo boxes
@@ -968,7 +1109,7 @@ public class MainWindow extends JFrame {
     //FPS values that are available for 1920x1080 mp4 files
     //Then, if the user selects "30" in the video FPS combobox, the video codec combobox should only show codecs that
     //are available for 1920x1080 30fps mp4 files
-    // I dislike that this works the way i want it to, or rather, that I didn't find a cleaner way to do it
+    // I dislike that this code works the way I want it to, or rather, that I didn't find a cleaner way to do it
     public static void doCascadeFilter(JComboBox<String> comboBox) {
         // Video
         if (comboBox.equals(comboBoxVideoExt)) {
@@ -1139,8 +1280,10 @@ public class MainWindow extends JFrame {
             }
         }
 
-        if ( ext.isEmpty() ) {
-            System.err.println("[ERROR] Failed to get extension while checking for thumbnail embedding support.");
+        if ( ext.isEmpty()) {
+            if (advancedSettingsEnabled) {
+                System.err.println("[ERROR] Failed to get extension while checking for thumbnail embedding support.");
+            }
             return;
         }
 

@@ -1,33 +1,40 @@
-//TODO #4 add opening link from history list in default browser
-//TODO #6 add sounds for modal dialogs *on click off dialog
-//TODO #7 add right click menu to history list & text area
-
 package main.java;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
+import static main.java.HistoryLogger.*;
 import static main.java.MainWindow.fontName;
+import static main.java.MainWorker.darkMode;
 
 public class HistoryWindow extends JDialog {
     protected JPanel mainPanel;
         protected JPanel topPanel;
             protected JLabel labelTitle;
-            protected JScrollPane scrollPane;
-                protected DefaultTableModel tableModel;
-                protected DefaultTableCellRenderer cellRenderer;
-                protected JTable historyTable;
-                public static ArrayList<String[]> historyList;
-                protected String[] columnNames = {"URL", "Status", "Type", "Date"};
-                protected int sortModeCol = 3;
-                protected int selectedRow;
+            protected static CustomSeparator separatorHWT1;
+        protected JScrollPane scrollPane;
+            protected DefaultTableModel tableModel;
+            protected DefaultTableCellRenderer cellRenderer;
+            protected JTable historyTable;
+            protected JPopupMenu tablePopupMenu;
+            public static ArrayList<String[]> historyList;
+            protected int sortModeCol = 3;
+            protected int selectedRow;
         protected JPanel sidePanelLeft;
         protected JPanel sidePanelRight;
             protected JLabel labelRight;
+            protected JPanel buttonPanel;
+                protected JButton openLinkButton;
+                protected JButton clearButton;
+                protected JButton removeButton;
+                protected JButton insertButton;
+
         protected JPanel verticalPanelBottom;
             protected JPanel pagePanel;
                 protected JButton firstButton;
@@ -37,13 +44,38 @@ public class HistoryWindow extends JDialog {
                 protected JLabel labelPageTotal;
                 protected JButton nextButton;
                 protected JButton lastButton;
-            protected JPanel buttonPanel;
-                protected JButton clearButton;
-                protected JButton removeButton;
-                protected JButton closeButton;
+                protected static JButton closeButton;
+
+    private final int historyWindowWidth = 1300;
+    private final int historyWindowHeight = 550;
 
     public HistoryWindow(JFrame parent) {
         super(parent, "Download History", true);
+
+        initializeTableModel();
+        initializeCellRenderer();
+
+        historyList = new HistoryLogger().getHistory();
+
+        initializeWindowProperties();
+
+        initializeHistoryWindowGUI();
+    }
+
+    private void initializeWindowProperties() {
+        this.setSize(historyWindowWidth, historyWindowHeight);
+        this.setResizable(false);
+
+        this.setLocationRelativeTo(null);
+        this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+    }
+
+    private void initializeCellRenderer() {
+        cellRenderer = new DefaultTableCellRenderer();
+        cellRenderer.setHorizontalAlignment(JLabel.LEFT);
+    }
+
+    private void initializeTableModel() {
         tableModel = new DefaultTableModel() {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -52,20 +84,9 @@ public class HistoryWindow extends JDialog {
             }
         };
         tableModel.setColumnIdentifiers(columnNames);
+    }
 
-        cellRenderer = new DefaultTableCellRenderer();
-        cellRenderer.setHorizontalAlignment(JLabel.LEFT);
-
-
-        historyList = new HistoryLogger().getHistory();
-        if (MainWorker.debug) printHistoryList();
-
-        this.setSize(940, 500);
-        this.setResizable(false);
-
-        this.setLocationRelativeTo(null);
-        this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-
+    private void initializeHistoryWindowGUI() {
         // create a border panel
         mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
@@ -74,7 +95,7 @@ public class HistoryWindow extends JDialog {
             // create a top panel in the border panel
             topPanel = new JPanel();
             topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
-            topPanel.setPreferredSize(new Dimension(0, 50));
+            topPanel.setPreferredSize(new Dimension(0, 55));
             mainPanel.add(topPanel, BorderLayout.NORTH);
             {
                 // create a label at the top of the border panel
@@ -85,7 +106,13 @@ public class HistoryWindow extends JDialog {
                 topPanel.add(labelTitle, BorderLayout.NORTH);
 
                 // create Y spacing
-                topPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+                topPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+
+                // create a separator at the top of the border panel
+                separatorHWT1 = new CustomSeparator(4, 3);
+                separatorHWT1.setBackground(new Color(darkMode ? 0x595959 : 0xc2c2c2));
+                topPanel.add(separatorHWT1);
+
             }
 
             // create a side panel on the left of the border panel
@@ -96,7 +123,7 @@ public class HistoryWindow extends JDialog {
             sidePanelLeft.setPreferredSize(new Dimension(25, 0));
             mainPanel.add(sidePanelLeft, BorderLayout.WEST);
             {
-
+                //nada
             }
 
             // create a JScrollPane in the center of the border panel
@@ -117,19 +144,22 @@ public class HistoryWindow extends JDialog {
                 historyTable.getTableHeader().setReorderingAllowed(false);
                 historyTable.getTableHeader().setResizingAllowed(false);
 
-                historyTable.getColumnModel().getColumn(0).setPreferredWidth(325);
-                historyTable.getColumnModel().getColumn(1).setPreferredWidth(160);
-                historyTable.getColumnModel().getColumn(2).setPreferredWidth(120);
-                historyTable.getColumnModel().getColumn(3).setPreferredWidth(150 - scrollPane.getVerticalScrollBar().getWidth());
+                historyTable.getColumnModel().getColumn(colTitle).setPreferredWidth(345);
+                historyTable.getColumnModel().getColumn(colUrl).setPreferredWidth(325);
+                historyTable.getColumnModel().getColumn(colStatus).setPreferredWidth(160);
+                historyTable.getColumnModel().getColumn(colType).setPreferredWidth(120);
+                historyTable.getColumnModel().getColumn(colDate).setPreferredWidth(150 - scrollPane.getVerticalScrollBar().getWidth());
 
                 historyTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+                //disable component focus border
+                historyTable.setFocusable(false);
                 historyTable.setShowGrid(true);
                 scrollPane.setViewportView(historyTable);
 
                 final boolean[] ascending = {true};
                 historyTable.getTableHeader().addMouseListener(new MouseAdapter() {
                     @Override
-                    public void mouseClicked(java.awt.event.MouseEvent e) {
+                    public void mouseClicked(MouseEvent e) {
                         sortModeCol = historyTable.columnAtPoint(e.getPoint());
                         String name = historyTable.getColumnName(sortModeCol);
                         if (MainWorker.debug) {
@@ -141,14 +171,27 @@ public class HistoryWindow extends JDialog {
                     }
                 });
 
-                // row selection listener
-                historyTable.getSelectionModel().addListSelectionListener(e -> {
-                    // only selected event
-                    if (!e.getValueIsAdjusting()) return;
+                // row selection listener include both clicks
+                historyTable.addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mouseClicked(MouseEvent e) {
+                        int row = historyTable.rowAtPoint(e.getPoint());
+                        System.out.println("Row at point: " + row);
+                        if (row >= 0) {
+                            historyTable.setRowSelectionInterval(row, row);
+                            selectedRow = historyTable.getSelectedRow();
+                            // check if double click
+                            if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2) {
+                                if (MainWorker.debug) System.out.println("Double click on row: " + row);
+                                MainWorker.openLink(HistoryWindow.this, historyTable, selectedRow);
 
-                    selectedRow = historyTable.getSelectedRow();
-                    if (MainWorker.debug) {
-                        System.out.println("Row selected: " + selectedRow + " Page: " + labelPageNumber.getText());
+                            } else if (SwingUtilities.isRightMouseButton(e)) {
+                                if (MainWorker.debug) System.out.println("Right click on row: " + row);
+                                tablePopupMenu.show(e.getComponent(), e.getX(), e.getY());
+                            }
+                        } else {
+                            historyTable.clearSelection();
+                        }
                     }
                 });
             }
@@ -156,7 +199,7 @@ public class HistoryWindow extends JDialog {
             // create a side panel on the right of the border panel
             sidePanelRight = new JPanel();
             sidePanelRight.setLayout(new BoxLayout(sidePanelRight, BoxLayout.Y_AXIS));
-            sidePanelRight.setAlignmentY(Component.TOP_ALIGNMENT);
+            sidePanelRight.setAlignmentY(Component.BOTTOM_ALIGNMENT);
             sidePanelRight.setAlignmentX(Component.CENTER_ALIGNMENT);
             mainPanel.add(sidePanelRight, BorderLayout.EAST);
             {
@@ -172,14 +215,35 @@ public class HistoryWindow extends JDialog {
                 // create a button panel int the verticalPanel of the border panel
                 buttonPanel = new JPanel();
                 buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS));
-                buttonPanel.setMinimumSize(new Dimension(135, 0));
-                buttonPanel.setPreferredSize(new Dimension(135, 0));
+                buttonPanel.setMinimumSize(new Dimension(135, 376));
+                buttonPanel.setPreferredSize(new Dimension(135, 376));
                 sidePanelRight.add(buttonPanel);
                 {
+                    // create a open link button in the button panel
+                    openLinkButton = new JButton("Open Link");
+                    openLinkButton.setFont(new Font(fontName, Font.PLAIN, 14));
+                    openLinkButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+                    openLinkButton.setMinimumSize(new Dimension(125, 25));
+                    openLinkButton.setMaximumSize(new Dimension(125, 25));
+                    buttonPanel.add(openLinkButton);
+
+                    openLinkButton.addActionListener(e -> {
+                        if (MainWorker.debug) System.out.println("Open Link button pressed.");
+                        selectedRow = historyTable.getSelectedRow();
+                        MainWorker.openLink(this, historyTable, selectedRow);
+                    });
+
+                    // create a Y spacing
+                    buttonPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+
                     // create a clear history button in the button panel
                     clearButton = new JButton("Clear History");
+                    clearButton.setFont(new Font(fontName, Font.PLAIN, 14));
                     clearButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+                    clearButton.setMinimumSize(new Dimension(125, 25));
+                    clearButton.setMaximumSize(new Dimension(125, 25));
                     buttonPanel.add(clearButton);
+
                     clearButton.addActionListener(e -> {
                         if (MainWorker.debug) System.out.println("Clear button pressed.");
                         HistoryLogger historyLogger = new HistoryLogger();
@@ -188,12 +252,16 @@ public class HistoryWindow extends JDialog {
                     });
 
                     // create Y spacing
-                    buttonPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+                    buttonPanel.add(Box.createRigidArea(new Dimension(0, 10)));
 
                     // create a remove selection button in the button panel
-                    removeButton = new JButton("Remove Selection");
+                    removeButton = new JButton("Remove Entry");
+                    removeButton.setFont(new Font(fontName, Font.PLAIN, 14));
                     removeButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+                    removeButton.setMinimumSize(new Dimension(125, 25));
+                    removeButton.setMaximumSize(new Dimension(125, 25));
                     buttonPanel.add(removeButton);
+
                     removeButton.addActionListener(e -> {
                         if (MainWorker.debug) System.out.println("Remove button pressed.");
                         selectedRow = historyTable.getSelectedRow();
@@ -201,14 +269,21 @@ public class HistoryWindow extends JDialog {
                     });
 
                     // create Y spacing
-                    buttonPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+                    buttonPanel.add(Box.createRigidArea(new Dimension(0, 10)));
 
-                    // create a close button in the button panel
-                    closeButton = new JButton("Close");
-                    closeButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-                    closeButton.setAlignmentY(Component.BOTTOM_ALIGNMENT);
-                    buttonPanel.add(closeButton);
-                    closeButton.addActionListener(e -> this.dispose());
+                    // create an insert url button in the button panel
+                    insertButton = new JButton("Insert URL");
+                    insertButton.setFont(new Font(fontName, Font.PLAIN, 14));
+                    insertButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+                    insertButton.setMinimumSize(new Dimension(125, 25));
+                    insertButton.setMaximumSize(new Dimension(125, 25));
+                    buttonPanel.add(insertButton);
+
+                    insertButton.addActionListener(e -> {
+                        if (MainWorker.debug) System.out.println("Insert button pressed.");
+                        selectedRow = historyTable.getSelectedRow();
+                        MainWorker.insertURL(this, historyTable, selectedRow);
+                    });
                 }
             }
 
@@ -220,8 +295,9 @@ public class HistoryWindow extends JDialog {
             {
                 // create page panel
                 pagePanel = new JPanel();
-                pagePanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+                pagePanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
                 pagePanel.setAlignmentY(Component.TOP_ALIGNMENT);
+                pagePanel.setMaximumSize(new Dimension(historyWindowWidth, 35));
                 verticalPanelBottom.add(pagePanel);
                 {
                     // create button to go to first page
@@ -280,14 +356,83 @@ public class HistoryWindow extends JDialog {
                         setTablePage(pageNum);
                     });
 
-                    // create X spacing to center on the table
-                    pagePanel.add(Box.createRigidArea(new Dimension(150, 0)));
+                    // create X spacing to center the page buttons on the table
+                    // account for the width of the buttons because of right alignment
+                    int sidePanelsWidth = 160; // L = 25, R = 135
+                    int buttonsWidth = 125;
+                    int x = ((historyWindowWidth - sidePanelsWidth) / 2) - buttonsWidth;
+                    pagePanel.add(Box.createRigidArea(new Dimension(x, 0)));
 
+                    // create a close button in the button panel
+                    closeButton = new JButton("Close");
+                    closeButton.setFont(new Font(fontName, Font.PLAIN, 14));
+                    closeButton.setPreferredSize(new Dimension(125, 25));
+                    closeButton.setBackground(new Color(darkMode ? 0x375a81 : 0xffffff));
+                    closeButton.addAncestorListener(new RequestFocusListener());
+                    pagePanel.add(closeButton);
+
+                    closeButton.addActionListener(e -> this.dispose());
+                }
+            }
+
+
+            tablePopupMenu = new JPopupMenu();
+            {
+                JMenu copySubMenu = getCopySubMenu();
+                tablePopupMenu.add(copySubMenu);
+
+                String[] menuItems = {"Open Link", "Remove Entry", "Insert URL"};
+                ActionListener[] actions = {
+                        e -> {
+                            System.out.println("POPUPMENU: Open Link selected");
+                            selectedRow = historyTable.getSelectedRow();
+                            MainWorker.openLink(HistoryWindow.this, historyTable, selectedRow);
+                        },
+                        e -> {
+                            System.out.println("POPUPMENU: Remove Entry selected");
+                            selectedRow = historyTable.getSelectedRow();
+                            removeHistoryRow(selectedRow);
+                        },
+                        e -> {
+                            System.out.println("POPUPMENU: Insert URL selected");
+                            selectedRow = historyTable.getSelectedRow();
+                            MainWorker.insertURL(HistoryWindow.this, historyTable, selectedRow);
+                        }
+                };
+
+                for (int i = 0; i < menuItems.length; i++) {
+                    JMenuItem menuItem = new JMenuItem(menuItems[i]);
+                    menuItem.addActionListener(actions[i]);
+                    tablePopupMenu.add(menuItem);
+                    menuItem.setFont(new Font(fontName, Font.PLAIN, 14));
                 }
             }
 
             setHistoryTable();
         }
+    }
+
+    private JMenu getCopySubMenu() {
+        JMenu copySubMenu = new JMenu("Copy");
+        copySubMenu.setFont(new Font(fontName, Font.PLAIN, 14));
+        String[] options = {"All", "Title", "URL", "Status", "Type", "Date"};
+        int[] indices = {-1, colTitle, colUrl, colStatus, colType, colDate};
+
+        for (int i = 0; i < options.length; i++) {
+            JMenuItem menuItem = new JMenuItem(options[i]);
+            final int index = indices[i];
+            final String option = options[i];
+
+            menuItem.addActionListener(e -> {
+                System.out.println("POPUPMENU: Copy " + option + " selected");
+                selectedRow = historyTable.getSelectedRow();
+                MainWorker.copyRowToClipboard(HistoryWindow.this, historyTable, selectedRow, index);
+            });
+
+            copySubMenu.add(menuItem);
+            menuItem.setFont(copySubMenu.getFont());
+        }
+        return copySubMenu;
     }
 
     private void removeHistoryRow(int selectedRow) {
@@ -322,15 +467,28 @@ public class HistoryWindow extends JDialog {
     }
 
     private void printHistoryList() {
-        System.out.println("History List:");
+        String fullLengthDivider = "+----------------------------------------------------------------------------------------------------------------------+";
+        String halfLengthDivider = fullLengthDivider.substring(0, 47) + "+";
+        int historyListSize = historyList.size();
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(halfLengthDivider);
+        sb.append(String.format("%n| %-18s %,-25d |%n", "History List Size:", historyListSize));
+        sb.append(halfLengthDivider);
+        sb.append("\n\n");
+
+        sb.append(String.format("| %-60s | %-45s | %-26s | %-15s | %-21s |%n",
+                columnNames[colTitle], columnNames[colUrl], columnNames[colStatus],
+                columnNames[colType], columnNames[colDate] + " (Recent First)"));
+        sb.append(fullLengthDivider).append("\n");
+
         for (String[] data : historyList) {
-            System.out.println(
-                    columnNames[0] + ": " + data[0] +
-                            " | " + columnNames[1] + ": " + data[1] +
-                            " | " + columnNames[2] + ": " + data[2] +
-                            " | " + columnNames[2] + ": " + data[3]
-            );
+            sb.append(String.format("| %-60s | %-45s | %-26s | %-15s | %-21s |%n",
+                    data[colTitle], data[colUrl], data[colStatus], data[colType], data[colDate]));
         }
+        sb.append(fullLengthDivider).append("\n");
+        System.out.print(sb);
     }
 
     private void sortHistoryList(int col, boolean[] ascending) {
@@ -339,8 +497,8 @@ public class HistoryWindow extends JDialog {
         updateColumnHeaders(ascending[0]);
 
         // sort the history list by the selected column
-        int date = 3, type = 2, secondarySortType = date;
-        if (col == date) secondarySortType = type;
+        int secondarySortType = colDate;
+        if (col == colDate) secondarySortType = colType;
         historyLogger.sortHistoryList(historyList, col, secondarySortType, ascending[0]);
         ascending[0] = !ascending[0];
 
@@ -412,16 +570,15 @@ public class HistoryWindow extends JDialog {
             if (MainWorker.debug) System.out.println("List is empty. No data to display.");
         } else {
             // sort the history list by date
-            int date = 3;
-            sortHistoryList(date, new boolean[]{false});
-        }
-        for (String[] data : historyList) {
-            if (MainWorker.debug) printHistoryList();
+            sortHistoryList(colDate, new boolean[]{false});
+            //if (MainWorker.debug) printHistoryList(); FIXME fix formatting when printing to console
 
-            if (data != null) {
-                tableModel.addRow(data);
-            } else {
-                System.err.println("[ERROR] Failed to set History Table. Data is null.");
+            for (String[] data : historyList) {
+                if (data != null) {
+                    tableModel.addRow(data);
+                } else {
+                    System.err.println("[ERROR] Failed to set History Table. Data is null.");
+                }
             }
         }
 
