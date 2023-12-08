@@ -458,7 +458,7 @@ public class MainWorker {
             if (debug) e.printStackTrace(System.err);
         }
 
-        videoFileName = fileName;
+        videoFileName = fileName.replaceAll("#", "");
     }
 
     public static String getCommand() {
@@ -880,7 +880,10 @@ public class MainWorker {
                 name.contains(videoFileName)
         );
         if (fileList == null) {
-            if (debug) System.out.println("No files to delete.");
+            System.err.println("[ERROR] Failed to retrieve list of files to delete."
+                    + "\nDirectory: " + downloadDirectoryPath
+                    + "\nFilename: " + videoFileName
+            );
             return;
         } else {
             if (debug) System.out.println("Files to delete: " + Arrays.toString(fileList));
@@ -897,6 +900,10 @@ public class MainWorker {
                 } catch (IOException e1) {
                     System.err.println("[ERROR] Failed to delete file: " + pathToDelete.getFileName());
                     if (debug) e1.printStackTrace(System.err);
+                    if (debug) System.out.println(
+                            "Directory: " + downloadDirectoryPath
+                            + "\nFilename: " + videoFileName
+                    );
                 }
             }
         }
