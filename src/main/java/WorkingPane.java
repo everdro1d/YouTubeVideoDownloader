@@ -2,11 +2,8 @@ package main.java;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.awt.event.WindowAdapter;
+import java.util.Objects;
 
 import static main.java.MainWorker.*;
 
@@ -19,6 +16,12 @@ public class WorkingPane extends JFrame {
     protected String message = "";
     protected static JProgressBar progressBar;
     protected static JButton cancelButton;
+
+    protected static JDialog cancelledDialog;
+    protected static JDialog confirmDialog;
+    protected static JDialog saveProgressDialog;
+    protected static JDialog[] cancelDialogArray = new JDialog[3];
+
     public WorkingPane() {
         workingFrame = new JFrame("Working...");
 
@@ -26,6 +29,13 @@ public class WorkingPane extends JFrame {
         workingFrame.setPreferredSize(new Dimension(355, 170));
         workingFrame.setLocationRelativeTo(null);
         workingFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+
+        workingFrame.addWindowListener( new WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                closeWorkingPane();
+            }
+        });
 
         workingFrame.setResizable(false);
 
@@ -71,65 +81,118 @@ public class WorkingPane extends JFrame {
                 panelRow2.add(cancelButton);
 
                 cancelButton.addActionListener(e -> { // TODO add confirm dialog for cancel when recoding is in progress
-                    for (String binaryFile : binaryFiles) {
-                        closeProcess(null, binaryFile);
-                    }
+                    if (debug) System.out.println("Cancel button pressed.");
 
-                    downloadStatus = "Canceled - User Input";
-                    closeWorkingPane();
-
-                    JOptionPane.showMessageDialog(null, "Download was cancelled.", "Cancelled", JOptionPane.INFORMATION_MESSAGE);
-
-                    if (debug) {
-                        System.out.println("Download was cancelled.");
-                        System.out.println("Download started: " + downloadStarted);
-                    }
-
-                    if (downloadStarted && !(downloadCount == downloadMax)) {
-                        int delFiles = JOptionPane.showConfirmDialog(null, "Save download progress to resume later?", "Cancelled", JOptionPane.YES_NO_OPTION);
-                        if (delFiles == JOptionPane.NO_OPTION) {
-                            // an array of all files with .part extension
-                            String[] partFiles = new File(filePath).list((dir, name) -> name.endsWith(".ytdl") || name.contains(".part"));
-                            if (partFiles == null) {
-                                if (debug) System.out.println("No files to delete.");
-                                return;
-                            }
-
-                            // delete all files with .part extension
-                            for (String part : partFiles) {
-                                Path pathToDelete = Paths.get(filePath+ "\\" + part);
-                                for (int tries = 0; tries < 5; tries++) {
-                                    try {
-                                        Files.delete(pathToDelete);
-                                        if (debug) System.out.println("Deleted file: " + pathToDelete.getFileName());
-                                        break;
-                                    } catch (IOException e1) {
-                                        System.err.println("[ERROR] Failed to delete file: " + pathToDelete.getFileName());
-                                        if (debug) e1.printStackTrace(System.err);
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    cancelDownload();
                 });
             }
             panel.add(Box.createVerticalStrut(5));
         }
         workingFrame.setVisible(true);
+        MainWindow.downloadButton.setEnabled(false);
+    }
+
+    private void cancelDownload() {
+        JOptionPane confirmPane = new JOptionPane("Are you sure you want to cancel the download?", JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION);
+        confirmDialog = confirmPane.createDialog(workingFrame, "Cancel Download");
+
+        JOptionPane cancelledPane = new JOptionPane("Download was cancelled.", JOptionPane.INFORMATION_MESSAGE);
+        cancelledDialog = cancelledPane.createDialog(null, "Cancelled");
+
+        JOptionPane saveProgressPane = new JOptionPane("Save download progress to resume later?", JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION);
+        saveProgressDialog = saveProgressPane.createDialog(null, "Save Progress");
+
+        cancelDialogArray[0] = confirmDialog;
+        cancelDialogArray[1] = cancelledDialog;
+        cancelDialogArray[2] = saveProgressDialog;
+
+
+        confirmDialog.setVisible(true);
+        Object confirm = confirmPane.getValue();
+        if (confirm != null) {
+            int result = (int) confirm;
+            if (result != JOptionPane.YES_OPTION) {
+                return;
+            } else {
+                if (debug) System.out.println("Cancel confirmed.");
+                downloadCanceled = true;
+                downloadStatus = "cancelledTemp";
+            }
+        } else {
+            System.err.println("Confirm dialog returned null.");
+            return;
+        }
+
+        for (String binaryFile : binaryFiles) {
+            closeProcess(null, binaryFile);
+        }
+
+        cancelledDialog.setVisible(true);
+        closeWorkingPane(true);
+
+        if (debug) {
+            System.out.println("Download was cancelled.");
+            System.out.println("Download started: " + downloadStarted);
+        }
+
+        if (downloadStarted) {
+            saveProgressDialog.setVisible(true);
+            Object saveProgress = saveProgressPane.getValue();
+            if (saveProgress != null) {
+                int result = (int) saveProgress;
+                if (result == JOptionPane.NO_OPTION) {
+                    if (debug) System.out.println("Save progress denied. Deleting files.");
+                    deleteRelatedFiles();
+                    downloadStatus = validDownloadStatus[3];
+                } else {
+                    if (debug) System.out.println("Save progress confirmed.");
+                    downloadStatus = validDownloadStatus[4];
+                }
+                if (!Objects.equals(downloadStatus, "cancelledTemp")) {
+                    logDownloadHistory();
+                }
+            } else {
+                System.err.println("Save progress dialog returned null.");
+                return;
+            }
+        }
     }
 
     public void closeWorkingPane() {
-        MainWindow.downloadButton.setEnabled(true);
-        workingFrame.dispose();
+        closeWorkingPane(false);
     }
 
+    public void closeWorkingPane(boolean cancelValid) {
+        if (debug) System.out.println("Closing working pane.");
+        if (!downloadCanceled && cancelValid) {
+            cancelDownload();
+        }
+        for (JDialog dialog : cancelDialogArray) {
+            // if the dialog is not null -> continue
+            if ( dialog != null ) {
+                // if the download status is not cancelled and the dialog is the save progress dialog -> dispose
+                if ( !Objects.equals(downloadStatus, "cancelledTemp") ) { //&& Objects.equals(dialog, saveProgressDialog)
+                    dialog.dispose();
+                    // if download status is cancelled and the dialog is not the save progress dialog -> dispose
+                } else if (Objects.equals(downloadStatus, "cancelledTemp") && !Objects.equals(dialog, saveProgressDialog) ) {
+                    dialog.dispose();
+                } else if (dialog != saveProgressDialog) {
+                    System.err.println("[ERROR] Dialog not disposed: " + dialog.getTitle());
+                }
+            }
+        }
+        MainWindow.downloadButton.setEnabled(true);
+        workingFrame.dispose();
+
+    }
 
     public void setCTitle(String title) {
         label1.setText(title);
     }
+
     public void setMessage(String message) {
         this.message = message;
-        labelMessage.setText(message);
+        labelMessage.setText(String.format("<html><body style='width: 300px'>%s</body></html>", message));
     }
 
     public void setProgress(int i) {

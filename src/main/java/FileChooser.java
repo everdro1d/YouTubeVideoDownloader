@@ -13,7 +13,7 @@ public class FileChooser extends JFileChooser {
         this.setApproveButtonText("Select");
         this.setAcceptAllFileFilterUsed(false);
         this.setMultiSelectionEnabled(false);
-        this.setCurrentDirectory(new java.io.File(MainWorker.filePath));
+        this.setCurrentDirectory(new java.io.File(MainWorker.downloadDirectoryPath));
         this.setFileHidingEnabled(true);
         this.setPreferredSize(new Dimension(600, 450));
         setFileChooserFont(this.getComponents());

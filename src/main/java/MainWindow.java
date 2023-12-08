@@ -752,7 +752,7 @@ public class MainWindow extends JFrame {
                 fileChooserButton.setIcon(getIcon("main/resources/folderIcon.png"));
                 southPanelRow1.add(fileChooserButton);
 
-                fileChooserButton.addActionListener((e) -> MainWorker.filePath = MainWorker.openFileChooser());
+                fileChooserButton.addActionListener((e) -> MainWorker.downloadDirectoryPath = MainWorker.openFileChooser());
 
 
                 southPanelRow1.add(Box.createRigidArea(new Dimension(20, 0)));

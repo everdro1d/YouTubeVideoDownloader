@@ -466,7 +466,7 @@ public class HistoryWindow extends JDialog {
         }
     }
 
-    private void printHistoryList() {
+    private void printHistoryList() { //FIXME fix formatting when printing to console
         String fullLengthDivider = "+----------------------------------------------------------------------------------------------------------------------+";
         String halfLengthDivider = fullLengthDivider.substring(0, 47) + "+";
         int historyListSize = historyList.size();
@@ -571,7 +571,7 @@ public class HistoryWindow extends JDialog {
         } else {
             // sort the history list by date
             sortHistoryList(colDate, new boolean[]{false});
-            //if (MainWorker.debug) printHistoryList(); FIXME fix formatting when printing to console
+            //if (MainWorker.debug) printHistoryList(); TODO
 
             for (String[] data : historyList) {
                 if (data != null) {

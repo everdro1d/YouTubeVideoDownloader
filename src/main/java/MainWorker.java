@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Scanner;
@@ -35,19 +36,36 @@ public class MainWorker {
     protected static int downloadCount = 0;
     protected static int downloadMax = 1;
     public static String downloadStatus = "";
+
+    /**
+     * The valid download statuses are:
+     * <ul>
+     *     <li>[0] Completed - Success</li>
+     *     <li>[1] Stopped - Fatal Error</li>
+     *     <li>[2] Stopped - Already Exists</li>
+     *     <li>[3] Canceled - Deleted Files</li>
+     *     <li>[4] Canceled - Saved Files</li>
+     * </ul>
+     */
     public static String[] validDownloadStatus = new String[]{
             "Completed - Success", "Stopped - Fatal Error", "Stopped - Already Exists",
-            "Canceled - User Input"};
+            "Canceled - Deleted Files", "Canceled - Saved Files"
+    };
     protected static boolean downloadStarted = false;
-    protected static String[] binaryFiles = {"yt-dlp.exe", "ffmpeg.exe", "ffprobe.exe"};
+    protected static String[] binaryFiles = {"yt-dlp", "ffmpeg", "ffprobe"};
     protected static String binaryPath = "main/libs/"; // the path to the binary to run
-    protected static String filePath = ""; // the path to download the video to
+    protected static String downloadDirectoryPath = ""; // the path to download the video to
     public static boolean debug = false; // whether debug mode is enabled
     protected static boolean darkMode = false; // whether dark mode is enabled
     protected static boolean compatibilityMode = false; // if the compatability mode is enabled
     protected static boolean logHistory = true; // whether to log the download history
     static Preferences prefs = Preferences.userNodeForPackage(MainWorker.class);
     protected static String videoTitle = "";
+    protected static String videoFileName = "";
+    private static WorkingPane workingPane;
+    protected static boolean downloadCanceled = false;
+    private static boolean windows = false;
+    private static boolean macOS = false;
 
 
     public static void main(String[] args) {
@@ -105,11 +123,22 @@ public class MainWorker {
 
     private static void checkOSCompatability() {
         String osName = System.getProperty("os.name").toLowerCase();
-        boolean windows = osName.contains("win");
-        if (!windows) {
-            System.err.println("This program is currently only compatible with Windows.");
-            JOptionPane.showMessageDialog(null, "This program is currently only compatible with Windows.", "Error", JOptionPane.ERROR_MESSAGE);
+        windows = osName.contains("win");
+        macOS = osName.contains("mac");
+        if (!windows && !macOS) {
+            System.err.println("This program is not compatible with your operating system.");
+            JOptionPane.showMessageDialog(null, "This program is not compatible with your operating system.", "Error!", JOptionPane.ERROR_MESSAGE);
             System.exit(1);
+        }
+
+        if (windows) {
+            binaryPath += "win/";
+            for (int i = 0; i < 3; i++) {
+                binaryFiles[i] += ".exe";
+            }
+        } else {
+            binaryPath += "mac/";
+            binaryFiles[0] = "yt-dlp_macos";
         }
     }
 
@@ -129,7 +158,10 @@ public class MainWorker {
 
                 Files.copy(binaryPathStream, outputPath, StandardCopyOption.REPLACE_EXISTING);
 
-                Files.setAttribute(outputPath, "dos:hidden", true);
+                // set binary file to hidden on windows
+                if (windows) Files.setAttribute(outputPath, "dos:hidden", true);
+                // set binary file to hidden on macOS
+                if (macOS) Runtime.getRuntime().exec("chflags hidden \\" + outputPath + binaryFile);
 
                 Runtime.getRuntime().addShutdownHook(new Thread(() -> deleteBinaryTempFiles(binaryFile)));
 
@@ -167,13 +199,13 @@ public class MainWorker {
     private static void prefs() {
         // load preferences
         darkMode = prefs.getBoolean("darkMode", false);
-        filePath = prefs.get("filePath", (System.getProperty("user.home") + "\\Downloads"));
+        downloadDirectoryPath = prefs.get("filePath", (System.getProperty("user.home") + "\\Downloads"));
         compatibilityMode = prefs.getBoolean("compatibilityMode", false);
         logHistory = prefs.getBoolean("logHistory", true);
 
         // save preferences on exit
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            prefs.put("filePath", filePath);
+            prefs.put("filePath", downloadDirectoryPath);
             prefs.putBoolean("darkMode", darkMode);
             prefs.putBoolean("compatibilityMode", compatibilityMode);
             prefs.putBoolean("logHistory", logHistory);
@@ -342,28 +374,53 @@ public class MainWorker {
         // start download
         if ( !checkURLDialog(false) ) { return; }
 
-        if (filePath.isEmpty()) {
-            filePath = openFileChooser();
+        if (downloadDirectoryPath.isEmpty()) {
+            downloadDirectoryPath = openFileChooser();
         }
 
-        getVideoTitle();
+        downloadCanceled = false;
+        workingPane = new WorkingPane();
+        workingPane.setCTitle(" Getting Download Info...");
 
-        String cmd = getCommand();
-        if (debug) System.out.println(cmd);
+        // thread for working pane (won't draw otherwise)
+        new Thread(() -> {
+            // get video info
+            workingPane.setMessage(" Getting video info...");
+            getVideoTitle();
+            workingPane.setMessage(" Getting file info...");
+            getVideoFileName();
+            if (debug) System.out.println("Video Title: " + videoTitle);
+            if (debug) System.out.println("Video Filename: " + videoFileName);
+            workingPane.closeWorkingPane();
 
-        download(cmd);
+            if (!downloadCanceled) {
+                // get download command
+                String cmd = getCommand();
+                if (debug) System.out.println(cmd);
+
+                // start download
+                download(cmd);
+            } else {
+                downloadCanceled = false;
+                if (videoTitle.isEmpty()) {
+                    videoTitle = "Canceled before title was retrieved";
+                }
+                downloadStatus = validDownloadStatus[3];
+                logDownloadHistory();
+            }
+        }).start();
     }
 
     public static void getVideoTitle() {
-        ProcessBuilder pb = new ProcessBuilder(Arrays.asList(downloadBinary, "--get-title", "-o", "%(title)s", rawURL));
+        ProcessBuilder pb = new ProcessBuilder(Arrays.asList(
+                downloadBinary, "--get-title", "-o", "%(title)s", rawURL
+        ));
         Process p;
         try {
             p = pb.start();
             new Thread(new SyncPipe(p.getErrorStream(), System.err)).start();
             Scanner scanner = new Scanner(p.getInputStream());
-            String title = scanner.nextLine();
-            if (debug) System.out.println("Video Title: " + title);
-            videoTitle = title;
+            if (scanner.hasNextLine()) videoTitle = scanner.nextLine();
             p.waitFor();
             if (debug) System.out.println(p.exitValue());
         } catch (Exception e) {
@@ -371,11 +428,31 @@ public class MainWorker {
         }
     }
 
+    private static void getVideoFileName() {
+        String fileName = "";
+        ProcessBuilder pb = new ProcessBuilder(Arrays.asList(
+                downloadBinary, "--restrict-filenames", "--get-filename", "-o \\%(title)s.%(ext)s\" ", rawURL
+        ));
+        Process p;
+        try {
+            p = pb.start();
+            new Thread(new SyncPipe(p.getErrorStream(), System.err)).start();
+            Scanner scanner = new Scanner(p.getInputStream());
+            if (scanner.hasNextLine()) fileName = scanner.nextLine();
+            p.waitFor();
+            if (debug) System.out.println(p.exitValue());
+        } catch (Exception e) {
+            if (debug) e.printStackTrace(System.err);
+        }
+
+        if (!fileName.isEmpty()) videoFileName = fileName.split("[\\\\.]")[1];
+    }
+
     public static String getCommand() {
         // the options to pass to the binary
         String advancedSettings = getAdvancedSettings();
 
-        return downloadBinary + " " + advancedSettings + "-o \"" + filePath + "\\%(title)s.%(ext)s\" " + "\"" + rawURL + "\"";
+        return downloadBinary + " " + advancedSettings + "-o \"" + downloadDirectoryPath + "\\%(title)s.%(ext)s\" " + "\"" + rawURL + "\"";
     }
 
     public static void download(String cmd) {
@@ -409,14 +486,12 @@ public class MainWorker {
     }
 
     private static void downloadProgressPanes(Scanner scanner, Process p) {
-        WorkingPane workingPane = new WorkingPane();
-
-        MainWindow.downloadButton.setEnabled(false);
+        workingPane = new WorkingPane();
 
         boolean doDownload = true;
         boolean downloadComplete = false;
         boolean downloadChecked = false;
-        downloadStatus = "";
+        downloadStatus = "oops";
 
         int delCount = 0;
         int delMax = (videoAudio == 0) ? 2 : 0;
@@ -532,7 +607,7 @@ public class MainWorker {
                             closeProcess(p, binaryFile);
                         }
                         downloadChecked = true;
-                        downloadStatus = "Stopped - Fatal Error";
+                        downloadStatus = validDownloadStatus[1];
                     } else if (s.contains("has already been downloaded")) {
                         if (debug) System.out.println("This video has already been downloaded.");
                         workingPane.setVisible(false);
@@ -542,16 +617,21 @@ public class MainWorker {
                             closeProcess(p, binaryFile);
                         }
                         downloadChecked = true;
-                        downloadStatus = "Stopped - Already Exists";
+                        downloadStatus = validDownloadStatus[2];
                     }
                 }
             }
         }
 
         if (debug) System.out.println(scanner.hasNextLine() ? scanner.nextLine() : "No more output from process.");
-        workingPane.closeWorkingPane();
+        if (workingPane != null) workingPane.closeWorkingPane();
         scanner.close();
 
+        logDownloadHistory();
+    }
+
+    protected static void logDownloadHistory() {
+        System.out.println("Logging download history.");
         if (logHistory) {
             // check if the download failed somehow
             if ( !containsAny(validDownloadStatus, downloadStatus) ) {
@@ -570,7 +650,7 @@ public class MainWorker {
             if (debug) System.out.println("Logged download history: \n" + Arrays.toString(data));
 
         } else if (debug) {
-            System.out.println("Skipped logging download history.");
+            System.out.println("Logging download history is disabled. Skipping.");
         }
     }
 
@@ -585,7 +665,7 @@ public class MainWorker {
         workingPane.closeWorkingPane();
         JOptionPane.showMessageDialog(null, "Download Completed", "Finished!", JOptionPane.INFORMATION_MESSAGE);
         boolean downloadChecked = true;
-        downloadStatus = "Completed - Success";
+        downloadStatus = validDownloadStatus[0];
 
         return downloadChecked;
     }
@@ -617,23 +697,27 @@ public class MainWorker {
         int dC = Math.max(1, Math.min(downloadCount, downloadMax));
 
         String[] split = s.split(" ");
-        String[] split2 = Arrays.copyOfRange(split, 1, split.length-2);
-        String message = String.join(" ", split2);
-        workingPane.setMessage(" " + message);
+        String[] messageLine1 = Arrays.copyOfRange(split, 1, split.length-2);
+        String[] messageLine2 = Arrays.copyOfRange(split, split.length-2, split.length);
+
+        String joinedMessage1 = String.join(" ", messageLine1);
+        String joinedMessage2 = String.join(" ", messageLine2);
+        String message = "<tab>" + joinedMessage1 + "<br><tab>" + joinedMessage2;
+
+        workingPane.setMessage(message);
         workingPane.setCTitle(" Working...   (" + (dC) + "/" + downloadMax + ")");
 
-        if (message.contains("%")) {
-            String progress = message.split("%")[0].replace(".", "").replace(" ", "");
+        if (joinedMessage1.contains("%")) {
+            String progress = joinedMessage1.split("%")[0].replace(".", "").replace(" ", "");
             if (!progress.isEmpty()) {
                 int progressInt = Math.round(Float.parseFloat(progress) / 10);
                 workingPane.setProgress(progressInt);
             }
         }
-
     }
 
     protected static String openFileChooser() {
-        String output = System.getProperty("user.home") + "\\Downloads";
+        String output = System.getProperty("user.home");
 
         FileChooser fileChooser = new FileChooser();
         fileChooser.setVisible(true);
@@ -643,6 +727,7 @@ public class MainWorker {
             output = fileChooser.getSelectedFile().getAbsolutePath();
             JOptionPane.showMessageDialog(frame, "Download location set to: " + output, "Download Location", JOptionPane.INFORMATION_MESSAGE);
         }
+
         return output;
     }
 
@@ -651,7 +736,8 @@ public class MainWorker {
             p = globalDefaultProcess;
         }
         try {
-            Runtime.getRuntime().exec("taskkill /F /IM " + binaryFile);
+            if (windows) Runtime.getRuntime().exec("taskkill /F /IM " + binaryFile);
+            if (macOS) Runtime.getRuntime().exec("killall -SIGINT " + binaryFile);
             System.out.println("Attempted to close task: " + binaryFile);
             if (p != null && p.isAlive()) {
                 p.destroy();
@@ -750,7 +836,7 @@ public class MainWorker {
     }
 
     /** Simulates an ENTER keyReleased event on a component.
-     * @param component
+     * @param component the component to simulate the event on
      */
     protected static void simulateKeyEvent(JComponent component) {
         simulateKeyEvent(component, KeyEvent.VK_ENTER, '\n', 0, KeyEvent.KEY_RELEASED);
@@ -764,8 +850,37 @@ public class MainWorker {
      * @param modifiers KeyEvent.CTRL_MASK, KeyEvent.SHIFT_MASK, KeyEvent.ALT_MASK, KeyEvent.META_MASK
      * @param event KeyEvent.KEY_PRESSED, KeyEvent.KEY_RELEASED, or KeyEvent.KEY_TYPED
      */
+    @SuppressWarnings("SameParameterValue")
     protected static void simulateKeyEvent(JComponent component, int keyCode, char keyChar, int modifiers, int event) {
         KeyEvent keyEvent = new KeyEvent(component, event, System.currentTimeMillis(), modifiers, keyCode, keyChar);
         component.dispatchEvent(keyEvent);
+    }
+
+    protected static void deleteRelatedFiles() {
+        // an array of all files with .part extension that match the video file name
+        String[] fileList = new File(downloadDirectoryPath).list((dir, name) ->
+                name.contains(videoFileName)
+        );
+        if (fileList == null) {
+            if (debug) System.out.println("No files to delete.");
+            return;
+        } else {
+            if (debug) System.out.println("Files to delete: " + Arrays.toString(fileList));
+        }
+
+        // delete all matching files
+        for (String file : fileList) {
+            Path pathToDelete = Paths.get(downloadDirectoryPath + "\\" + file);
+            for (int tries = 0; tries < 5; tries++) {
+                try {
+                    Files.delete(pathToDelete);
+                    if (debug) System.out.println("Deleted file: " + pathToDelete.getFileName());
+                    break;
+                } catch (IOException e1) {
+                    System.err.println("[ERROR] Failed to delete file: " + pathToDelete.getFileName());
+                    if (debug) e1.printStackTrace(System.err);
+                }
+            }
+        }
     }
 }
