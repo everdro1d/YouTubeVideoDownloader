@@ -45,7 +45,7 @@ public class WorkingPane extends JFrame {
         {
             panel.add(Box.createVerticalStrut(5));
 
-            label1 = new JLabel(" Working...");
+            label1 = new JLabel(" Preparing Download...");
             label1.setFont(new Font(MainWindow.fontName, Font.PLAIN, 18));
             label1.setAlignmentX(Component.LEFT_ALIGNMENT);
             label1.setHorizontalTextPosition(JLabel.LEFT);

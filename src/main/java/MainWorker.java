@@ -13,6 +13,7 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -52,6 +53,15 @@ public class MainWorker {
             "Canceled - Deleted Files", "Canceled - Saved Files"
     };
     protected static boolean downloadStarted = false;
+
+    /**
+     * The binary files are
+     * <ul>
+     *     <li>[0] yt-dlp *note: use downloadBinary to call for correct name</li>
+     *     <li>[1] ffmpeg</li>
+     *     <li>[2] ffprobe</li>
+     * </ul>
+     */
     protected static String[] binaryFiles = {"yt-dlp", "ffmpeg", "ffprobe"};
     protected static String binaryPath = "main/libs/"; // the path to the binary to run
     protected static String downloadDirectoryPath = ""; // the path to download the video to
@@ -64,13 +74,16 @@ public class MainWorker {
     protected static String videoFileName = "";
     private static WorkingPane workingPane;
     protected static boolean downloadCanceled = false;
-    private static boolean windows = false;
-    private static boolean macOS = false;
+    protected static boolean windows = false;
+    protected static boolean macOS = false;
+    protected static String jarPath;
 
 
     public static void main(String[] args) {
         checkCommandLineArgs(args);
         checkOSCompatability();
+
+        getJarPath();
 
         // binary temp file operations
         copyBinaryTempFiles();
@@ -144,7 +157,8 @@ public class MainWorker {
 
     private static void copyBinaryTempFiles() {
         if (debug) System.out.println("Copying binary files to temp directory.");
-        downloadBinary = binaryFiles[0];
+        String div = (windows) ? "\\" : "/";
+        downloadBinary = jarPath + div + binaryFiles[0];
 
         for (String binaryFile : binaryFiles) {
             if (debug) System.out.println("Copying binary file: " + binaryFile);
@@ -154,14 +168,15 @@ public class MainWorker {
                     System.err.println("Could not find binary file: " + binaryFile);
                     continue;
                 }
-                Path outputPath = new File(binaryFile).toPath();
+                Path outputPath = new File((jarPath + div + binaryFile)).toPath();
 
                 Files.copy(binaryPathStream, outputPath, StandardCopyOption.REPLACE_EXISTING);
 
                 // set binary file to hidden on windows
                 if (windows) Files.setAttribute(outputPath, "dos:hidden", true);
                 // set binary file to hidden on macOS
-                if (macOS) Runtime.getRuntime().exec("chflags hidden \\" + outputPath + binaryFile);
+                if (macOS) Runtime.getRuntime().exec("chflags hidden " + outputPath);
+                if (macOS) Runtime.getRuntime().exec("chmod +x " + outputPath);
 
                 Runtime.getRuntime().addShutdownHook(new Thread(() -> deleteBinaryTempFiles(binaryFile)));
 
@@ -173,16 +188,14 @@ public class MainWorker {
 
     private static void deleteBinaryTempFiles(String binaryFile) {
         if (debug) System.out.println("Deleting binary file: " + binaryFile);
-
-        File fileToDelete = new File(binaryFile);
+        String div = (windows) ? "\\" : "/";
+        File fileToDelete = new File((jarPath + div + binaryFile));
         if (fileToDelete.exists()) {
             int iterations = 0;
             while (!fileToDelete.delete() && iterations++ < 5) {
                 System.err.println("Failed to delete temp file: " + binaryFile + "\nRetrying...");
                 try {
                     closeProcess(null, binaryFile);
-
-                    //Thread.sleep(200);
 
                     if (fileToDelete.delete()) {
                         System.err.println("Deleted temp file: " + binaryFile);
@@ -386,9 +399,9 @@ public class MainWorker {
         new Thread(() -> {
             // get video info
             workingPane.setMessage(" Getting video info...");
-            getVideoTitle();
+            getVideoTitleProcess();
             workingPane.setMessage(" Getting file info...");
-            getVideoFileName();
+            getVideoFileNameProcess();
             if (debug) System.out.println("Video Title: " + videoTitle);
             if (debug) System.out.println("Video Filename: " + videoFileName);
             workingPane.closeWorkingPane();
@@ -411,7 +424,7 @@ public class MainWorker {
         }).start();
     }
 
-    public static void getVideoTitle() {
+    public static void getVideoTitleProcess() {
         ProcessBuilder pb = new ProcessBuilder(Arrays.asList(
                 downloadBinary, "--get-title", "-o", "%(title)s", rawURL
         ));
@@ -428,10 +441,10 @@ public class MainWorker {
         }
     }
 
-    private static void getVideoFileName() {
+    private static void getVideoFileNameProcess() {
         String fileName = "";
         ProcessBuilder pb = new ProcessBuilder(Arrays.asList(
-                downloadBinary, "--restrict-filenames", "--get-filename", "-o \\%(title)s.%(ext)s\" ", rawURL
+                downloadBinary, "--restrict-filenames", "--get-filename", "-o %(title)s ", rawURL
         ));
         Process p;
         try {
@@ -445,14 +458,15 @@ public class MainWorker {
             if (debug) e.printStackTrace(System.err);
         }
 
-        if (!fileName.isEmpty()) videoFileName = fileName.split("[\\\\.]")[1];
+        videoFileName = fileName;
     }
 
     public static String getCommand() {
         // the options to pass to the binary
         String advancedSettings = getAdvancedSettings();
+        String div = (windows) ? "\\" : "/";
 
-        return downloadBinary + " " + advancedSettings + "-o \"" + downloadDirectoryPath + "\\%(title)s.%(ext)s\" " + "\"" + rawURL + "\"";
+        return downloadBinary + " " + advancedSettings + "-o " + downloadDirectoryPath + div + "%(title)s.%(ext)s " + rawURL;
     }
 
     public static void download(String cmd) {
@@ -552,6 +566,10 @@ public class MainWorker {
                         downloadCount = Math.min(downloadCount + 1, downloadMax);
                     }
 
+                    if (s.contains("does not exist")) {
+                        downloadCount = Math.max(downloadCount - 1, 0);
+                    }
+
                     if (debug) System.out.println("Downloads: " + downloadCount + " / " + downloadMax +
                                 "\nDeletes: " + delCount + " / " + delMax);
 
@@ -612,7 +630,7 @@ public class MainWorker {
                         if (debug) System.out.println("This video has already been downloaded.");
                         workingPane.setVisible(false);
                         workingPane.closeWorkingPane();
-                        JOptionPane.showMessageDialog(null, "This video has already been downloaded.", "Error!", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(null, "This video has already been downloaded.", "Aborted!", JOptionPane.ERROR_MESSAGE);
                         for (String binaryFile : binaryFiles) {
                             closeProcess(p, binaryFile);
                         }
@@ -881,6 +899,16 @@ public class MainWorker {
                     if (debug) e1.printStackTrace(System.err);
                 }
             }
+        }
+    }
+
+    protected static void getJarPath() {
+        try {
+            jarPath = Paths.get(MainWorker.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParent().toString();
+            System.out.println("Jar Path: " + jarPath);
+        } catch (URISyntaxException e) {
+            if (MainWorker.debug) e.printStackTrace(System.err);
+            System.err.println("[ERROR] Failed to get jar path.");
         }
     }
 }

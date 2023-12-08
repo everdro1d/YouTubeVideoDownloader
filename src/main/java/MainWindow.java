@@ -294,7 +294,11 @@ public class MainWindow extends JFrame {
                     lightDarkModeButton.setSelectedIcon(darkMode ? sunIcon : moonIcon);
                     lightDarkModeButton.setIcon(darkMode ? moonIcon : sunIcon);
 
-                    northPanelEastBorder.add(lightDarkModeButton, BorderLayout.EAST);
+                    if (!macOS) {
+                        northPanelEastBorder.add(lightDarkModeButton, BorderLayout.EAST);
+                    } else {
+                        northPanelEastBorder.add(Box.createRigidArea(new Dimension(50, 0)));
+                    }
 
                     lightDarkModeButton.addActionListener((e) -> {
                         darkMode = !darkMode;
@@ -866,7 +870,7 @@ public class MainWindow extends JFrame {
         checkType();
 
         if (checkBoxAdvancedSettings.isSelected() && youtube && !compatibilityMode) {
-            // there are two identical if statements because of the way the code is structured
+            // get video options
             AdvancedSettings.readVideoOptionsFromYT();
         } else {
             getVideoOptions = false;
@@ -890,9 +894,10 @@ public class MainWindow extends JFrame {
 
         windowHeightExpanded = windowHeight + centerVerticalPanelRow2.getHeight() + 20;
 
-        if (checkBoxAdvancedSettings.isSelected()) { // there are two identical if statements because of the way the code is structured
+        if (checkBoxAdvancedSettings.isSelected()) { //GUI if
             frame.setMinimumSize(new Dimension(windowWidthExpanded, windowHeightExpanded));
             frame.setSize(new Dimension(windowWidthExpanded, windowHeightExpanded));
+            frame.setLocationRelativeTo(null);
 
             advancedSettingsPanelRow2.setSize(advancedSettingsPanelRow1.getSize());
             advancedSettingsPanelRow3.setSize(advancedSettingsPanelRow1.getSize());

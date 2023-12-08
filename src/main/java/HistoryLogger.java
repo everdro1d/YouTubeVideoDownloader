@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.file.Files;
@@ -13,6 +12,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collections;
+
+import static main.java.MainWorker.windows;
 
 public class HistoryLogger {
     public static final String historyFileName = "history.txt";
@@ -120,17 +121,10 @@ public class HistoryLogger {
     }
 
     public static String getHistoryFilePath() {
-        String jarPath;
         String historyFilePath;
-        try {
-            jarPath = Paths.get(HistoryLogger.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParent().toString();
-        } catch (URISyntaxException e) {
-            if (MainWorker.debug) e.printStackTrace(System.err);
-            System.err.println("[ERROR] Failed to get jar path.");
-            return "";
-        }
 
-        historyFilePath = jarPath + "\\" + historyFileName;
+        String div = windows ? "\\" : "/";
+        historyFilePath = MainWorker.jarPath + div + historyFileName;
         if (MainWorker.debug) System.out.println("History File Default Path: " + historyFilePath);
 
         Path filePath = Paths.get(historyFilePath);
@@ -138,7 +132,8 @@ public class HistoryLogger {
         if (!Files.exists(filePath)) {
             try {
                 Files.createFile(filePath);
-                Files.setAttribute(filePath, "dos:hidden", true);
+                if (MainWorker.windows) Files.setAttribute(filePath, "dos:hidden", true);
+                if (MainWorker.macOS) Runtime.getRuntime().exec("chflags hidden " + filePath);
                 if (MainWorker.debug) System.out.println("Created history file at: " + historyFilePath);
             } catch (IOException e) {
                 if (MainWorker.debug) e.printStackTrace(System.err);

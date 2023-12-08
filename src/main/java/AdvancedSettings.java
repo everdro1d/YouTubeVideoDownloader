@@ -60,7 +60,7 @@ public class AdvancedSettings {
     }
 
     private static void getVideoOptions() {
-        String cmd = downloadBinary + " --list-formats " + "\"" + rawURL + "\"";
+        String cmd = downloadBinary + " --list-formats " + rawURL;
         new Thread(()-> videoOptionsProcess(cmd.split(" "))).start();
     }
 
@@ -90,7 +90,6 @@ public class AdvancedSettings {
 
     public static void setAdvancedSettings() {
         // set the advanced options comboBox arrays from the tableMap
-
 
         //Video ------------------------------------------
         arrayVideoExtensions =
@@ -182,7 +181,9 @@ public class AdvancedSettings {
 
     public static String getAdvancedSettings() {
         StringBuilder output = new StringBuilder();
+        String div = windows ? "\\" : "/";
         ArrayList<String> arrayListAdvancedSettings = new ArrayList<>();
+        arrayListAdvancedSettings.add("--ffmpeg-location " + (jarPath + div) );
         arrayListAdvancedSettings.add("--restrict-filenames");
         arrayListAdvancedSettings.add("--progress");
         arrayListAdvancedSettings.add("--newline");
@@ -197,24 +198,24 @@ public class AdvancedSettings {
 
         if (!advancedSettingsEnabled) {
             arrayListAdvancedSettings.add("--embed-thumbnail");
-            arrayListAdvancedSettings.add("--convert-thumbnails \"png\"");
+            arrayListAdvancedSettings.add("--convert-thumbnails png");
             arrayListAdvancedSettings.add("--add-metadata");
 
             switch (videoAudio) {
                 case 0:
                     arrayListAdvancedSettings.add("-f");
                     arrayListAdvancedSettings.add(
-                            "\"(bv[ext=mp4][height<=1080]" + (compatibilityMode ? "[vcodec~='^((he|a)vc|h26[45])']" : "[vcodec!*=vp09]") + "+ba[ext=m4a]) / (b[ext=mp4][vcodec!*=vp09]) / (bv+ba/b)\"");
+                            "((bv[ext=mp4][height<=1080]" + (compatibilityMode ? "[vcodec~='^((he|a)vc|h26[45])']" : "[vcodec!*=vp09]") + "+ba[ext=m4a])/(b[ext=mp4][vcodec!*=vp09])/((bv+ba)/b))");
                     break;
                 case 1:
                     arrayListAdvancedSettings.add("-f");
                     arrayListAdvancedSettings.add(
-                            "\"(bv[ext=mp4][height<=1080]" + (compatibilityMode ? "[vcodec~='^((he|a)vc|h26[45])'])" : "[vcodec!*=vp09])") + " / bv\"");
+                            "((bv[ext=mp4][height<=1080]" + (compatibilityMode ? "[vcodec~='^((he|a)vc|h26[45])'])" : "[vcodec!*=vp09])") + "/bv)");
                     break;
                 case 2:
                     arrayListAdvancedSettings.add("-f");
                     arrayListAdvancedSettings.add(
-                            "\"(ba[ext=m4a]) / ba\"" );
+                            "((ba[ext=m4a])/ba)" );
                     break;
             }
 
@@ -222,7 +223,7 @@ public class AdvancedSettings {
             if (writeThumbnail) {
                 if (embedThumbnail) {
                     arrayListAdvancedSettings.add("--embed-thumbnail");
-                    arrayListAdvancedSettings.add("--convert-thumbnails \"png\"");
+                    arrayListAdvancedSettings.add("--convert-thumbnails png");
                 } else {
                     arrayListAdvancedSettings.add("--write-thumbnail");
                 }
