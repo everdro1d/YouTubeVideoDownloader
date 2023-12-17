@@ -168,7 +168,7 @@ public class MainWorker {
         }
 
         fileDiv = (windows) ? "\\" : "/";
-        stringQuotes = (windows) ? "\"" : "'";
+        stringQuotes = (windows) ? "\"" : "";
 
         if (windows) {
             binaryPath += "win/";
