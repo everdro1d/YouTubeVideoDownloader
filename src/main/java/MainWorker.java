@@ -168,7 +168,7 @@ public class MainWorker {
         }
 
         fileDiv = (windows) ? "\\" : "/";
-        stringQuotes = (windows) ? "\"" : "";
+        stringQuotes = (windows) ? "\"" : "'";
 
         if (windows) {
             binaryPath += "win/";
@@ -574,9 +574,10 @@ public class MainWorker {
         // the options to pass to the binary
         String advancedSettings = getAdvancedSettings();
 
-        return downloadBinary + " " + advancedSettings + "-o "
-                + stringQuotes + downloadDirectoryPath + fileDiv + "%(title)s.%(ext)s" + stringQuotes
-                + " " + rawURL;
+        return downloadBinary + " " + advancedSettings + "-P "
+                + stringQuotes + downloadDirectoryPath + fileDiv + stringQuotes
+                + " -o " + stringQuotes + "%(title)s.%(ext)s" + stringQuotes
+                + " " + stringQuotes + rawURL + stringQuotes;
     }
 
     public static void download(String cmd) {

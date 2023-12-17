@@ -195,30 +195,29 @@ public class AdvancedSettings {
         }
 
         if (recode) {
-            arrayListAdvancedSettings.add("--recode " + stringQuotes + arrayRecodeExt[recodeExt] + stringQuotes);
+            arrayListAdvancedSettings.add("--recode " + arrayRecodeExt[recodeExt]);
         }
 
         if (!advancedSettingsEnabled) {
             arrayListAdvancedSettings.add("--embed-thumbnail");
             arrayListAdvancedSettings.add(
-                    "--convert-thumbnails " + stringQuotes + arrayWriteThumbnailExt[writeThumbnailExt] + stringQuotes);
+                    "--convert-thumbnails " + arrayWriteThumbnailExt[writeThumbnailExt]);
             arrayListAdvancedSettings.add("--add-metadata");
 
+
+            arrayListAdvancedSettings.add("-f");
             switch (videoAudio) {
                 case 0:
-                    arrayListAdvancedSettings.add("-f");
                     arrayListAdvancedSettings.add(
-                            "((bv[ext=mp4][height<=1080]" + (compatibilityMode ? "[vcodec~='^((he|a)vc|h26[45])']" : "[vcodec!*=vp09]") + "+ba[ext=m4a])/(b[ext=mp4][vcodec!*=vp09])/((bv+ba)/b))");
+                            stringQuotes + "((bv[ext=mp4][height<=1080]" + (compatibilityMode ? "[vcodec~='^((he|a)vc|h26[45])']" : "[vcodec!*=vp09]") + "+ba[ext=m4a])/(b[ext=mp4][vcodec!*=vp09])/((bv+ba)/b))" + stringQuotes);
                     break;
                 case 1:
-                    arrayListAdvancedSettings.add("-f");
                     arrayListAdvancedSettings.add(
-                            "((bv[ext=mp4][height<=1080]" + (compatibilityMode ? "[vcodec~='^((he|a)vc|h26[45])'])" : "[vcodec!*=vp09])") + "/bv)");
+                            stringQuotes + "((bv[ext=mp4][height<=1080]" + (compatibilityMode ? "[vcodec~='^((he|a)vc|h26[45])'])" : "[vcodec!*=vp09])") + "/bv)" + stringQuotes);
                     break;
                 case 2:
-                    arrayListAdvancedSettings.add("-f");
                     arrayListAdvancedSettings.add(
-                            "((ba[ext=m4a])/ba)" );
+                            stringQuotes + "((ba[ext=m4a])/ba)" + stringQuotes);
                     break;
             }
 
