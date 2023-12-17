@@ -215,8 +215,7 @@ public class MainWorker {
 
     private static void deleteBinaryTempFiles(String binaryFile) {
         if (debug) System.out.println("Deleting binary file: " + binaryFile);
-        String div = (windows) ? "\\" : "/";
-        File fileToDelete = new File((jarPath + div + binaryFile));
+        File fileToDelete = new File((jarPath + fileDiv + binaryFile));
         if (fileToDelete.exists()) {
             int iterations = 0;
             while (!fileToDelete.delete() && iterations++ < 5) {
@@ -574,10 +573,9 @@ public class MainWorker {
     public static String getCommand() {
         // the options to pass to the binary
         String advancedSettings = getAdvancedSettings();
-        String div = (windows) ? "\\" : "/";
 
         return downloadBinary + " " + advancedSettings + "-o "
-                + stringQuotes + downloadDirectoryPath + div + "%(title)s.%(ext)s" + stringQuotes
+                + stringQuotes + downloadDirectoryPath + fileDiv + "%(title)s.%(ext)s" + stringQuotes
                 + " " + rawURL;
     }
 

@@ -193,15 +193,17 @@ public class AdvancedSettings {
         if (debug) {
             arrayListAdvancedSettings.add("--verbose");
         }
+        String q = "\"";
+        if (!windows) q = "";
 
         if (recode) {
-            arrayListAdvancedSettings.add("--recode \"" + arrayRecodeExt[recodeExt] + "\"");
+            arrayListAdvancedSettings.add("--recode " + q + arrayRecodeExt[recodeExt] + q);
         }
 
         if (!advancedSettingsEnabled) {
             arrayListAdvancedSettings.add("--embed-thumbnail");
             arrayListAdvancedSettings.add(
-                    "--convert-thumbnails \"" + arrayWriteThumbnailExt[writeThumbnailExt] + "\"");
+                    "--convert-thumbnails " + q + arrayWriteThumbnailExt[writeThumbnailExt] + q);
             arrayListAdvancedSettings.add("--add-metadata");
 
             switch (videoAudio) {
@@ -227,7 +229,7 @@ public class AdvancedSettings {
                 if (embedThumbnail) {
                     arrayListAdvancedSettings.add("--embed-thumbnail");
                     arrayListAdvancedSettings.add(
-                            "--convert-thumbnails \"" + arrayWriteThumbnailExt[writeThumbnailExt] + "\"");
+                            "--convert-thumbnails " + q + arrayWriteThumbnailExt[writeThumbnailExt] + q);
                 } else {
                     arrayListAdvancedSettings.add("--write-thumbnail");
                 }
