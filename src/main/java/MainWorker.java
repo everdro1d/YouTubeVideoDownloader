@@ -1,6 +1,3 @@
-/*
- */
-
 package main.java;
 
 import com.formdev.flatlaf.FlatDarkLaf;
@@ -14,10 +11,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
+import java.nio.file.*;
 import java.util.Arrays;
 import java.util.Scanner;
 import java.util.prefs.Preferences;
@@ -28,8 +24,11 @@ import static main.java.MainWindow.*;
 import static main.java.WorkingPane.workingFrame;
 
 public class MainWorker {
-    //public static final String version = "1.2.0"; // the version of the program TODO create update checking
+    public static final String dro1dDevWebsite = "https://everdro1d.github.io/";
+    public static final String titleText = "YouTube Video Downloader";
+    protected static boolean closeAfterInsert;
     protected static MainWindow window;
+    protected static int[] windowPosition = new int[]{0, 0, 0};
     private static Process globalDefaultProcess;
     public static String rawURL = ""; // raw URL String from the text field
     public static String videoID; // the video ID from the URL
@@ -48,7 +47,7 @@ public class MainWorker {
      *     <li>[4] Canceled - Saved Files</li>
      * </ul>
      */
-    public static String[] validDownloadStatus = new String[]{
+    public static final String[] validDownloadStatus = new String[]{
             "Completed - Success", "Stopped - Fatal Error", "Stopped - Already Exists",
             "Canceled - Deleted Files", "Canceled - Saved Files"
     };
@@ -69,7 +68,7 @@ public class MainWorker {
     protected static boolean darkMode = false; // whether dark mode is enabled
     protected static boolean compatibilityMode = false; // if the compatability mode is enabled
     protected static boolean logHistory = true; // whether to log the download history
-    static Preferences prefs = Preferences.userNodeForPackage(MainWorker.class);
+    static final Preferences prefs = Preferences.userNodeForPackage(MainWorker.class);
     protected static String videoTitle = "";
     protected static String videoFileName = "";
     private static WorkingPane workingPane;
@@ -77,20 +76,22 @@ public class MainWorker {
     protected static boolean windows = false;
     protected static boolean macOS = false;
     protected static String jarPath;
-
+    public static String fileDiv = "\\";
+    public static String stringQuotes = "\"";
 
     public static void main(String[] args) {
         checkCommandLineArgs(args);
         checkOSCompatability();
 
         getJarPath();
+        // set icon
+        Icon frameIcon = getApplicationIcon("images/diskIconLargeDownloadArrow.png");
 
         // binary temp file operations
         copyBinaryTempFiles();
 
         // set look and feel
-        FlatLightLaf.setup();
-        FlatDarkLaf.setup();
+        setLookAndFeel();
 
         // load preferences
         prefs();
@@ -103,6 +104,16 @@ public class MainWorker {
         EventQueue.invokeLater(() -> {
             try {
                 window = new MainWindow();
+                setFramePosition(
+                        prefs.getInt("framePosX", windowPosition[0]),
+                        prefs.getInt("framePosY", windowPosition[1]),
+                        prefs.getInt("activeMonitor", windowPosition[2])
+                );
+                if (frameIcon != null) {
+                    frame.setIconImage(((ImageIcon) frameIcon).getImage());
+                } else {
+                    System.err.println("Failed to set icon.");
+                }
                 window.coloringModeChange();
             } catch (Exception ex) {
                 if (debug) ex.printStackTrace(System.err);
@@ -118,16 +129,28 @@ public class MainWorker {
         }
     }
 
+    private static void setLookAndFeel() {
+        if (macOS) {
+            System.setProperty("apple.awt.application.name", titleText);
+            System.setProperty("apple.awt.application.appearance", "system");
+            String appearance = System.getProperty("apple.awt.application.appearance");
+            System.out.println("Appearance: " + appearance);
+        }
+
+        FlatLightLaf.setup();
+        FlatDarkLaf.setup();
+    }
+
     private static void checkCommandLineArgs(String[] args) {
         if (args.length > 0) {
             String arg = args[0];
-            if (arg.equals("debug")) {
+            if (arg.equals("-debug")) {
                 System.out.println("Debug mode enabled.");
                 debug = true;
             } else {
                 System.err.println(
                         "Unknown argument: " + arg +
-                                "\nValid arguments: debug" +
+                                "\nValid arguments: -debug" +
                                 "\nContinuing without arguments."
                 );
             }
@@ -140,9 +163,12 @@ public class MainWorker {
         macOS = osName.contains("mac");
         if (!windows && !macOS) {
             System.err.println("This program is not compatible with your operating system.");
-            JOptionPane.showMessageDialog(null, "This program is not compatible with your operating system.", "Error!", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(frame, "This program is not compatible with your operating system.", "Error!", JOptionPane.ERROR_MESSAGE);
             System.exit(1);
         }
+
+        fileDiv = (windows) ? "\\" : "/";
+        stringQuotes = (windows) ? "\"" : "'";
 
         if (windows) {
             binaryPath += "win/";
@@ -157,8 +183,7 @@ public class MainWorker {
 
     private static void copyBinaryTempFiles() {
         if (debug) System.out.println("Copying binary files to temp directory.");
-        String div = (windows) ? "\\" : "/";
-        downloadBinary = jarPath + div + binaryFiles[0];
+        downloadBinary = jarPath + fileDiv + binaryFiles[0];
 
         for (String binaryFile : binaryFiles) {
             if (debug) System.out.println("Copying binary file: " + binaryFile);
@@ -168,15 +193,17 @@ public class MainWorker {
                     System.err.println("Could not find binary file: " + binaryFile);
                     continue;
                 }
-                Path outputPath = new File((jarPath + div + binaryFile)).toPath();
+                Path outputPath = new File((jarPath + fileDiv + binaryFile)).toPath();
 
                 Files.copy(binaryPathStream, outputPath, StandardCopyOption.REPLACE_EXISTING);
 
-                // set binary file to hidden on windows
+                // set binary file to hidden
                 if (windows) Files.setAttribute(outputPath, "dos:hidden", true);
-                // set binary file to hidden on macOS
-                if (macOS) Runtime.getRuntime().exec("chflags hidden " + outputPath);
-                if (macOS) Runtime.getRuntime().exec("chmod +x " + outputPath);
+                // set binary file to executable (and hidden on macOS)
+                if (macOS) {
+                    new ProcessBuilder("chflags", "hidden", outputPath.toString()).start();
+                    new ProcessBuilder("chmod", "+x", outputPath.toString()).start();
+                }
 
                 Runtime.getRuntime().addShutdownHook(new Thread(() -> deleteBinaryTempFiles(binaryFile)));
 
@@ -215,6 +242,11 @@ public class MainWorker {
         downloadDirectoryPath = prefs.get("filePath", (System.getProperty("user.home") + "\\Downloads"));
         compatibilityMode = prefs.getBoolean("compatibilityMode", false);
         logHistory = prefs.getBoolean("logHistory", true);
+        closeAfterInsert = prefs.getBoolean("closeAfterInsert", false);
+
+        windowPosition[0] = prefs.getInt("framePosX", 0);
+        windowPosition[1] = prefs.getInt("framePosY", 0);
+        windowPosition[2] = prefs.getInt("activeMonitor", 0);
 
         // save preferences on exit
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -222,7 +254,85 @@ public class MainWorker {
             prefs.putBoolean("darkMode", darkMode);
             prefs.putBoolean("compatibilityMode", compatibilityMode);
             prefs.putBoolean("logHistory", logHistory);
+            prefs.putBoolean("closeAfterInsert", closeAfterInsert);
+
+            prefs.putInt("framePosX", windowPosition[0]);
+            prefs.putInt("framePosY", windowPosition[1]);
+            prefs.putInt("activeMonitor", windowPosition[2]);
         }));
+    }
+
+
+    /**
+     * Gets the window's position on the current monitor.
+     * @return int[] = {x, y, activeMonitor}
+     */
+    public static int[] getFramePositionOnScreen(JFrame frame) {
+        int[] framePosition = new int[]{0, 0, 0};
+        Point frameLocation = frame.getLocationOnScreen();
+
+        // get the monitor that frame is on
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice[] gs = ge.getScreenDevices();
+
+        for (int i = 0; i < gs.length; i++) {
+            GraphicsDevice gd = gs[i];
+            GraphicsConfiguration[] gc = gd.getConfigurations();
+            Rectangle screenBounds = gc[0].getBounds();
+            int screenWidth = screenBounds.width;
+            int screenHeight = screenBounds.height;
+
+            framePosition[0] = frameLocation.x;
+            framePosition[1] = frameLocation.y;
+
+            if (frameLocation.x >= screenBounds.x && frameLocation.x <= screenBounds.x + screenWidth) {
+                if (frameLocation.y >= screenBounds.y && frameLocation.y <= screenBounds.y + screenHeight) {
+                    framePosition[2] = i;
+                    break;
+                }
+            }
+        }
+
+        return framePosition;
+    }
+
+    private static void setFramePosition(int framePosX, int framePosY, int activeMonitor) {
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice[] gs = ge.getScreenDevices();
+
+        if (activeMonitor > -1 && activeMonitor < gs.length) {
+            GraphicsDevice gd = gs[activeMonitor];
+            GraphicsConfiguration[] gc = gd.getConfigurations();
+            Rectangle screenBounds = gc[0].getBounds();
+            Insets screenInsets = Toolkit.getDefaultToolkit().getScreenInsets(gc[0]);
+            int screenWidth = screenBounds.width;
+            int screenHeight = screenBounds.height;
+
+            // check if the window is on the screen and account for taskbar
+            if (framePosY > screenBounds.height - frame.getHeight() - screenInsets.bottom) {
+                windowPosition[1] = framePosY = Math.min( Math.max(0, framePosY),
+                        screenBounds.height - frame.getHeight() - screenInsets.bottom
+                );
+            }
+
+            if (framePosX == 0 && framePosY == 0) {
+                //center on screen 0
+                framePosX = screenBounds.x + (screenWidth - frame.getWidth()) / 2;
+                framePosY = screenBounds.y + (screenHeight - frame.getHeight()) / 2;
+            }
+
+            if (framePosX >= screenBounds.x && framePosX <= screenBounds.x + screenWidth) {
+                if (framePosY >= screenBounds.y && framePosY <= screenBounds.y + screenHeight) {
+
+                    frame.setLocation(framePosX, framePosY);
+                }
+            }
+        }
+    }
+
+    protected static void setLocationOnResize(JFrame frame) {
+        int[] framePosition = getFramePositionOnScreen(frame);
+        setFramePosition(framePosition[0], framePosition[1], framePosition[2]);
     }
 
     private static void uiManager() {
@@ -320,7 +430,7 @@ public class MainWorker {
             String[] validURLs = {
                     "www.youtube.com/watch?v=",
                     "youtu.be/",
-                    "www.youtube.com/channel/",
+                    "www.youtube.com/shorts/",
 
                     "www.instagram.com/p/",
                     "www.instagram.com/reel/"
@@ -375,7 +485,7 @@ public class MainWorker {
 
     private static boolean checkURLDialog(boolean show) {
         if ((rawURL == null) || !validURL(rawURL) || show) {
-                JOptionPane.showMessageDialog(null, "Please check the link or enter a valid URL.", "Error! Media not found.", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(frame, "Please check the link or enter a valid URL.", "Error! Media not found.", JOptionPane.ERROR_MESSAGE);
             return false;
         }
         return true;
@@ -433,7 +543,7 @@ public class MainWorker {
             p = pb.start();
             new Thread(new SyncPipe(p.getErrorStream(), System.err)).start();
             Scanner scanner = new Scanner(p.getInputStream());
-            if (scanner.hasNextLine()) videoTitle = scanner.nextLine();
+            if (scanner.hasNextLine()) videoTitle = scanner.nextLine().trim();
             p.waitFor();
             if (debug) System.out.println(p.exitValue());
         } catch (Exception e) {
@@ -458,7 +568,7 @@ public class MainWorker {
             if (debug) e.printStackTrace(System.err);
         }
 
-        videoFileName = fileName.replaceAll("#", "");
+        videoFileName = fileName.replaceAll("#", "").trim();
     }
 
     public static String getCommand() {
@@ -466,7 +576,9 @@ public class MainWorker {
         String advancedSettings = getAdvancedSettings();
         String div = (windows) ? "\\" : "/";
 
-        return downloadBinary + " " + advancedSettings + "-o " + downloadDirectoryPath + div + "%(title)s.%(ext)s " + rawURL;
+        return downloadBinary + " " + advancedSettings + "-o "
+                + stringQuotes + downloadDirectoryPath + div + "%(title)s.%(ext)s" + stringQuotes
+                + " " + rawURL;
     }
 
     public static void download(String cmd) {
@@ -620,7 +732,7 @@ public class MainWorker {
                         System.err.println("An error occurred while downloading the video.:\n" + s);
                         workingPane.setVisible(false);
                         workingPane.closeWorkingPane();
-                        JOptionPane.showMessageDialog(null, "An error occurred while downloading the video.:\n" + s, "Error!", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(frame, "An error occurred while downloading the video:\n" + s, "Error!", JOptionPane.ERROR_MESSAGE);
                         for (String binaryFile : binaryFiles) {
                             closeProcess(p, binaryFile);
                         }
@@ -630,7 +742,7 @@ public class MainWorker {
                         if (debug) System.out.println("This video has already been downloaded.");
                         workingPane.setVisible(false);
                         workingPane.closeWorkingPane();
-                        JOptionPane.showMessageDialog(null, "This video has already been downloaded.", "Aborted!", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(frame, "This video has already been downloaded.", "Aborted!", JOptionPane.ERROR_MESSAGE);
                         for (String binaryFile : binaryFiles) {
                             closeProcess(p, binaryFile);
                         }
@@ -681,7 +793,7 @@ public class MainWorker {
         if (debug) System.out.println("Finished.");
         workingPane.setVisible(false);
         workingPane.closeWorkingPane();
-        JOptionPane.showMessageDialog(null, "Download Completed", "Finished!", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(frame, "Download Completed", "Finished!", JOptionPane.INFORMATION_MESSAGE);
         boolean downloadChecked = true;
         downloadStatus = validDownloadStatus[0];
 
@@ -689,16 +801,12 @@ public class MainWorker {
     }
 
     private static String getVideoAudioStatus() {
-        switch (videoAudio) {
-            case 0:
-                return "Video + Audio";
-            case 1:
-                return "Video Only";
-            case 2:
-                return "Audio Only";
-            default:
-                return "Unknown Type";
-        }
+        return switch (videoAudio) {
+            case 0 -> "Video + Audio";
+            case 1 -> "Video Only";
+            case 2 -> "Audio Only";
+            default -> "Unknown Type";
+        };
     }
 
     private static String getCurrentTime() {
@@ -740,10 +848,12 @@ public class MainWorker {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setVisible(true);
 
-        int returnValue = fileChooser.showOpenDialog(null);
+        int returnValue = fileChooser.showOpenDialog(frame);
         if (returnValue == JFileChooser.APPROVE_OPTION) {
             output = fileChooser.getSelectedFile().getAbsolutePath();
             JOptionPane.showMessageDialog(frame, "Download location set to: " + output, "Download Location", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            if ( !downloadDirectoryPath.isEmpty() ) output = downloadDirectoryPath;
         }
 
         return output;
@@ -754,8 +864,8 @@ public class MainWorker {
             p = globalDefaultProcess;
         }
         try {
-            if (windows) Runtime.getRuntime().exec("taskkill /F /IM " + binaryFile);
-            if (macOS) Runtime.getRuntime().exec("killall -SIGINT " + binaryFile);
+            if (windows) new ProcessBuilder("taskkill", "/F", "/IM", binaryFile).start();
+            if (macOS) new ProcessBuilder("killall", "-SIGINT", binaryFile).start();
             System.out.println("Attempted to close task: " + binaryFile);
             if (p != null && p.isAlive()) {
                 p.destroy();
@@ -765,7 +875,7 @@ public class MainWorker {
         }
     }
 
-    protected static Icon getIcon(String pathFromSrc) {
+    protected static Icon getApplicationIcon(String pathFromSrc) {
         Icon icon = null;
         try (InputStream iconStream = MainWorker.class.getClassLoader().getResourceAsStream(pathFromSrc)) {
             if (iconStream != null) {
@@ -780,7 +890,16 @@ public class MainWorker {
         return icon;
     }
 
-    protected static void openLink(HistoryWindow historyWindow, JTable historyTable, int selectedRow) {
+    protected static void openLink(String url) {
+        try {
+            if (debug) System.out.println("Opening link: " + url);
+            Desktop.getDesktop().browse(new java.net.URI(url));
+        } catch (Exception e) {
+            if (debug) e.printStackTrace(System.err);
+        }
+    }
+
+    protected static void openLinkFromTable(HistoryWindow historyWindow, JTable historyTable, int selectedRow) {
         if (selectedRow == -1) {
             // show an error dialog if no row is selected
             JOptionPane.showMessageDialog(historyWindow,
@@ -790,12 +909,7 @@ public class MainWorker {
         } else {
             // get the string in the first column of the selected row
             String url = (String) historyTable.getValueAt(selectedRow, colUrl);
-            try {
-                if (debug) System.out.println("Opening link: " + url);
-                Desktop.getDesktop().browse(new java.net.URI(url));
-            } catch (Exception e) {
-                if (debug) e.printStackTrace(System.err);
-            }
+            openLink(url);
         }
     }
 
@@ -815,13 +929,14 @@ public class MainWorker {
                 textField_URL.requestFocus();
                 simulateKeyEvent(textField_URL, KeyEvent.VK_ENTER, '\n', 0, KeyEvent.KEY_RELEASED);
                 textField_URL.selectAll();
-
-                historyWindow.dispose();
             } catch (Exception e) {
                 if (debug) e.printStackTrace(System.err);
             }
         }
 
+        if (closeAfterInsert) {
+            historyWindow.dispose();
+        }
     }
 
     protected static void copyRowToClipboard(HistoryWindow historyWindow, JTable historyTable, int selectedRow, int i) {
@@ -875,18 +990,21 @@ public class MainWorker {
     }
 
     protected static void deleteRelatedFiles() {
-        // an array of all files with .part extension that match the video file name
-        String[] fileList = new File(downloadDirectoryPath).list((dir, name) ->
-                name.contains(videoFileName)
-        );
-        if (fileList == null) {
+        // an array of all files in download directory that match the video file name
+
+        String[] fileList = new File(downloadDirectoryPath + fileDiv).list((dir, name) -> name.startsWith(videoFileName));
+
+        if ( fileList == null || fileList.length < 1 )  {
             System.err.println("[ERROR] Failed to retrieve list of files to delete."
                     + "\nDirectory: " + downloadDirectoryPath
                     + "\nFilename: " + videoFileName
             );
             return;
         } else {
-            if (debug) System.out.println("Files to delete: " + Arrays.toString(fileList));
+            if (debug) {
+                System.out.println("Files to delete: " + Arrays.toString(fileList));
+                System.out.println("Directory: " + downloadDirectoryPath);
+            }
         }
 
         // delete all matching files
@@ -912,10 +1030,23 @@ public class MainWorker {
     protected static void getJarPath() {
         try {
             jarPath = Paths.get(MainWorker.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParent().toString();
-            System.out.println("Jar Path: " + jarPath);
+            if (debug) System.out.println("Jar Path: " + jarPath);
         } catch (URISyntaxException e) {
-            if (MainWorker.debug) e.printStackTrace(System.err);
+            if (debug) e.printStackTrace(System.err);
             System.err.println("[ERROR] Failed to get jar path.");
+        }
+    }
+
+    public static boolean isFileInUse(Path filePath) {
+        try (FileChannel channel = FileChannel.open(filePath, StandardOpenOption.WRITE);
+             FileLock lock = channel.tryLock()) {
+
+            // If the lock is null, then the file is already locked
+            return lock == null;
+
+        } catch (IOException e) {
+            // An exception occurred, which means the file is likely in use
+            return true;
         }
     }
 }

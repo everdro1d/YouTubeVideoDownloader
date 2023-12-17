@@ -32,6 +32,7 @@ public class AdvancedSettings {
     protected static int audioASR = 0; // the audio sample rate to download
 
     protected static int recodeExt = 0; // the recode format to download
+    protected static int writeThumbnailExt = 0; // the write thumbnail format to download
 
     protected static String[] arrayVideoExtensions = new String[] {""};
     protected static String[] arrayVideoResolution = new String[] {""};
@@ -44,13 +45,15 @@ public class AdvancedSettings {
     protected static String[] arrayAudioCodec = new String[] {""};
     protected static String[] arrayAudioABR = new String[] {""};
     protected static String[] arrayAudioASR = new String[] {""};
-    protected static String[] arrayVARecodeExt = new String[] {"avi", "flv", "mkv", "mov", "mp4", "webm"};
-    protected static String[] arrayVORecodeExt = new String[] {"avi", "flv", "mkv", "gif", "mov", "mp4", "webm"};
-    protected static String[] arrayAORecodeExt = new String[] {"aac", "aiff", "flac", "m4a", "mka", "mp3", "ogg", "opus", "wav"};
+    protected static final String[] arrayVARecodeExt = new String[] {"avi", "flv", "mkv", "mov", "mp4", "webm"};
+    protected static final String[] arrayVORecodeExt = new String[] {"avi", "flv", "mkv", "gif", "mov", "mp4", "webm"};
+    protected static final String[] arrayAORecodeExt = new String[] {"aac", "aiff", "flac", "m4a", "mka", "mp3", "ogg", "opus", "wav"};
     protected static String[] arrayRecodeExt = new String[] {""}; // gets set depending on the videoAudio variable
 
-    protected static String[] arrayEmbedThumbnailSupported = new String[] // supported formats for embed thumbnail
+    protected static final String[] arrayEmbedThumbnailSupported = new String[] // supported formats for embed thumbnail
             {"mp3", "mkv", "mka", "ogg", "opus", "flac", "m4a", "mp4", "m4v", "mov"};
+    protected static final String[] arrayWriteThumbnailExt = new String[] // supported formats for write thumbnail
+            {"png", "jpg", "webp"};
 
 
     public static void readVideoOptionsFromYT() {
@@ -181,9 +184,8 @@ public class AdvancedSettings {
 
     public static String getAdvancedSettings() {
         StringBuilder output = new StringBuilder();
-        String div = windows ? "\\" : "/";
         ArrayList<String> arrayListAdvancedSettings = new ArrayList<>();
-        arrayListAdvancedSettings.add("--ffmpeg-location " + (jarPath + div) );
+        arrayListAdvancedSettings.add("--ffmpeg-location " + stringQuotes + (jarPath + fileDiv + binaryFiles[1]) + stringQuotes );
         arrayListAdvancedSettings.add("--restrict-filenames");
         arrayListAdvancedSettings.add("--progress");
         arrayListAdvancedSettings.add("--newline");
@@ -198,7 +200,8 @@ public class AdvancedSettings {
 
         if (!advancedSettingsEnabled) {
             arrayListAdvancedSettings.add("--embed-thumbnail");
-            arrayListAdvancedSettings.add("--convert-thumbnails png");
+            arrayListAdvancedSettings.add(
+                    "--convert-thumbnails \"" + arrayWriteThumbnailExt[writeThumbnailExt] + "\"");
             arrayListAdvancedSettings.add("--add-metadata");
 
             switch (videoAudio) {
@@ -223,7 +226,8 @@ public class AdvancedSettings {
             if (writeThumbnail) {
                 if (embedThumbnail) {
                     arrayListAdvancedSettings.add("--embed-thumbnail");
-                    arrayListAdvancedSettings.add("--convert-thumbnails png");
+                    arrayListAdvancedSettings.add(
+                            "--convert-thumbnails \"" + arrayWriteThumbnailExt[writeThumbnailExt] + "\"");
                 } else {
                     arrayListAdvancedSettings.add("--write-thumbnail");
                 }

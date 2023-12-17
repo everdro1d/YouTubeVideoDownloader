@@ -17,22 +17,27 @@ import static main.java.MainWorker.*;
 
 public class MainWindow extends JFrame {
     protected static HistoryWindow historyWindow;
+
     protected static JFrame frame;
         protected JPanel mainPanel;
             protected JPanel northPanel;
                 protected JPanel northPanelBorder1;
                     protected JPanel northPanelWestBorder;
                         protected JButton historyButton;
+                    protected JPanel northPanelCenter;
+                        protected JPanel northPanelCenterRow1;
+                            protected JButton titleIconButton;
+                            protected JPanel northPanelCenterRow1YPanel;
+                                protected JLabel labelTitle;
+                                protected CustomSeparator separatorTitle;
                     protected JPanel northPanelEastBorder;
                         protected JToggleButton lightDarkModeButton;
-                    protected JPanel northPanelRow1;
-                        protected JLabel labelTitle;
-                        protected CustomSeparator separatorNP1;
-                        protected JLabel labelURL;
-                        protected static JTextField textField_URL;
-                        protected static JPopupMenu textFieldPopupMenu;
-                        protected boolean validURL;
-                        protected JComboBox<String> comboBoxType;
+                        protected JPanel northPanelCenterRow2;
+                            protected JLabel labelURL;
+                            protected static JTextField textField_URL;
+                            protected static JPopupMenu textFieldPopupMenu;
+                            protected boolean validURL;
+                            protected JComboBox<String> comboBoxType;
             protected JPanel centerVerticalPanel;
 
                 protected JPanel centerVerticalPanelRow1;
@@ -75,250 +80,283 @@ public class MainWindow extends JFrame {
                         protected JLabel labelRecodeBox;
                         protected static JComboBox<String> comboBoxRecodeExt;
                         protected static JCheckBox checkBoxWriteThumbnail;
+                        protected static JComboBox<String> comboBoxWriteThumbnailExt;
                         protected static JCheckBox checkBoxEmbedThumbnail;
                         protected static JCheckBox checkBoxMetadata;
 
             protected JPanel southPanel;
-                protected CustomSeparator separatorSP;
+                protected CustomSeparator separatorButtonPanel;
                 protected JPanel southPanelRow1;
                     protected JButton fileChooserButton;
                     protected static JButton downloadButton;
             protected JPanel eastPanel;
             protected JPanel westPanel;
-    private final String titleText = "YouTube Video Downloader V2.0";
     private final String[] typeComboBoxOptions = {"Video + Audio", "Only Video", "Only Audio"};
     protected static final int windowWidth = 840;
-    protected final int windowHeight = 245;
-    protected int windowWidthExpanded = 980;
+    protected final int windowHeight = 250;
+    protected final int windowWidthExpanded = 980;
     protected int windowHeightExpanded = 360;
     protected final int fontSize = 18;
     protected static final String fontName = "Tahoma";
 
 
     public MainWindow() {
+        initializeWindowProperties();
+
+        initializeGUIComponents();
+
+        frame.setVisible(true);
+
+        setHandCursorToClickableComponents(frame);
+    }
+
+    private void initializeWindowProperties() {
         frame = new JFrame();
         frame.setTitle(titleText);
         frame.setMinimumSize(new Dimension(windowWidth, windowHeight));
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setLocationRelativeTo(null);
         frame.setResizable(false);
+        frame.setLocationRelativeTo(null);
 
-        mainPanel = new JPanel();
-        mainPanel.setLayout(new BorderLayout());
-        frame.add(mainPanel);
-
-        initializeGUIComponents();
-
-        textField_URL.getKeyListeners()[0].keyReleased(null);
-
-        frame.setVisible(true);
+        frame.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentMoved(ComponentEvent e) {
+                windowPosition = getFramePositionOnScreen(frame);
+            }
+        });
     }
 
     private void initializeGUIComponents() {
-
-        // add a new JPanel in the north of the mainPanel
-        northPanel = new JPanel();
-        northPanel.setLayout(new BorderLayout());
-            mainPanel.add(northPanel, BorderLayout.NORTH);
+        mainPanel = new JPanel();
+        mainPanel.setLayout(new BorderLayout());
+        frame.add(mainPanel);
+        // dependent on the layout of the mainPanel
         {
-            northPanelBorder1 = new JPanel();
-            northPanelBorder1.setLayout(new BorderLayout());
-                northPanel.add(northPanelBorder1, BorderLayout.NORTH);
+            // add a new JPanel in the north of the mainPanel
+            northPanel = new JPanel();
+            northPanel.setLayout(new BorderLayout());
+            mainPanel.add(northPanel, BorderLayout.NORTH);
             {
-                // add a new JPanel in the west of the northPanelBorder1
-                northPanelWestBorder = new JPanel();
-                northPanelWestBorder.setLayout(new BoxLayout(northPanelWestBorder, BoxLayout.Y_AXIS));
-                northPanelBorder1.add(northPanelWestBorder, BorderLayout.WEST);
+                northPanelBorder1 = new JPanel();
+                northPanelBorder1.setLayout(new BorderLayout());
+                northPanel.add(northPanelBorder1, BorderLayout.NORTH);
                 {
-                    //adds a new label in the west of the northPanelBorder1
-                    //this is just to make the title look centered           TotalWidthOfPanel = 70
-                    northPanelWestBorder.add(Box.createRigidArea(new Dimension(20, 0)));
+                    // add a new JPanel in the west of the northPanelBorder1
+                    northPanelWestBorder = new JPanel();
+                    northPanelWestBorder.setLayout(new BoxLayout(northPanelWestBorder, BoxLayout.Y_AXIS));
+                    northPanelBorder1.add(northPanelWestBorder, BorderLayout.WEST);
+                    {
+                        //adds a new label in the west of the northPanelBorder1
+                        //this is just to make the title look centered           TotalWidthOfPanel = 70
+                        northPanelWestBorder.add(Box.createRigidArea(new Dimension(20, 0)));
 
-                    //create Y spacing
-                    northPanelWestBorder.add(Box.createRigidArea(new Dimension(0, 10)));
+                        //create Y spacing
+                        northPanelWestBorder.add(Box.createRigidArea(new Dimension(0, 10)));
 
-                    // add a history button in the west of the northPanelWestBorder
-                    historyButton = new JButton();
-                    historyButton.setBorderPainted(false);
-                    historyButton.setContentAreaFilled(false);
-                    historyButton.setAlignmentX(Component.LEFT_ALIGNMENT);
-                    historyButton.setAlignmentY(Component.BOTTOM_ALIGNMENT);
-                    historyButton.setEnabled(logHistory);
-                    historyButton.setIcon(
-                            getIcon(darkMode ? "main/resources/historyIconDark.png" : "main/resources/historyIcon.png")
-                    );
-                    northPanelWestBorder.add(historyButton);
+                        // add a history button in the west of the northPanelWestBorder
+                        historyButton = new JButton();
+                        historyButton.setBorderPainted(false);
+                        historyButton.setContentAreaFilled(false);
+                        historyButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+                        historyButton.setAlignmentY(Component.BOTTOM_ALIGNMENT);
+                        historyButton.setEnabled(logHistory);
+                        historyButton.setIcon(
+                                getApplicationIcon(darkMode ? "images/historyIconDark.png" : "images/historyIcon.png")
+                        );
+                        northPanelWestBorder.add(historyButton);
 
-                    historyButton.addActionListener((e) -> {
-                        historyWindow = new HistoryWindow(frame);
-                        historyWindow.setVisible(true);
-                    });
+                        historyButton.addActionListener((e) -> {
+                            historyWindow = new HistoryWindow(frame);
+                            historyWindow.setVisible(true);
+                        });
 
-                }
-                // add a new JPanel in the center of the northPanelBorder1
-                northPanelRow1 = new JPanel();
-                northPanelRow1.setLayout(new BoxLayout(northPanelRow1, BoxLayout.Y_AXIS));
-                northPanelBorder1.add(northPanelRow1, BorderLayout.CENTER);
-
-                // dependent on the layout of the northPanelRow1
-                {
-                    northPanelRow1.add(Box.createRigidArea(new Dimension(0, 5)));
-
-                    // add a new title label in the north of the northPanelRow1
-                    labelTitle = new JLabel(titleText);
-                    labelTitle.setFont(new Font(fontName, Font.BOLD, 24));
-                    labelTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
-                    northPanelRow1.add(labelTitle);
-
-                    northPanelRow1.add(Box.createRigidArea(new Dimension(0, 10)));
-
-                    // add a new separator in the north of the northPanelRow1
-                    separatorNP1 = new CustomSeparator(2, 3);
-                    northPanelRow1.add(separatorNP1);
-
-                    northPanelRow1.add(Box.createRigidArea(new Dimension(0, 30)));
-
-                    // add a new JPanel in the center of the northPanel
-                    northPanelRow1 = new JPanel();
-                    northPanelRow1.setLayout(new BoxLayout(northPanelRow1, BoxLayout.LINE_AXIS));
-                    northPanel.add(northPanelRow1, BorderLayout.CENTER);
+                    }
+                    // add a new JPanel in the center of the northPanelBorder1
+                    northPanelCenter = new JPanel();
+                    northPanelCenter.setLayout(new BoxLayout(northPanelCenter, BoxLayout.Y_AXIS));
+                    northPanelBorder1.add(northPanelCenter, BorderLayout.CENTER);
 
                     // dependent on the layout of the northPanelRow1
                     {
+                        northPanelCenter.add(Box.createRigidArea(new Dimension(0, 5)));
 
-                        northPanelRow1.add(Box.createRigidArea(new Dimension(20, 0)));
+                        // add a new JPanel in the first row of the northPanelCenter for the title
+                        northPanelCenterRow1 = new JPanel();
+                        northPanelCenterRow1.setLayout(new BoxLayout(northPanelCenterRow1, BoxLayout.X_AXIS));
+                        northPanelCenter.add(northPanelCenterRow1);
+                        {
+                            Icon titleIcon = getTitleIcon();
+                            titleIconButton = new JButton(titleIcon);
+                            titleIconButton.setContentAreaFilled(false);
+                            titleIconButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+                            northPanelCenterRow1.add(titleIconButton);
 
-                        //add a new label on the left side of the north panel underneath the title
-                        labelURL = new JLabel("URL: ");
-                        labelURL.setFont(new Font(fontName, Font.PLAIN, fontSize));
-                        labelURL.setHorizontalAlignment(SwingConstants.LEFT);
-                        labelURL.setAlignmentX(Component.LEFT_ALIGNMENT);
-                        northPanelRow1.add(labelURL);
+                            titleIconButton.addActionListener((e) -> openLink(MainWorker.dro1dDevWebsite));
 
-                        //add a new text field in the center of the north panel underneath the title
-                        textField_URL = new JTextField(rawURL);
-                        textField_URL.setFont(new Font(fontName, Font.PLAIN, fontSize));
-                        textField_URL.setHorizontalAlignment(SwingConstants.LEFT);
-                        textField_URL.setAlignmentX(Component.CENTER_ALIGNMENT);
-                        textField_URL.setColumns(28);
-                        northPanelRow1.add(textField_URL);
+                            int spacerWidth = 15;
+                            northPanelCenterRow1.add(Box.createRigidArea(new Dimension(spacerWidth, 0)));
 
-                        textField_URL.addKeyListener(new KeyAdapter() {
-                            public void keyReleased(KeyEvent e) {
-                                rawURL = textField_URL.getText().trim();
-                                if (rawURL.isEmpty()) {
-                                    validURL = false;
-                                } else {
-                                    validURL = validURL(rawURL);
-                                    if (validURL) {
-                                        //find the char index of the videoID add 11 to get the end of the video ID
-                                        int videoIDStart = rawURL.indexOf(videoID);
-                                        int videoIDEnd = videoIDStart + 11;
-                                        //cut off the URL to the end of the video ID
-                                        rawURL = rawURL.substring(0, videoIDEnd);
+                            northPanelCenterRow1YPanel = new JPanel();
+                            northPanelCenterRow1YPanel.setLayout(new BoxLayout(northPanelCenterRow1YPanel, BoxLayout.Y_AXIS));
+                            northPanelCenterRow1.add(northPanelCenterRow1YPanel);
+                            {
+                                // add a new title label in the north of the northPanelRow1
+                                labelTitle = new JLabel(titleText);
+                                labelTitle.setFont(new Font(fontName, Font.BOLD, 24));
+                                labelTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
+                                northPanelCenterRow1YPanel.add(labelTitle);
 
-                                        textField_URL.setText(rawURL);
+                                northPanelCenterRow1YPanel.add(Box.createRigidArea(new Dimension(0, 15)));
 
+                                // add a new separator in the north of the northPanelRow1
+                                separatorTitle = new CustomSeparator(false, 2, 3);
+                                northPanelCenterRow1YPanel.add(separatorTitle);
+                            }
+
+                            // x spacing to account for the icon
+                            northPanelCenterRow1.add(Box.createRigidArea(new Dimension(titleIcon.getIconWidth() + spacerWidth, 0)));
+                        }
+
+                        northPanelCenter.add(Box.createRigidArea(new Dimension(0, 20)));
+
+                        // add a new JPanel in the second row of the northPanelCenter
+                        northPanelCenterRow2 = new JPanel();
+                        northPanelCenterRow2.setLayout(new BoxLayout(northPanelCenterRow2, BoxLayout.LINE_AXIS));
+                        northPanel.add(northPanelCenterRow2, BorderLayout.CENTER);
+
+                        // dependent on the layout of the northPanelRow1
+                        {
+
+                            northPanelCenterRow2.add(Box.createRigidArea(new Dimension(20, 0)));
+
+                            //add a new label on the left side of the north panel underneath the title
+                            labelURL = new JLabel("URL: ");
+                            labelURL.setFont(new Font(fontName, Font.PLAIN, fontSize));
+                            labelURL.setHorizontalAlignment(SwingConstants.LEFT);
+                            labelURL.setAlignmentX(Component.LEFT_ALIGNMENT);
+                            northPanelCenterRow2.add(labelURL);
+
+                            //add a new text field in the center of the north panel underneath the title
+                            textField_URL = new JTextField(rawURL);
+                            textField_URL.setFont(new Font(fontName, Font.PLAIN, fontSize));
+                            textField_URL.setHorizontalAlignment(SwingConstants.LEFT);
+                            textField_URL.setAlignmentX(Component.CENTER_ALIGNMENT);
+                            textField_URL.setColumns(28);
+                            northPanelCenterRow2.add(textField_URL);
+
+                            textField_URL.addKeyListener(new KeyAdapter() {
+                                public void keyReleased(KeyEvent e) {
+                                    rawURL = textField_URL.getText().trim();
+                                    if (rawURL.isEmpty()) {
+                                        validURL = false;
+                                    } else {
+                                        validURL = validURL(rawURL);
+                                        if (validURL) {
+                                            //find the char index of the videoID add 11 to get the end of the video ID
+                                            int videoIDStart = rawURL.indexOf(videoID);
+                                            int videoIDEnd = videoIDStart + 11;
+                                            //cut off the URL to the end of the video ID
+                                            rawURL = rawURL.substring(0, videoIDEnd);
+
+                                            textField_URL.setText(rawURL);
+
+
+                                        }
                                         if (debug) System.out.println("RawURL: " + rawURL);
                                     }
+                                    validURLLabel.setText(validURL ? "URL is valid" : "URL is invalid");
+                                    coloringModeChange();
+
+                                    if (validURL && !compatibilityMode) {
+                                        checkBoxAdvancedSettings.setEnabled(true);
+                                    } else {
+                                        checkBoxAdvancedSettings.setSelected(false);
+                                        checkBoxAdvancedSettings.setEnabled(false);
+                                        advancedSettingsPanelRow1.setVisible(false);
+                                        advancedSettingsPanelRow2.setVisible(false);
+                                        advancedSettingsPanelRow3.setVisible(false);
+                                        advancedSettingsEvent(true);
+                                    }
                                 }
-                                validURLLabel.setText(validURL ? "URL is valid" : "URL is invalid");
-                                coloringModeChange();
+                            });
 
-                                if (validURL && !compatibilityMode) {
-                                    checkBoxAdvancedSettings.setEnabled(true);
-                                } else {
-                                    checkBoxAdvancedSettings.setSelected(false);
-                                    checkBoxAdvancedSettings.setEnabled(false);
-                                    advancedSettingsPanelRow1.setVisible(false);
-                                    advancedSettingsPanelRow2.setVisible(false);
-                                    advancedSettingsPanelRow3.setVisible(false);
-                                    advancedSettingsEvent(true);
+                            textField_URL.addMouseListener(new MouseAdapter() {
+                                @Override
+                                public void mouseClicked(MouseEvent e) {
+                                    textField_URL.requestFocusInWindow();
+
+                                    if (SwingUtilities.isRightMouseButton(e)) {
+                                        if (MainWorker.debug) System.out.println("Right click on URL text field");
+                                        textFieldPopupMenu.show(e.getComponent(), e.getX(), e.getY());
+                                    } else if (SwingUtilities.isLeftMouseButton(e)) {
+                                        if (MainWorker.debug) System.out.println("Left click on URL text field");
+                                        textFieldPopupMenu.setVisible(false);
+                                    }
                                 }
-                            }
-                        });
-
-                        textField_URL.addMouseListener(new MouseAdapter() {
-                            @Override
-                            public void mouseClicked(MouseEvent e) {
-                                textField_URL.requestFocusInWindow();
-
-                                if (SwingUtilities.isRightMouseButton(e)) {
-                                    if (MainWorker.debug) System.out.println("Right click on URL text field");
-                                    textFieldPopupMenu.show(e.getComponent(), e.getX(), e.getY());
-                                } else if (SwingUtilities.isLeftMouseButton(e)) {
-                                    if (MainWorker.debug) System.out.println("Left click on URL text field");
-                                    textFieldPopupMenu.setVisible(false);
-                                }
-                            }
-                        });
+                            });
 
 
-                        northPanelRow1.add(Box.createRigidArea(new Dimension(10, 0)));
+                            northPanelCenterRow2.add(Box.createRigidArea(new Dimension(10, 0)));
 
-                        //add a new comboBox on the right side of the north panel underneath the title
-                        comboBoxType = new JComboBox<>();
-                        comboBoxType.setFont(new Font(fontName, Font.PLAIN, fontSize));
-                        comboBoxType.setModel(new DefaultComboBoxModel<>(typeComboBoxOptions));
-                        comboBoxType.setSelectedIndex(videoAudio);
-                        comboBoxType.setAlignmentX(Component.RIGHT_ALIGNMENT);
-                        northPanelRow1.add(comboBoxType);
+                            //add a new comboBox on the right side of the north panel underneath the title
+                            comboBoxType = new JComboBox<>();
+                            comboBoxType.setFont(new Font(fontName, Font.PLAIN, fontSize));
+                            comboBoxType.setModel(new DefaultComboBoxModel<>(typeComboBoxOptions));
+                            comboBoxType.setSelectedIndex(videoAudio);
+                            comboBoxType.setAlignmentX(Component.RIGHT_ALIGNMENT);
+                            northPanelCenterRow2.add(comboBoxType);
 
-                        comboBoxType.addActionListener((e) -> {
-                            videoAudio = comboBoxType.getSelectedIndex();
-                            checkType();
-                            // 0 = video and audio,  1 = only video,  2 = only audio
-                        });
+                            comboBoxType.addActionListener((e) -> {
+                                videoAudio = comboBoxType.getSelectedIndex();
+                                checkType();
+                                // 0 = video and audio,  1 = only video,  2 = only audio
+                            });
 
-                        northPanelRow1.add(Box.createRigidArea(new Dimension(20, 0)));
+                            northPanelCenterRow2.add(Box.createRigidArea(new Dimension(20, 0)));
+                        }
                     }
-                }
 
-                // add a new JPanel in the east of the northPanelBorder1
-                northPanelEastBorder = new JPanel();
-                northPanelEastBorder.setLayout(new BoxLayout(northPanelEastBorder, BoxLayout.Y_AXIS));
-                northPanelBorder1.add(northPanelEastBorder, BorderLayout.EAST);
-                {
-                    //create Y spacing
-                    northPanelEastBorder.add(Box.createRigidArea(new Dimension(0, 10)));
+                    // add a new JPanel in the east of the northPanelBorder1
+                    northPanelEastBorder = new JPanel();
+                    northPanelEastBorder.setLayout(new BoxLayout(northPanelEastBorder, BoxLayout.Y_AXIS));
+                    northPanelBorder1.add(northPanelEastBorder, BorderLayout.EAST);
+                    {
+                        //create Y spacing
+                        northPanelEastBorder.add(Box.createRigidArea(new Dimension(0, 10)));
 
-                    lightDarkModeButton = new JToggleButton();
-                    lightDarkModeButton.setBorderPainted(false);
-                    lightDarkModeButton.setContentAreaFilled(false);
-                    lightDarkModeButton.setAlignmentX(Component.RIGHT_ALIGNMENT);
-                    lightDarkModeButton.setAlignmentY(Component.CENTER_ALIGNMENT);
+                        lightDarkModeButton = new JToggleButton();
+                        lightDarkModeButton.setBorderPainted(false);
+                        lightDarkModeButton.setContentAreaFilled(false);
+                        lightDarkModeButton.setAlignmentX(Component.RIGHT_ALIGNMENT);
+                        lightDarkModeButton.setAlignmentY(Component.CENTER_ALIGNMENT);
 
-                    Icon sunIcon = getIcon("main/resources/sunIcon.png");
-                    Icon moonIcon = getIcon("main/resources/moonIcon.png");
+                        Icon sunIcon = getApplicationIcon("images/sunIcon.png");
+                        Icon moonIcon = getApplicationIcon("images/moonIcon.png");
 
-                    lightDarkModeButton.setSelectedIcon(darkMode ? sunIcon : moonIcon);
-                    lightDarkModeButton.setIcon(darkMode ? moonIcon : sunIcon);
+                        lightDarkModeButton.setSelectedIcon(darkMode ? sunIcon : moonIcon);
+                        lightDarkModeButton.setIcon(darkMode ? moonIcon : sunIcon);
 
-                    if (!macOS) {
                         northPanelEastBorder.add(lightDarkModeButton, BorderLayout.EAST);
-                    } else {
-                        northPanelEastBorder.add(Box.createRigidArea(new Dimension(50, 0)));
+
+                        lightDarkModeButton.addActionListener((e) -> {
+                            darkMode = !darkMode;
+                            MainWorker.lightDarkMode();
+                            coloringModeChange();
+                            SwingUtilities.updateComponentTreeUI(frame);
+                        });
+
+                        northPanelEastBorder.add(Box.createRigidArea(new Dimension(20, 0)));
                     }
-
-                    lightDarkModeButton.addActionListener((e) -> {
-                        darkMode = !darkMode;
-                        MainWorker.lightDarkMode();
-                        coloringModeChange();
-                        SwingUtilities.updateComponentTreeUI(frame);
-                    });
-
-                    northPanelEastBorder.add(Box.createRigidArea(new Dimension(20, 0)));
                 }
             }
-        }
 
-        //------------------------------ Main Panel Divider ------------------------------\\
+            //------------------------------ Main Panel Divider ------------------------------\\
 
 
             //create a new JPanel boxlayout in the center of the mainPanel
             centerVerticalPanel = new JPanel();
             centerVerticalPanel.setLayout(new BoxLayout(centerVerticalPanel, BoxLayout.Y_AXIS));
-                mainPanel.add(centerVerticalPanel, BorderLayout.CENTER);
+            mainPanel.add(centerVerticalPanel, BorderLayout.CENTER);
 
             //dependent on the layout of the centerVerticalPanel
             {
@@ -327,7 +365,7 @@ public class MainWindow extends JFrame {
                 //create a new JPanel boxlayout in the first row of the centerVerticalPanel
                 centerVerticalPanelRow1 = new JPanel();
                 centerVerticalPanelRow1.setLayout(new BoxLayout(centerVerticalPanelRow1, BoxLayout.LINE_AXIS));
-                    centerVerticalPanel.add(centerVerticalPanelRow1);
+                centerVerticalPanel.add(centerVerticalPanelRow1);
 
                 //dependent on the layout of the centerVerticalPanelRow1
                 {
@@ -338,7 +376,7 @@ public class MainWindow extends JFrame {
                     validURLLabel.setFont(new Font(fontName, Font.PLAIN, fontSize));
                     validURLLabel.setHorizontalTextPosition(SwingConstants.LEFT);
                     validURLLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-                        centerVerticalPanelRow1.add(validURLLabel);
+                    centerVerticalPanelRow1.add(validURLLabel);
 
                     centerVerticalPanelRow1.add(Box.createRigidArea(new Dimension(10, 0)));
 
@@ -347,18 +385,18 @@ public class MainWindow extends JFrame {
                     checkBoxAdvancedSettings.setFont(new Font(fontName, Font.PLAIN, fontSize));
                     checkBoxAdvancedSettings.setAlignmentX(Component.CENTER_ALIGNMENT);
                     checkBoxAdvancedSettings.setEnabled(false);
-                        centerVerticalPanelRow1.add(checkBoxAdvancedSettings);
+                    centerVerticalPanelRow1.add(checkBoxAdvancedSettings);
 
-                        checkBoxAdvancedSettings.addActionListener((e) -> {
-                            checkBoxCompatibility.setSelected(false);
-                            compatibilityMode = false;
-                            checkBoxCompatibility.setEnabled(!checkBoxAdvancedSettings.isSelected());
-                            advancedSettingsEvent(containsAny(new String[]{
-                                    "https://www.youtube.com/watch?v=",
-                                    "https://youtu.be/",
-                                    "https://www.youtube.com/shorts/"
-                            }, rawURL));
-                        });
+                    checkBoxAdvancedSettings.addActionListener((e) -> {
+                        checkBoxCompatibility.setSelected(false);
+                        compatibilityMode = false;
+                        checkBoxCompatibility.setEnabled(!checkBoxAdvancedSettings.isSelected());
+                        advancedSettingsEvent(containsAny(new String[]{
+                                "https://www.youtube.com/watch?v=",
+                                "https://youtu.be/",
+                                "https://www.youtube.com/shorts/"
+                        }, rawURL));
+                    });
 
                     centerVerticalPanelRow1.add(Box.createRigidArea(new Dimension(10, 0)));
 
@@ -367,26 +405,26 @@ public class MainWindow extends JFrame {
                     checkBoxCompatibility.setFont(new Font(fontName, Font.PLAIN, fontSize));
                     checkBoxCompatibility.setAlignmentX(Component.CENTER_ALIGNMENT);
                     checkBoxCompatibility.setEnabled(true);
-                        centerVerticalPanelRow1.add(checkBoxCompatibility);
+                    centerVerticalPanelRow1.add(checkBoxCompatibility);
 
                     if (prefs.getBoolean("compatibilityMode", false)) {
                         checkBoxCompatibility.setSelected(compatibilityMode);
                         checkBoxAdvancedSettings.setSelected(!compatibilityMode);
                     }
-                        checkBoxCompatibility.addActionListener((e) -> {
+                    checkBoxCompatibility.addActionListener((e) -> {
 
-                            compatibilityMode = checkBoxCompatibility.isSelected();
-                            if (compatibilityMode) {
-                                checkBoxAdvancedSettings.setSelected(false);
-                                checkBoxAdvancedSettings.setEnabled(false);
-                                advancedSettingsPanelRow1.setVisible(false);
-                                advancedSettingsPanelRow2.setVisible(false);
-                                advancedSettingsPanelRow3.setVisible(false);
-                                advancedSettingsEvent(true);
-                            } else {
-                                checkBoxAdvancedSettings.setEnabled(validURL && !checkBoxCompatibility.isSelected());
-                            }
-                        });
+                        compatibilityMode = checkBoxCompatibility.isSelected();
+                        if (compatibilityMode) {
+                            checkBoxAdvancedSettings.setSelected(false);
+                            checkBoxAdvancedSettings.setEnabled(false);
+                            advancedSettingsPanelRow1.setVisible(false);
+                            advancedSettingsPanelRow2.setVisible(false);
+                            advancedSettingsPanelRow3.setVisible(false);
+                            advancedSettingsEvent(true);
+                        } else {
+                            checkBoxAdvancedSettings.setEnabled(validURL && !checkBoxCompatibility.isSelected());
+                        }
+                    });
 
                     centerVerticalPanelRow1.add(Box.createRigidArea(new Dimension(10, 0)));
 
@@ -394,16 +432,16 @@ public class MainWindow extends JFrame {
                     checkBoxLogHistory.setFont(new Font(fontName, Font.PLAIN, fontSize));
                     checkBoxLogHistory.setAlignmentX(Component.CENTER_ALIGNMENT);
                     checkBoxLogHistory.setEnabled(true);
-                        centerVerticalPanelRow1.add(checkBoxLogHistory);
+                    centerVerticalPanelRow1.add(checkBoxLogHistory);
 
                     if (prefs.getBoolean("logHistory", true)) {
                         checkBoxLogHistory.setSelected(logHistory);
                         historyButton.setEnabled(logHistory);
                     }
-                        checkBoxLogHistory.addActionListener((e) -> {
-                            logHistory = checkBoxLogHistory.isSelected();
-                            historyButton.setEnabled(logHistory);
-                        });
+                    checkBoxLogHistory.addActionListener((e) -> {
+                        logHistory = checkBoxLogHistory.isSelected();
+                        historyButton.setEnabled(logHistory);
+                    });
                 }
 
                 centerVerticalPanel.add(Box.createRigidArea(new Dimension(0, 20)));
@@ -412,7 +450,7 @@ public class MainWindow extends JFrame {
                 centerVerticalPanelRow2 = new JPanel();
                 centerVerticalPanelRow2.setLayout(new BoxLayout(centerVerticalPanelRow2, BoxLayout.Y_AXIS));
                 centerVerticalPanelRow2.putClientProperty(FlatClientProperties.STYLE, "arc: 10");
-                    centerVerticalPanel.add(centerVerticalPanelRow2);
+                centerVerticalPanel.add(centerVerticalPanelRow2);
 
                 //dependent on the layout of the centerVerticalPanelRow2
                 {
@@ -421,7 +459,7 @@ public class MainWindow extends JFrame {
                     advancedSettingsPanelRow1 = new JPanel();
                     advancedSettingsPanelRow1.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
                     advancedSettingsPanelRow1.setVisible(false);
-                        centerVerticalPanelRow2.add(advancedSettingsPanelRow1);
+                    centerVerticalPanelRow2.add(advancedSettingsPanelRow1);
 
                     // dependent on the layout of the advancedSettingsPanelRow1
                     {
@@ -431,7 +469,7 @@ public class MainWindow extends JFrame {
                         labelVideoExt = new JLabel("Video Format: ");
                         labelVideoExt.setFont(new Font(fontName, Font.PLAIN, fontSize));
                         labelVideoExt.setAlignmentX(Component.LEFT_ALIGNMENT);
-                            advancedSettingsPanelRow1.add(labelVideoExt);
+                        advancedSettingsPanelRow1.add(labelVideoExt);
 
                         comboBoxVideoExt = new JComboBox<>(arrayVideoExtensions);
                         comboBoxMaker(comboBoxVideoExt, videoExt);
@@ -454,7 +492,7 @@ public class MainWindow extends JFrame {
                         labelVideoResolution = new JLabel("Resolution: ");
                         labelVideoResolution.setFont(new Font(fontName, Font.PLAIN, fontSize));
                         labelVideoResolution.setAlignmentX(Component.LEFT_ALIGNMENT);
-                            advancedSettingsPanelRow1.add(labelVideoResolution);
+                        advancedSettingsPanelRow1.add(labelVideoResolution);
 
                         comboBoxVideoResolution = new JComboBox<>(arrayVideoResolution);
                         comboBoxMaker(comboBoxVideoResolution, videoResolution);
@@ -471,7 +509,7 @@ public class MainWindow extends JFrame {
                         labelVideoFPS = new JLabel("FPS: ");
                         labelVideoFPS.setFont(new Font(fontName, Font.PLAIN, fontSize));
                         labelVideoFPS.setAlignmentX(Component.LEFT_ALIGNMENT);
-                            advancedSettingsPanelRow1.add(labelVideoFPS);
+                        advancedSettingsPanelRow1.add(labelVideoFPS);
 
                         comboBoxVideoFPS = new JComboBox<>(arrayVideoFPS);
                         comboBoxMaker(comboBoxVideoFPS, videoFPS);
@@ -488,7 +526,7 @@ public class MainWindow extends JFrame {
                         labelVideoVBR = new JLabel("VBR: ");
                         labelVideoVBR.setFont(new Font(fontName, Font.PLAIN, fontSize));
                         labelVideoVBR.setAlignmentX(Component.LEFT_ALIGNMENT);
-                            advancedSettingsPanelRow1.add(labelVideoVBR);
+                        advancedSettingsPanelRow1.add(labelVideoVBR);
 
                         comboBoxVideoVBR = new JComboBox<>(arrayVideoVBR);
                         comboBoxMaker(comboBoxVideoVBR, videoVBR);
@@ -505,7 +543,7 @@ public class MainWindow extends JFrame {
                         labelVideoCodec = new JLabel("Codec: ");
                         labelVideoCodec.setFont(new Font(fontName, Font.PLAIN, fontSize));
                         labelVideoCodec.setAlignmentX(Component.LEFT_ALIGNMENT);
-                            advancedSettingsPanelRow1.add(labelVideoCodec);
+                        advancedSettingsPanelRow1.add(labelVideoCodec);
 
                         comboBoxVideoCodec = new JComboBox<>(arrayVideoCodec);
                         comboBoxMaker(comboBoxVideoCodec, videoCodec);
@@ -526,7 +564,7 @@ public class MainWindow extends JFrame {
                     advancedSettingsPanelRow2 = new JPanel();
                     advancedSettingsPanelRow2.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
                     advancedSettingsPanelRow2.setVisible(false);
-                        centerVerticalPanelRow2.add(advancedSettingsPanelRow2);
+                    centerVerticalPanelRow2.add(advancedSettingsPanelRow2);
 
                     //dependent on the layout of the advancedSettingsPanelRow2
                     {
@@ -621,7 +659,7 @@ public class MainWindow extends JFrame {
                     advancedSettingsPanelRow3 = new JPanel();
                     advancedSettingsPanelRow3.setLayout(new FlowLayout(FlowLayout.CENTER, 0, 0));
                     advancedSettingsPanelRow3.setVisible(false);
-                        centerVerticalPanelRow2.add(advancedSettingsPanelRow3);
+                    centerVerticalPanelRow2.add(advancedSettingsPanelRow3);
 
                     //dependent on the layout of the advancedSettingsPanelRow3
                     {
@@ -678,7 +716,7 @@ public class MainWindow extends JFrame {
                         advancedSettingsPanelRow3.add(Box.createRigidArea(new Dimension(25, 0)));
 
 
-                        //add a new checkbox for thumbnail writing TODO maybe allow converting with combobox
+                        //add a new checkbox for thumbnail writing
                         checkBoxWriteThumbnail = new JCheckBox("Write Thumbnail");
                         checkBoxWriteThumbnail.setFont(new Font(fontName, Font.PLAIN, fontSize));
                         checkBoxWriteThumbnail.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -686,8 +724,24 @@ public class MainWindow extends JFrame {
 
                         checkBoxWriteThumbnail.addActionListener((e) -> {
                             writeThumbnail = checkBoxWriteThumbnail.isSelected();
+                            comboBoxWriteThumbnailExt.setEnabled(writeThumbnail);
                             checkEmbedThumbnailSupported();
+
                         });
+
+
+                        advancedSettingsPanelRow3.add(Box.createRigidArea(new Dimension(5, 0)));
+
+
+                        //add a new combobox to the right of the write thumbnail checkbox
+                        comboBoxWriteThumbnailExt = new JComboBox<>(arrayWriteThumbnailExt);
+                        comboBoxMaker(comboBoxWriteThumbnailExt, writeThumbnailExt);
+                        comboBoxWriteThumbnailExt.setEnabled(false);
+                        advancedSettingsPanelRow3.add(comboBoxWriteThumbnailExt);
+
+                        comboBoxWriteThumbnailExt.addActionListener(
+                                (e) -> writeThumbnailExt = comboBoxWriteThumbnailExt.getSelectedIndex()
+                        );
 
 
                         advancedSettingsPanelRow3.add(Box.createRigidArea(new Dimension(10, 0)));
@@ -729,136 +783,160 @@ public class MainWindow extends JFrame {
 
             }
 
-        //------------------------------ Main Panel Divider ------------------------------\\
+            //------------------------------ Main Panel Divider ------------------------------\\
 
 
-        southPanel = new JPanel();
-        southPanel.setLayout(new BoxLayout(southPanel, BoxLayout.Y_AXIS));
+            southPanel = new JPanel();
+            southPanel.setLayout(new BoxLayout(southPanel, BoxLayout.Y_AXIS));
             mainPanel.add(southPanel, BorderLayout.SOUTH);
-        {
-            southPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-
-            separatorSP = new CustomSeparator(6, 4);
-            southPanel.add(separatorSP);
-
-            southPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-
-            // add a new JPanel in the south of the mainPanel
-            southPanelRow1 = new JPanel();
-            southPanelRow1.setLayout(new FlowLayout());
-                southPanel.add(southPanelRow1, BorderLayout.SOUTH);
             {
-                //add a new FileChooser button in the center of the southPanel
-                fileChooserButton = new JButton("Choose Folder");
-                fileChooserButton.setFont(new Font(fontName, Font.PLAIN, fontSize+2));
-                fileChooserButton.setPreferredSize(new Dimension(185, 40));
-                fileChooserButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-                fileChooserButton.setIcon(getIcon("main/resources/folderIcon.png"));
-                southPanelRow1.add(fileChooserButton);
+                southPanel.add(Box.createRigidArea(new Dimension(0, 10)));
 
-                fileChooserButton.addActionListener((e) -> MainWorker.downloadDirectoryPath = MainWorker.openFileChooser());
+                separatorButtonPanel = new CustomSeparator(true, 6, 4);
+                southPanel.add(separatorButtonPanel);
 
+                southPanel.add(Box.createRigidArea(new Dimension(0, 5)));
 
-                southPanelRow1.add(Box.createRigidArea(new Dimension(20, 0)));
+                // add a new JPanel in the south of the mainPanel
+                southPanelRow1 = new JPanel();
+                southPanelRow1.setLayout(new FlowLayout());
+                southPanel.add(southPanelRow1, BorderLayout.SOUTH);
+                {
+                    //add a new FileChooser button in the center of the southPanel
+                    fileChooserButton = new JButton("Choose Folder");
+                    fileChooserButton.setFont(new Font(fontName, Font.PLAIN, fontSize + 2));
+                    fileChooserButton.setPreferredSize(new Dimension(185, 40));
+                    fileChooserButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+                    fileChooserButton.setIcon(getApplicationIcon("images/folderIcon.png"));
+                    southPanelRow1.add(fileChooserButton);
 
-
-                // add a new button in the center of the southPanel
-                downloadButton = new JButton("Download");
-                downloadButton.setFont(new Font(fontName, Font.PLAIN, fontSize+2));
-                downloadButton.setPreferredSize(new Dimension(160, 40));
-                downloadButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-                downloadButton.setIcon(getIcon("main/resources/downloadIcon.png"));
-                southPanelRow1.add(downloadButton);
-
-                downloadButton.addActionListener((e) -> MainWorker.downloadButtonClicked());
+                    fileChooserButton.addActionListener((e) -> MainWorker.downloadDirectoryPath = MainWorker.openFileChooser());
 
 
-                southPanelRow1.add(Box.createRigidArea(new Dimension(20, 0)));
+                    southPanelRow1.add(Box.createRigidArea(new Dimension(20, 0)));
 
+
+                    // add a new button in the center of the southPanel
+                    downloadButton = new JButton("Download");
+                    downloadButton.setFont(new Font(fontName, Font.PLAIN, fontSize + 2));
+                    downloadButton.setPreferredSize(new Dimension(160, 40));
+                    downloadButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+                    downloadButton.setIcon(getApplicationIcon("images/downloadIcon.png"));
+                    southPanelRow1.add(downloadButton);
+
+                    downloadButton.addActionListener((e) -> MainWorker.downloadButtonClicked());
+
+
+                    southPanelRow1.add(Box.createRigidArea(new Dimension(20, 0)));
+
+                }
             }
-        }
 
-        // add a new JPanel in the east of the mainPanel
-        eastPanel = new JPanel();
-        eastPanel.setLayout(new BoxLayout(eastPanel, BoxLayout.Y_AXIS));
+            // add a new JPanel in the east of the mainPanel
+            eastPanel = new JPanel();
+            eastPanel.setLayout(new BoxLayout(eastPanel, BoxLayout.Y_AXIS));
             mainPanel.add(eastPanel, BorderLayout.EAST);
-        {
-            eastPanel.add(Box.createRigidArea(new Dimension(20, 0)));
-        }
-
-        // add a new JPanel in the west of the mainPanel
-        westPanel = new JPanel();
-        westPanel.setLayout(new BoxLayout(westPanel, BoxLayout.Y_AXIS));
-            mainPanel.add(westPanel, BorderLayout.WEST);
-        {
-            westPanel.add(Box.createRigidArea(new Dimension(20, 0)));
-        }
-
-        textFieldPopupMenu = new JPopupMenu();
-        {
-            String[] menuItems = {"Cut", "Copy", "Paste", "Delete", "Select All"};
-            ActionListener[] actions = {
-                    (e) -> {
-                        textField_URL.cut();
-                        requestFocusAndSimulateKeyEvent();
-                    },
-                    (e) -> {
-                        textField_URL.copy();
-                        requestFocusAndSimulateKeyEvent();
-                    },
-                    (e) -> {
-                        textField_URL.paste();
-                        requestFocusAndSimulateKeyEvent();
-                    },
-                    (e) -> {
-                        textField_URL.setText("");
-                        requestFocusAndSimulateKeyEvent();
-                    },
-                    (e) -> {
-                        textField_URL.selectAll();
-                        textField_URL.requestFocus();
-                    }
-            };
-
-            for (int i = 0; i < menuItems.length; i++) {
-                JMenuItem menuItem = new JMenuItem(menuItems[i]);
-                menuItem.addActionListener(actions[i]);
-                textFieldPopupMenu.add(menuItem);
-                menuItem.setEnabled(false);
-                menuItem.setFont(new Font(fontName, Font.PLAIN, 14));
+            {
+                eastPanel.add(Box.createRigidArea(new Dimension(20, 0)));
             }
 
-            //check if the text field is empty
-            textFieldPopupMenu.addPopupMenuListener(new PopupMenuListener() {
-                @Override
-                public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-                    //enable/disable the select all menu item based on whether there is text in the text field
-                    textFieldPopupMenu.getComponent( 4 ).setEnabled( !textField_URL.getText().isEmpty() );
+            // add a new JPanel in the west of the mainPanel
+            westPanel = new JPanel();
+            westPanel.setLayout(new BoxLayout(westPanel, BoxLayout.Y_AXIS));
+            mainPanel.add(westPanel, BorderLayout.WEST);
+            {
+                westPanel.add(Box.createRigidArea(new Dimension(20, 0)));
+            }
 
-                    //enable/disable the paste menu item based on whether the clipboard contains text
-                    for (DataFlavor flavor : Toolkit.getDefaultToolkit().getSystemClipboard().getAvailableDataFlavors()) {
-                        if (flavor.equals(DataFlavor.stringFlavor)) {
-                            textFieldPopupMenu.getComponent( 2 ).setEnabled(true);
-                            break;
-                        } else {
-                            textFieldPopupMenu.getComponent( 2 ).setEnabled(false);
+            textFieldPopupMenu = new JPopupMenu();
+            {
+                String[] menuItems = {"Cut", "Copy", "Paste", "Delete", "Select All"};
+                ActionListener[] actions = {
+                        (e) -> {
+                            textField_URL.cut();
+                            requestFocusAndSimulateKeyEvent();
+                        },
+                        (e) -> {
+                            textField_URL.copy();
+                            requestFocusAndSimulateKeyEvent();
+                        },
+                        (e) -> {
+                            textField_URL.paste();
+                            requestFocusAndSimulateKeyEvent();
+                        },
+                        (e) -> {
+                            textField_URL.setText("");
+                            requestFocusAndSimulateKeyEvent();
+                        },
+                        (e) -> {
+                            textField_URL.selectAll();
+                            textField_URL.requestFocus();
                         }
-                    }
+                };
 
-                    //enable/disable the cut, copy, delete menu items based on whether there is text selected
-                    boolean isTextSelected = textField_URL.getSelectedText() != null;
-                    textFieldPopupMenu.getComponent( 0 ).setEnabled(isTextSelected);
-                    textFieldPopupMenu.getComponent( 1 ).setEnabled(isTextSelected);
-                    textFieldPopupMenu.getComponent( 3 ).setEnabled(isTextSelected);
+                for (int i = 0; i < menuItems.length; i++) {
+                    JMenuItem menuItem = new JMenuItem(menuItems[i]);
+                    menuItem.addActionListener(actions[i]);
+                    textFieldPopupMenu.add(menuItem);
+                    menuItem.setEnabled(false);
+                    menuItem.setFont(new Font(fontName, Font.PLAIN, 14));
                 }
 
-                @Override
-                public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {}
-                @Override
-                public void popupMenuCanceled(PopupMenuEvent e) {}
-            });
+                //check if the text field is empty
+                textFieldPopupMenu.addPopupMenuListener(new PopupMenuListener() {
+                    @Override
+                    public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                        //enable/disable the select all menu item based on whether there is text in the text field
+                        textFieldPopupMenu.getComponent(4).setEnabled(!textField_URL.getText().isEmpty());
+
+                        //enable/disable the paste menu item based on whether the clipboard contains text
+                        for (DataFlavor flavor : Toolkit.getDefaultToolkit().getSystemClipboard().getAvailableDataFlavors()) {
+                            if (flavor.equals(DataFlavor.stringFlavor)) {
+                                textFieldPopupMenu.getComponent(2).setEnabled(true);
+                                break;
+                            } else {
+                                textFieldPopupMenu.getComponent(2).setEnabled(false);
+                            }
+                        }
+
+                        //enable/disable the cut, copy, delete menu items based on whether there is text selected
+                        boolean isTextSelected = textField_URL.getSelectedText() != null;
+                        textFieldPopupMenu.getComponent(0).setEnabled(isTextSelected);
+                        textFieldPopupMenu.getComponent(1).setEnabled(isTextSelected);
+                        textFieldPopupMenu.getComponent(3).setEnabled(isTextSelected);
+                    }
+
+                    @Override
+                    public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+                    }
+
+                    @Override
+                    public void popupMenuCanceled(PopupMenuEvent e) {
+                    }
+                });
+            }
         }
 
+    }
+
+    protected static void setHandCursorToClickableComponents(Container container) {
+        for (Component component : container.getComponents()) {
+            if (component instanceof AbstractButton || component instanceof JComboBox) {
+                component.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            } else if (component instanceof JTextField) {
+                component.setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
+            } else if (component instanceof Container) {
+                setHandCursorToClickableComponents((Container) component);
+            }
+        }
+    }
+
+    private Icon getTitleIcon() {
+        ImageIcon icon = (ImageIcon) getApplicationIcon(
+                darkMode ? "images/diskIconLargeDownloadArrowDark.png"
+                        : "images/diskIconLargeDownloadArrow.png"
+        );
+        return new ImageIcon(icon.getImage().getScaledInstance(50, 50, Image.SCALE_SMOOTH));
     }
 
     private static void requestFocusAndSimulateKeyEvent() {
@@ -897,7 +975,7 @@ public class MainWindow extends JFrame {
         if (checkBoxAdvancedSettings.isSelected()) { //GUI if
             frame.setMinimumSize(new Dimension(windowWidthExpanded, windowHeightExpanded));
             frame.setSize(new Dimension(windowWidthExpanded, windowHeightExpanded));
-            frame.setLocationRelativeTo(null);
+            setLocationOnResize(frame);
 
             advancedSettingsPanelRow2.setSize(advancedSettingsPanelRow1.getSize());
             advancedSettingsPanelRow3.setSize(advancedSettingsPanelRow1.getSize());
@@ -912,13 +990,12 @@ public class MainWindow extends JFrame {
         }
     }
 
-    //TODO make colors global?
     protected void coloringModeChange() {
         // Colors
         Color backgroundColor = new Color(darkMode ? 0x2B2B2B : 0xE7E7E7);
 
-        Color separatorNP1Color = new Color(darkMode ? 0x46494b : 0xdcdcdc);
-        Color separatorSPColor = new Color(darkMode ? 0x595959 : 0xc2c2c2);
+        Color separatorTitleColor = new Color(darkMode ? 0x46494b : 0xc2c2c2);
+        Color separatorButtonPanelColor = new Color(darkMode ? 0x595959 : 0xc2c2c2);
 
         Color advSettingsPanelColor = new Color(darkMode ? 0x303234 : 0xe0e0e0);
 
@@ -936,14 +1013,17 @@ public class MainWindow extends JFrame {
 
         // Main Panel colors
         frame.getContentPane().setBackground(backgroundColor);
+        frame.setBackground(backgroundColor);
 
         // Separator colors
-        separatorNP1.setBackground(separatorNP1Color);
-        separatorSP.setBackground(separatorSPColor);
+        separatorTitle.setBackground(separatorTitleColor);
+        separatorButtonPanel.setBackground(separatorButtonPanelColor);
 
         historyButton.setIcon(
-                getIcon(darkMode ? "main/resources/historyIconDark.png" : "main/resources/historyIcon.png")
+                getApplicationIcon(darkMode ? "images/historyIconDark.png" : "images/historyIcon.png")
         );
+
+        titleIconButton.setIcon(getTitleIcon());
 
 
         // Advanced Settings Panel colors
@@ -959,7 +1039,7 @@ public class MainWindow extends JFrame {
             WorkingPane.label1.setForeground(textColor);
             WorkingPane.labelMessage.setForeground(textColor);
             WorkingPane.progressBar.setForeground(textColor);
-            WorkingPane.progressBar.setBackground(separatorSPColor);
+            WorkingPane.progressBar.setBackground(separatorButtonPanelColor);
 
         }
     }
@@ -1205,17 +1285,11 @@ public class MainWindow extends JFrame {
 
     private static void updateComboBoxByProperty(String property, Map<String, String> filterPropertiesMap, JComboBox<String> comboBox, String context) {
         if (property != null && filterPropertiesMap != null && !filterPropertiesMap.isEmpty()) {
-            Set<String> values;
-            switch (context) {
-                case "video":
-                    values = getUniqueValuesForVideo(property, filterPropertiesMap);
-                    break;
-                case "audio":
-                    values = getUniqueValuesForAudio(property, filterPropertiesMap);
-                    break;
-                default:
-                    throw new IllegalArgumentException("Invalid context: " + context);
-            }
+            Set<String> values = switch (context) {
+                case "video" -> getUniqueValuesForVideo(property, filterPropertiesMap);
+                case "audio" -> getUniqueValuesForAudio(property, filterPropertiesMap);
+                default -> throw new IllegalArgumentException("Invalid context: " + context);
+            };
 
             values.removeIf(value -> value.contains("only") || value.contains("ec"));
             String[] arrayValues = values.toArray(new String[0]);
@@ -1274,15 +1348,11 @@ public class MainWindow extends JFrame {
         if (recode) {
             ext = arrayRecodeExt[recodeExt];
         } else {
-            switch(videoAudio) {
-                case 0:
-                case 1:
-                    ext = arrayVideoExtensions[videoExt];
-                    break;
-                case 2:
-                    ext = arrayAudioExtensions[audioExt];
-                    break;
-            }
+            ext = switch (videoAudio) {
+                case 0, 1 -> arrayVideoExtensions[videoExt];
+                case 2 -> arrayAudioExtensions[audioExt];
+                default -> ext;
+            };
         }
 
         if ( ext.isEmpty()) {

@@ -4,15 +4,13 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import static main.java.MainWorker.isFileInUse;
 import static main.java.MainWorker.windows;
 
 public class HistoryLogger {
@@ -133,7 +131,9 @@ public class HistoryLogger {
             try {
                 Files.createFile(filePath);
                 if (MainWorker.windows) Files.setAttribute(filePath, "dos:hidden", true);
-                if (MainWorker.macOS) Runtime.getRuntime().exec("chflags hidden " + filePath);
+                if (MainWorker.macOS) {
+                    new ProcessBuilder("chflags", "hidden", filePath.toString()).start();
+                }
                 if (MainWorker.debug) System.out.println("Created history file at: " + historyFilePath);
             } catch (IOException e) {
                 if (MainWorker.debug) e.printStackTrace(System.err);
@@ -167,26 +167,13 @@ public class HistoryLogger {
             return result;
         });
 
-        if (primarySortType == 2) {
+        if (primarySortType == colType) {
             // sort in ascending order if the primary sort column is type
             ascending = !ascending;
         }
         if (!ascending) { // ascending is default
             // reverse the list
             Collections.reverse(historyList);
-        }
-    }
-
-    public static boolean isFileInUse(Path filePath) {
-        try (FileChannel channel = FileChannel.open(filePath, StandardOpenOption.WRITE);
-             FileLock lock = channel.tryLock()) {
-
-            // If the lock is null, then the file is already locked
-            return lock == null;
-
-        } catch (IOException e) {
-            // An exception occurred, which means the file is likely in use
-            return true;
         }
     }
 }

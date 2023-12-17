@@ -7,24 +7,29 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
 
 import static main.java.HistoryLogger.*;
 import static main.java.MainWindow.fontName;
+import static main.java.MainWindow.frame;
 import static main.java.MainWorker.darkMode;
 
 public class HistoryWindow extends JDialog {
+    private static final int historyWindowWidth = 1300;
+    private static final int historyWindowHeight = 550;
+
     protected JPanel mainPanel;
         protected JPanel topPanel;
             protected JLabel labelTitle;
-            protected static CustomSeparator separatorHWT1;
+            protected static CustomSeparator separatorHistoryTitle;
         protected JScrollPane scrollPane;
             protected DefaultTableModel tableModel;
             protected DefaultTableCellRenderer cellRenderer;
             protected JTable historyTable;
             protected JPopupMenu tablePopupMenu;
             public static ArrayList<String[]> historyList;
-            protected int sortModeCol = 3;
+            protected int sortModeCol = colDate;
             protected int selectedRow;
         protected JPanel sidePanelLeft;
         protected JPanel sidePanelRight;
@@ -34,6 +39,7 @@ public class HistoryWindow extends JDialog {
                 protected JButton clearButton;
                 protected JButton removeButton;
                 protected JButton insertButton;
+                protected JCheckBox closeAfterInsert;
 
         protected JPanel verticalPanelBottom;
             protected JPanel pagePanel;
@@ -46,11 +52,8 @@ public class HistoryWindow extends JDialog {
                 protected JButton lastButton;
                 protected static JButton closeButton;
 
-    private final int historyWindowWidth = 1300;
-    private final int historyWindowHeight = 550;
-
     public HistoryWindow(JFrame parent) {
-        super(parent, "Download History", true);
+        super(parent, "Download History", false);
 
         initializeTableModel();
         initializeCellRenderer();
@@ -60,13 +63,15 @@ public class HistoryWindow extends JDialog {
         initializeWindowProperties();
 
         initializeHistoryWindowGUI();
+
+        MainWindow.setHandCursorToClickableComponents(this);
     }
 
     private void initializeWindowProperties() {
         this.setSize(historyWindowWidth, historyWindowHeight);
         this.setResizable(false);
 
-        this.setLocationRelativeTo(null);
+        this.setLocationRelativeTo(frame);
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
     }
 
@@ -79,7 +84,7 @@ public class HistoryWindow extends JDialog {
         tableModel = new DefaultTableModel() {
             @Override
             public boolean isCellEditable(int row, int column) {
-                // All cells are uneditable
+                // All cells are un-editable
                 return false;
             }
         };
@@ -109,9 +114,9 @@ public class HistoryWindow extends JDialog {
                 topPanel.add(Box.createRigidArea(new Dimension(0, 5)));
 
                 // create a separator at the top of the border panel
-                separatorHWT1 = new CustomSeparator(4, 3);
-                separatorHWT1.setBackground(new Color(darkMode ? 0x595959 : 0xc2c2c2));
-                topPanel.add(separatorHWT1);
+                separatorHistoryTitle = new CustomSeparator(true, 4, 3);
+                separatorHistoryTitle.setBackground(new Color(darkMode ? 0x595959 : 0xc2c2c2));
+                topPanel.add(separatorHistoryTitle);
 
             }
 
@@ -151,6 +156,11 @@ public class HistoryWindow extends JDialog {
                 historyTable.getColumnModel().getColumn(colDate).setPreferredWidth(150 - scrollPane.getVerticalScrollBar().getWidth());
 
                 historyTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+                historyTable.setRowSelectionAllowed(true);
+                historyTable.setColumnSelectionAllowed(false);
+
+                historyTable.getTableHeader().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
                 //disable component focus border
                 historyTable.setFocusable(false);
                 historyTable.setShowGrid(true);
@@ -183,7 +193,7 @@ public class HistoryWindow extends JDialog {
                             // check if double click
                             if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2) {
                                 if (MainWorker.debug) System.out.println("Double click on row: " + row);
-                                MainWorker.openLink(HistoryWindow.this, historyTable, selectedRow);
+                                MainWorker.openLinkFromTable(HistoryWindow.this, historyTable, selectedRow);
 
                             } else if (SwingUtilities.isRightMouseButton(e)) {
                                 if (MainWorker.debug) System.out.println("Right click on row: " + row);
@@ -194,6 +204,19 @@ public class HistoryWindow extends JDialog {
                         }
                     }
                 });
+
+                historyTable.addMouseMotionListener(new MouseMotionAdapter() {
+                    @Override
+                    public void mouseMoved(MouseEvent e) {
+                        int row = historyTable.rowAtPoint(e.getPoint());
+                        if (row > -1) {
+                            historyTable.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                        } else {
+                            historyTable.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                        }
+                    }
+                });
+
             }
 
             // create a side panel on the right of the border panel
@@ -230,7 +253,7 @@ public class HistoryWindow extends JDialog {
                     openLinkButton.addActionListener(e -> {
                         if (MainWorker.debug) System.out.println("Open Link button pressed.");
                         selectedRow = historyTable.getSelectedRow();
-                        MainWorker.openLink(this, historyTable, selectedRow);
+                        MainWorker.openLinkFromTable(this, historyTable, selectedRow);
                     });
 
                     // create a Y spacing
@@ -246,9 +269,19 @@ public class HistoryWindow extends JDialog {
 
                     clearButton.addActionListener(e -> {
                         if (MainWorker.debug) System.out.println("Clear button pressed.");
-                        HistoryLogger historyLogger = new HistoryLogger();
-                        historyLogger.clearHistory();
-                        setHistoryTable();
+
+                        int confirm = DoNotAskAgainConfirmDialog.showConfirmDialog(this,
+                                "Are you sure you want to clear the history?",
+                                "Clear History", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE,
+                                "doNotAskAgainClearButton");
+
+                        if (confirm == JOptionPane.YES_OPTION) {
+                            HistoryLogger historyLogger = new HistoryLogger();
+                            historyLogger.clearHistory();
+                            setHistoryTable();
+                        } else {
+                            if (MainWorker.debug) System.out.println("Clear history was cancelled.");
+                        }
                     });
 
                     // create Y spacing
@@ -283,6 +316,23 @@ public class HistoryWindow extends JDialog {
                         if (MainWorker.debug) System.out.println("Insert button pressed.");
                         selectedRow = historyTable.getSelectedRow();
                         MainWorker.insertURL(this, historyTable, selectedRow);
+                    });
+
+                    // create Y spacing
+                    buttonPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+
+                    // create a closeAfterInsert checkbox in the button panel
+                    closeAfterInsert = new JCheckBox("<html>Close History Window After Inserting URL</html>");
+                    closeAfterInsert.setFont(new Font(fontName, Font.PLAIN, 14));
+                    closeAfterInsert.setAlignmentX(Component.CENTER_ALIGNMENT);
+                    closeAfterInsert.setMinimumSize(new Dimension(125, 60));
+                    closeAfterInsert.setMaximumSize(new Dimension(125, 60));
+                    closeAfterInsert.setSelected(MainWorker.closeAfterInsert);
+                    buttonPanel.add(closeAfterInsert);
+
+                    closeAfterInsert.addActionListener(e -> {
+                        if (MainWorker.debug) System.out.println("Close After Insert checkbox pressed.");
+                        MainWorker.closeAfterInsert = closeAfterInsert.isSelected();
                     });
                 }
             }
@@ -386,7 +436,7 @@ public class HistoryWindow extends JDialog {
                         e -> {
                             System.out.println("POPUPMENU: Open Link selected");
                             selectedRow = historyTable.getSelectedRow();
-                            MainWorker.openLink(HistoryWindow.this, historyTable, selectedRow);
+                            MainWorker.openLinkFromTable(HistoryWindow.this, historyTable, selectedRow);
                         },
                         e -> {
                             System.out.println("POPUPMENU: Remove Entry selected");
@@ -443,52 +493,106 @@ public class HistoryWindow extends JDialog {
                     "Error", JOptionPane.ERROR_MESSAGE);
 
         } else {
-            HistoryLogger historyLogger = new HistoryLogger();
+            int confirm = DoNotAskAgainConfirmDialog.showConfirmDialog(this,
+                    "Are you sure you want to remove the selected entry?",
+                    "Remove Entry", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE,
+                    "doNotAskAgainRemoveButton");
 
-            // calculate the actual index of the selected row in the full history list
-            int pageNum = Integer.parseInt(labelPageNumber.getText());
-            int maxRows = 25; // Maximum number of rows per page
-            int actualIndex = selectedRow + (pageNum - 1) * maxRows;
+            if (confirm == JOptionPane.YES_OPTION) {
+                HistoryLogger historyLogger = new HistoryLogger();
 
-            // remove the selected row from the full history list
-            if (actualIndex < historyList.size()) {
-                historyList.remove(actualIndex);
+                // calculate the actual index of the selected row in the full history list
+                int pageNum = Integer.parseInt(labelPageNumber.getText());
+                int maxRows = 25; // Maximum number of rows per page
+                int actualIndex = selectedRow + (pageNum - 1) * maxRows;
 
-                // copy historyList to tempList
-                ArrayList<String[]> tempList = new ArrayList<>(historyList);
-                historyLogger.setHistoryFile(tempList);
+                // remove the selected row from the full history list
+                if (actualIndex < historyList.size()) {
+                    historyList.remove(actualIndex);
+
+                    // copy historyList to tempList
+                    ArrayList<String[]> tempList = new ArrayList<>(historyList);
+                    historyLogger.setHistoryFile(tempList);
+                }
+
+                // update the table view
+                setTablePage(pageNum);
+
+                scrollPane.getVerticalScrollBar().setEnabled(historyTable.getRowCount() > 13);
             }
-
-            // update the table view
-            setTablePage(pageNum);
-
-            scrollPane.getVerticalScrollBar().setEnabled(historyTable.getRowCount() > 13);
         }
     }
 
-    private void printHistoryList() { //FIXME fix formatting when printing to console
-        String fullLengthDivider = "+----------------------------------------------------------------------------------------------------------------------+";
-        String halfLengthDivider = fullLengthDivider.substring(0, 47) + "+";
+    private void printHistoryList() {
+        int totalLineLength = 135;
+        int[] charAtColumnDivVertical = {63, 92, 110};
+        String tableFormat = "| %-60s | %-26s | %-15s | %-21s |%n| %-60s | %-26s | %-15s | %-21s |%n";
         int historyListSize = historyList.size();
 
         StringBuilder sb = new StringBuilder();
 
-        sb.append(halfLengthDivider);
-        sb.append(String.format("%n| %-18s %,-25d |%n", "History List Size:", historyListSize));
-        sb.append(halfLengthDivider);
-        sb.append("\n\n");
-
-        sb.append(String.format("| %-60s | %-45s | %-26s | %-15s | %-21s |%n",
-                columnNames[colTitle], columnNames[colUrl], columnNames[colStatus],
-                columnNames[colType], columnNames[colDate] + " (Recent First)"));
-        sb.append(fullLengthDivider).append("\n");
-
-        for (String[] data : historyList) {
-            sb.append(String.format("| %-60s | %-45s | %-26s | %-15s | %-21s |%n",
-                    data[colTitle], data[colUrl], data[colStatus], data[colType], data[colDate]));
+        String fullLengthDivider = "+" + "-".repeat(totalLineLength - 2) + "+";
+        String fullLengthDividerPlus = fullLengthDivider;
+        for (int i : charAtColumnDivVertical) {
+            fullLengthDividerPlus = replaceCharAt(fullLengthDividerPlus, i, "+");
         }
-        sb.append(fullLengthDivider).append("\n");
+        String fullLengthDividerColumn = fullLengthDivider;
+        for (int i : charAtColumnDivVertical) {
+            fullLengthDividerColumn = replaceCharAt(fullLengthDividerColumn, i, "|");
+        }
+
+
+/*
++-------------------------------------------------------------------------------------------------------------------------------------+
+| History List Size: 2                                                                                                                |
+|                                                                                                                                     |
++--------------------------------------------------------------+----------------------------+-----------------+-----------------------+
+*/
+        sb.append(fullLengthDivider);
+        sb.append(String.format("%n| %-18s %,-112d |%n", "History List Size:", historyListSize));
+        sb.append("|").append(fullLengthDivider.replace("-", " "),
+                1, fullLengthDivider.length() - 1).append("|").append("\n");
+        sb.append("|").append(fullLengthDividerPlus, 1, fullLengthDividerPlus.length() - 1).append("|").append("\n");
+
+
+/*
+|--------------------------------------------------------------+----------------------------+-----------------+-----------------------|
+| Title                                                        | Status                     | Type            | Date (Recent First)   |
+| URL                                                          |                            |                 |                       |
+|--------------------------------------------------------------|----------------------------|-----------------|-----------------------|
+*/
+        sb.append(String.format(
+                tableFormat, columnNames[colTitle], columnNames[colStatus], columnNames[colType],
+                columnNames[colDate] + " (Recent First)", columnNames[colUrl], "", "", "")
+        );
+        sb.append("|").append(fullLengthDividerColumn, 1, fullLengthDividerColumn.length() - 1).append("|").append("\n");
+
+
+/*
+|--------------------------------------------------------------|----------------------------|-----------------|-----------------------|
+| Me at the zoo                                                | Completed - Success        | Video + Audio   | 2023-12-11 22:44:28   |
+| https://www.youtube.com/watch?v=jNQXAC9IVRw                  |                            |                 |                       |
++--------------------------------------------------------------+----------------------------+-----------------+-----------------------+
+*/
+        for (String[] data : historyList) {
+            sb.append(String.format(
+                    tableFormat, data[colTitle], data[colStatus], data[colType], data[colDate],
+                    data[colUrl], "", "", "")
+            );
+
+            // if not the last row, add a divider
+            if (historyList.indexOf(data) != historyListSize - 1) {
+                sb.append("|").append(fullLengthDividerColumn, 1, fullLengthDividerColumn.length() - 1).append("|").append("\n");
+            }
+        }
+        sb.append("+").append(fullLengthDividerPlus, 1, fullLengthDividerPlus.length() - 1).append("+").append("\n");
+
+
         System.out.print(sb);
+    }
+
+    private String replaceCharAt(String fullLengthDivider, int i, String s) {
+        return fullLengthDivider.substring(0, i) + s + fullLengthDivider.substring(i + s.length());
     }
 
     private void sortHistoryList(int col, boolean[] ascending) {
@@ -536,7 +640,7 @@ public class HistoryWindow extends JDialog {
         // set the page number labels
         labelPageNumber.setText(String.valueOf(pageNum));
         labelPageTotal.setText("of " + (totalPages == 0 ? (totalPages = 1) : totalPages));
-        System.out.println("Page number: " + pageNum + " Total Pages: " + totalPages);
+        if (MainWorker.debug) System.out.println("Page number: " + pageNum + " Total Pages: " + totalPages);
 
         // check to enable/disable the page buttons
         firstButton.setEnabled(pageNum != 1);
@@ -571,7 +675,7 @@ public class HistoryWindow extends JDialog {
         } else {
             // sort the history list by date
             sortHistoryList(colDate, new boolean[]{false});
-            //if (MainWorker.debug) printHistoryList(); TODO
+            if (MainWorker.debug) printHistoryList();
 
             for (String[] data : historyList) {
                 if (data != null) {

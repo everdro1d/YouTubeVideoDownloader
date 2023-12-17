@@ -5,6 +5,7 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.util.Objects;
 
+import static main.java.MainWindow.frame;
 import static main.java.MainWorker.*;
 
 public class WorkingPane extends JFrame {
@@ -13,7 +14,6 @@ public class WorkingPane extends JFrame {
     protected static JPanel panelRow2;
     protected static JLabel label1;
     protected static JLabel labelMessage;
-    protected String message = "";
     protected static JProgressBar progressBar;
     protected static JButton cancelButton;
 
@@ -23,22 +23,16 @@ public class WorkingPane extends JFrame {
     protected static JDialog[] cancelDialogArray = new JDialog[3];
 
     public WorkingPane() {
-        workingFrame = new JFrame("Working...");
+        initializeWindowProperties();
 
-        workingFrame.setMinimumSize(new Dimension(355, 170));
-        workingFrame.setPreferredSize(new Dimension(355, 170));
-        workingFrame.setLocationRelativeTo(null);
-        workingFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        initializeGUIComponents();
 
-        workingFrame.addWindowListener( new WindowAdapter() {
-            @Override
-            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-                closeWorkingPane();
-            }
-        });
+        workingFrame.setVisible(true);
+        MainWindow.downloadButton.setEnabled(false); // disables so that the user cannot start another download while in progress
+        MainWindow.setHandCursorToClickableComponents(this);
+    }
 
-        workingFrame.setResizable(false);
-
+    private void initializeGUIComponents() {
         panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         workingFrame.add(panel);
@@ -80,16 +74,31 @@ public class WorkingPane extends JFrame {
                 cancelButton.setFont(new Font(MainWindow.fontName, Font.PLAIN, 14));
                 panelRow2.add(cancelButton);
 
-                cancelButton.addActionListener(e -> { // TODO add confirm dialog for cancel when recoding is in progress
+                cancelButton.addActionListener(e -> {
                     if (debug) System.out.println("Cancel button pressed.");
-
                     cancelDownload();
                 });
             }
             panel.add(Box.createVerticalStrut(5));
         }
-        workingFrame.setVisible(true);
-        MainWindow.downloadButton.setEnabled(false);
+    }
+
+    private void initializeWindowProperties() {
+        workingFrame = new JFrame("Working...");
+
+        workingFrame.setMinimumSize(new Dimension(355, 170));
+        workingFrame.setPreferredSize(new Dimension(355, 170));
+        workingFrame.setLocationRelativeTo(frame);
+        workingFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+
+        workingFrame.addWindowListener( new WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                closeWorkingPane();
+            }
+        });
+
+        workingFrame.setResizable(false);
     }
 
     private void cancelDownload() {
@@ -112,7 +121,7 @@ public class WorkingPane extends JFrame {
         if (confirm != null) {
             int result = (int) confirm;
             if (result != JOptionPane.YES_OPTION) {
-                return;
+                return; // !=
             } else {
                 if (debug) System.out.println("Cancel confirmed.");
                 downloadCanceled = true;
@@ -153,7 +162,7 @@ public class WorkingPane extends JFrame {
                 }
             } else {
                 System.err.println("Save progress dialog returned null.");
-                return;
+                // add return here if something else happens underneath
             }
         }
     }
@@ -170,12 +179,15 @@ public class WorkingPane extends JFrame {
         for (JDialog dialog : cancelDialogArray) {
             // if the dialog is not null -> continue
             if ( dialog != null ) {
+                // the first two are checks to make sure that the save progress dialog is not disposed after the download is cancelled
+
                 // if the download status is not cancelled and the dialog is the save progress dialog -> dispose
                 if ( !Objects.equals(downloadStatus, "cancelledTemp") ) { //&& Objects.equals(dialog, saveProgressDialog)
                     dialog.dispose();
-                    // if download status is cancelled and the dialog is not the save progress dialog -> dispose
+                // if download status is cancelled and the dialog is not the save progress dialog -> dispose
                 } else if (Objects.equals(downloadStatus, "cancelledTemp") && !Objects.equals(dialog, saveProgressDialog) ) {
                     dialog.dispose();
+
                 } else if (dialog != saveProgressDialog) {
                     System.err.println("[ERROR] Dialog not disposed: " + dialog.getTitle());
                 }
@@ -183,7 +195,6 @@ public class WorkingPane extends JFrame {
         }
         MainWindow.downloadButton.setEnabled(true);
         workingFrame.dispose();
-
     }
 
     public void setCTitle(String title) {
@@ -191,7 +202,6 @@ public class WorkingPane extends JFrame {
     }
 
     public void setMessage(String message) {
-        this.message = message;
         labelMessage.setText(String.format("<html><body style='width: 300px'>%s</body></html>", message));
     }
 

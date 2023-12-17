@@ -8,14 +8,24 @@ public class FileChooser extends JFileChooser {
     public FileChooser() {
         super();
         this.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
         this.setAcceptAllFileFilterUsed(false);
+
         this.setDialogTitle("Select a folder to download to:");
+
         this.setApproveButtonText("Select");
+
         this.setAcceptAllFileFilterUsed(false);
+
         this.setMultiSelectionEnabled(false);
+
         this.setCurrentDirectory(new java.io.File(MainWorker.downloadDirectoryPath));
+
         this.setFileHidingEnabled(true);
+
         this.setPreferredSize(new Dimension(600, 450));
+
+
         setFileChooserFont(this.getComponents());
 
         this.setFileFilter(new javax.swing.filechooser.FileFilter() {
@@ -26,13 +36,14 @@ public class FileChooser extends JFileChooser {
 
             @Override
             public String getDescription() {
-                return "Folders";
+                return "Directory (Folder)";
             }
         });
+
+        MainWindow.setHandCursorToClickableComponents(this);
     }
 
-    private void setFileChooserFont(Component[] comp)
-    {
+    private void setFileChooserFont(Component[] comp) {
         for (Component component : comp) {
             if (component instanceof Container) setFileChooserFont(((Container) component).getComponents());
             try {
