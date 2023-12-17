@@ -518,8 +518,8 @@ public class MainWorker {
 
             if (!downloadCanceled) {
                 // get download command
-                String[] cmd = getCommand();
-                if (debug) System.out.println(Arrays.toString(cmd));
+                ArrayList<String> cmd = getCommand();
+                if (debug) System.out.println("Download Command: " + cmd);
 
                 // start download
                 download(cmd);
@@ -571,35 +571,35 @@ public class MainWorker {
         videoFileName = fileName.replaceAll("#", "").trim();
     }
 
-    public static String[] getCommand() {
+    public static ArrayList<String> getCommand() {
         // the options to pass to the binary
         ArrayList<String> advancedSettings = getAdvancedSettings();
-
-        String tmpDiv = (windows) ? "\\\\" : "/";
         ArrayList<String> cmdList = new ArrayList<>();
-        cmdList.add(downloadBinary);
-        cmdList.addAll(advancedSettings);
-        cmdList.add("-P");
-        cmdList.add(stringQuotes + downloadDirectoryPath + tmpDiv + stringQuotes);
-        cmdList.add("-o");
-        cmdList.add(stringQuotes + "%(title)s.%(ext)s" + stringQuotes);
-        cmdList.add(stringQuotes + rawURL + stringQuotes);
+            cmdList.add(downloadBinary);
+            cmdList.addAll(advancedSettings);
+            cmdList.add("-P");
 
-        return cmdList.toArray(new String[0]);
+            String tmpDiv = (windows) ? "\\\\" : "/";
+            cmdList.add(stringQuotes + downloadDirectoryPath + tmpDiv + stringQuotes);
+            cmdList.add("-o");
+            cmdList.add(stringQuotes + "%(title)s.%(ext)s" + stringQuotes);
+            cmdList.add(stringQuotes + rawURL + stringQuotes);
+
+        return cmdList;
     }
 
-    public static void download(String[] cmd) {
-        if (cmd.length == 0) {
+    public static void download(ArrayList<String> cmd) {
+        if (cmd.isEmpty()) {
             System.err.println("Download command is empty.");
             return;
         }
-        if (debug) System.out.println(Arrays.toString(cmd));
+        if (debug) System.out.println("Download command: " + cmd);
 
         // start download
         new Thread(() -> downloadProcess(cmd)).start();
     }
 
-    private static void downloadProcess(String[] cmd) {
+    private static void downloadProcess(ArrayList<String> cmd) {
         ProcessBuilder pb = new ProcessBuilder(cmd);
         Process p;
         try {

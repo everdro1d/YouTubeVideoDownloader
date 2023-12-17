@@ -63,8 +63,8 @@ public class AdvancedSettings {
     }
 
     private static void getVideoOptions() {
-        String cmd = downloadBinary + " --list-formats " + rawURL;
-        new Thread(()-> videoOptionsProcess(cmd.split(" "))).start();
+        String[] cmd = {downloadBinary, "--list-formats", rawURL};
+        new Thread(()-> videoOptionsProcess(cmd)).start();
     }
 
     private static void videoOptionsProcess(String[] cmd) {
