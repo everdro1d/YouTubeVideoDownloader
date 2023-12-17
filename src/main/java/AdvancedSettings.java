@@ -182,10 +182,10 @@ public class AdvancedSettings {
     }
 
 
-    public static String getAdvancedSettings() {
-        StringBuilder output = new StringBuilder();
+    public static ArrayList<String> getAdvancedSettings() {
         ArrayList<String> arrayListAdvancedSettings = new ArrayList<>();
-        arrayListAdvancedSettings.add("--ffmpeg-location " + stringQuotes + (jarPath + fileDiv + binaryFiles[1]) + stringQuotes );
+        arrayListAdvancedSettings.add("--ffmpeg-location");
+        arrayListAdvancedSettings.add(stringQuotes + (jarPath + fileDiv + binaryFiles[1]) + stringQuotes );
         arrayListAdvancedSettings.add("--restrict-filenames");
         arrayListAdvancedSettings.add("--progress");
         arrayListAdvancedSettings.add("--newline");
@@ -200,8 +200,8 @@ public class AdvancedSettings {
 
         if (!advancedSettingsEnabled) {
             arrayListAdvancedSettings.add("--embed-thumbnail");
-            arrayListAdvancedSettings.add(
-                    "--convert-thumbnails " + arrayWriteThumbnailExt[writeThumbnailExt]);
+            arrayListAdvancedSettings.add("--convert-thumbnails");
+            arrayListAdvancedSettings.add(arrayWriteThumbnailExt[writeThumbnailExt]);
             arrayListAdvancedSettings.add("--add-metadata");
 
 
@@ -225,8 +225,8 @@ public class AdvancedSettings {
             if (writeThumbnail) {
                 if (embedThumbnail) {
                     arrayListAdvancedSettings.add("--embed-thumbnail");
-                    arrayListAdvancedSettings.add(
-                            "--convert-thumbnails " + stringQuotes + arrayWriteThumbnailExt[writeThumbnailExt] + stringQuotes);
+                    arrayListAdvancedSettings.add("--convert-thumbnails");
+                    arrayListAdvancedSettings.add(stringQuotes + arrayWriteThumbnailExt[writeThumbnailExt] + stringQuotes);
                 } else {
                     arrayListAdvancedSettings.add("--write-thumbnail");
                 }
@@ -266,13 +266,7 @@ public class AdvancedSettings {
             }
         }
 
-        for (String arrayListAdvancedOption : arrayListAdvancedSettings) {
-            // add the options to the cmd variable
-            output.append(arrayListAdvancedOption).append(" ");
-        }
-
-
-        return output.toString();
+        return arrayListAdvancedSettings;
     }
 
     // Example call for getUniqueValues() method:

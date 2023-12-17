@@ -14,6 +14,7 @@ import java.net.URISyntaxException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.file.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
 import java.util.prefs.Preferences;
@@ -168,7 +169,7 @@ public class MainWorker {
         }
 
         fileDiv = (windows) ? "\\" : "/";
-        stringQuotes = (windows) ? "\"" : "'";
+        stringQuotes = (windows) ? "\"" : "";
 
         if (windows) {
             binaryPath += "win/";
@@ -517,8 +518,8 @@ public class MainWorker {
 
             if (!downloadCanceled) {
                 // get download command
-                String cmd = getCommand();
-                if (debug) System.out.println(cmd);
+                String[] cmd = getCommand();
+                if (debug) System.out.println(Arrays.toString(cmd));
 
                 // start download
                 download(cmd);
@@ -570,23 +571,32 @@ public class MainWorker {
         videoFileName = fileName.replaceAll("#", "").trim();
     }
 
-    public static String getCommand() {
+    public static String[] getCommand() {
         // the options to pass to the binary
-        String advancedSettings = getAdvancedSettings();
+        ArrayList<String> advancedSettings = getAdvancedSettings();
 
-        return downloadBinary + " " + advancedSettings + "-P "
-                + stringQuotes + downloadDirectoryPath + fileDiv + stringQuotes
-                + " -o " + stringQuotes + "%(title)s.%(ext)s" + stringQuotes
-                + " " + stringQuotes + rawURL + stringQuotes;
+        String tmpDiv = (windows) ? "\\\\" : "/";
+        ArrayList<String> cmdList = new ArrayList<>();
+        cmdList.add(downloadBinary);
+        cmdList.addAll(advancedSettings);
+        cmdList.add("-P");
+        cmdList.add(stringQuotes + downloadDirectoryPath + tmpDiv + stringQuotes);
+        cmdList.add("-o");
+        cmdList.add(stringQuotes + "%(title)s.%(ext)s" + stringQuotes);
+        cmdList.add(stringQuotes + rawURL + stringQuotes);
+
+        return cmdList.toArray(new String[0]);
     }
 
-    public static void download(String cmd) {
-        if (cmd.isEmpty()) {
+    public static void download(String[] cmd) {
+        if (cmd.length == 0) {
             System.err.println("Download command is empty.");
             return;
         }
+        if (debug) System.out.println(Arrays.toString(cmd));
+
         // start download
-        new Thread(() -> downloadProcess(cmd.split(" "))).start();
+        new Thread(() -> downloadProcess(cmd)).start();
     }
 
     private static void downloadProcess(String[] cmd) {
