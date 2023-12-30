@@ -1,3 +1,11 @@
+/*  TODO #1 - see method validURL()
+    - rework url validation;
+        - take the rawURL and check a list of validExtractors to see if the list contains the urlHeader of the raw url (ex. "YouTube.com") then get the extractorID associated with it or return invalid if no match.
+        - use <extractorID>.getValue("IDLength") then check how long the rawURL.id is and check matching.
+        - maybe try to make a valid connection when urlHeader and extractorID are both valid and check for connection.
+        - when only ID is rawURL, then default to YouTube
+ */
+
 package main.java;
 
 import com.formdev.flatlaf.FlatDarkLaf;
@@ -6,14 +14,17 @@ import com.formdev.flatlaf.FlatLightLaf;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.file.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
@@ -46,11 +57,12 @@ public class MainWorker {
      *     <li>[2] Stopped - Already Exists</li>
      *     <li>[3] Canceled - Deleted Files</li>
      *     <li>[4] Canceled - Saved Files</li>
+     *     <li>[5] OVERRIDE - EMPTY</li>
      * </ul>
      */
     public static final String[] validDownloadStatus = new String[]{
             "Completed - Success", "Stopped - Fatal Error", "Stopped - Already Exists",
-            "Canceled - Deleted Files", "Canceled - Saved Files"
+            "Canceled - Deleted Files", "Canceled - Saved Files", "OVERRIDE - EMPTY"
     };
     protected static boolean downloadStarted = false;
 
@@ -206,7 +218,7 @@ public class MainWorker {
                     new ProcessBuilder("chmod", "+x", outputPath.toString()).start();
                 }
 
-                Runtime.getRuntime().addShutdownHook(new Thread(() -> deleteBinaryTempFiles(binaryFile)));
+                Runtime.getRuntime().addShutdownHook(new Thread(() -> deleteBinaryTempFile(binaryFile)));
 
             } catch (Exception e) {
                 if (debug) e.printStackTrace(System.err);
@@ -214,7 +226,7 @@ public class MainWorker {
         }
     }
 
-    private static void deleteBinaryTempFiles(String binaryFile) {
+    private static void deleteBinaryTempFile(String binaryFile) {
         if (debug) System.out.println("Deleting binary file: " + binaryFile);
         File fileToDelete = new File((jarPath + fileDiv + binaryFile));
         if (fileToDelete.exists()) {
@@ -416,11 +428,13 @@ public class MainWorker {
         return false;
     }
 
-    protected static boolean validURL(String url) {
+    protected static boolean validURL(String url) { //TODO #1
         if (url.isEmpty()) {
+            if (debug) System.out.println("Failed url - empty.");
             return false;
         }
         if (url.length() < 11) { // too short to be a valid URL with/or a video ID
+            if (debug) System.out.println("Failed url - too short.");
             return false;
         } else if (url.length() == 11) { // if URL contains only the video ID
             videoID = url;
@@ -428,24 +442,27 @@ public class MainWorker {
 
             // check if the URL is valid
             String[] validURLs = {
-                    "www.youtube.com/watch?v=",
+                    "youtube.com/watch?v=",
                     "youtu.be/",
-                    "www.youtube.com/shorts/",
+                    "youtube.com/shorts/",
 
-                    "www.instagram.com/p/",
-                    "www.instagram.com/reel/"
+                    "instagram.com/p/",
+                    "instagram.com/reel/"
             };
 
             if (containsAny(validURLs, rawURL)) {
                 if (!validatedURL(url, validURLs)) {
+                    if (debug) System.out.println("Failed url - validatedURL check.");
                     return false;
                 }
             } else {
+                if (debug) System.out.println("Failed url - containsAny check.");
                 return false;
             }
 
             //check if the url is valid
-            try { new java.net.URI(url); } catch (Exception e) {
+            try { new URI(url); } catch (Exception e) {
+                if (debug) System.out.println("Failed url - validatedURI check.");
                 return false;
             }
         }
@@ -462,7 +479,7 @@ public class MainWorker {
             }
         }
 
-        String[] splitURL = url.split("[/=?&]");
+        String[] splitURL = url.split("[/=?&.]");
 
         // check if the video ID is valid
         for (String s : splitURL) {
@@ -484,8 +501,11 @@ public class MainWorker {
     }
 
     private static boolean checkURLDialog(boolean show) {
+        if (overrideValidURL) {
+            return true;
+        }
         if ((rawURL == null) || !validURL(rawURL) || show) {
-                JOptionPane.showMessageDialog(frame, "Please check the link or enter a valid URL.", "Error! Media not found.", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(frame, "Please check the link or enter a valid URL.", "Error! Media not found.", JOptionPane.ERROR_MESSAGE);
             return false;
         }
         return true;
@@ -519,7 +539,7 @@ public class MainWorker {
             if (!downloadCanceled) {
                 // get download command
                 ArrayList<String> cmd = getCommand();
-                if (debug) System.out.println("Download Command: " + cmd);
+                if (debug) System.out.println("Download command: " + cmd.toString().replace(",", ""));
 
                 // start download
                 download(cmd);
@@ -593,7 +613,6 @@ public class MainWorker {
             System.err.println("Download command is empty.");
             return;
         }
-        if (debug) System.out.println("Download command: " + cmd);
 
         // start download
         new Thread(() -> downloadProcess(cmd)).start();
@@ -629,15 +648,28 @@ public class MainWorker {
         downloadStatus = "oops";
 
         int delCount = 0;
-        int delMax = (videoAudio == 0) ? 2 : 0;
-        downloadMax = (videoAudio == 0) ? 2 : 1;
-        if (recode) { // account for recoding operations
-            delMax += 1;
-        }
-        if (writeThumbnail|| !advancedSettingsEnabled) {
-            downloadMax += 1;
-            if (embedThumbnail|| !advancedSettingsEnabled) {
+        downloadMax = switch (videoAudio) {
+            case 0:
+                yield 2; // video and audio are downloaded separately and the thumbnail is accounted for below
+            case 1:
+                yield 1; // video only
+            case 2:
+                yield 1; // audio only
+            default:
+                throw new IllegalStateException("Unexpected value: " + videoAudio);
+        };
+        int delMax = 1;
+
+        if (!overrideValidURL) {
+            delMax = (videoAudio == 0) ? 2 : 0;
+            if (recode) { // account for recoding operations
                 delMax += 1;
+            }
+            if (writeThumbnail || !advancedSettingsEnabled) {
+                downloadMax += 1;
+                if (embedThumbnail || !advancedSettingsEnabled) {
+                    delMax += 1;
+                }
             }
         }
 
@@ -770,8 +802,16 @@ public class MainWorker {
     }
 
     protected static void logDownloadHistory() {
-        System.out.println("Logging download history.");
         if (logHistory) {
+            System.out.println("Logging download history.");
+            String url = rawURL;
+
+            if (overrideValidURL && rawURL.isEmpty()) {
+                videoTitle = validDownloadStatus[5];
+                url = validDownloadStatus[5];
+                downloadStatus = validDownloadStatus[5];
+            }
+
             // check if the download failed somehow
             if ( !containsAny(validDownloadStatus, downloadStatus) ) {
                 // if the download was canceled by the program (error from process, likely by an invalid url),
@@ -784,7 +824,7 @@ public class MainWorker {
 
             // log download history
             HistoryLogger historyLogger = new HistoryLogger();
-            String[] data = { videoTitle, rawURL, downloadStatus, getVideoAudioStatus(), getCurrentTime() };
+            String[] data = { videoTitle, url, downloadStatus, getVideoAudioStatus(), getCurrentTime() };
             historyLogger.logHistory(data);
             if (debug) System.out.println("Logged download history: \n" + Arrays.toString(data));
 
@@ -819,7 +859,7 @@ public class MainWorker {
     }
 
     private static String getCurrentTime() {
-        return java.time.LocalDateTime.now()
+        return LocalDateTime.now()
                 .toString()
                 .replace("T", " ")
                 .replace("Z", "")
@@ -884,9 +924,9 @@ public class MainWorker {
         }
     }
 
-    protected static Icon getApplicationIcon(String pathFromSrc) {
+    protected static Icon getApplicationIcon(String internalPath) {
         Icon icon = null;
-        try (InputStream iconStream = MainWorker.class.getClassLoader().getResourceAsStream(pathFromSrc)) {
+        try (InputStream iconStream = MainWorker.class.getClassLoader().getResourceAsStream(internalPath)) {
             if (iconStream != null) {
                 icon = new ImageIcon(ImageIO.read(iconStream));
             }
@@ -894,7 +934,7 @@ public class MainWorker {
             if (debug) e.printStackTrace(System.err);
         }
         if (icon == null) {
-            System.err.println("[ERROR] Could not find icon file at: " + pathFromSrc);
+            System.err.println("[ERROR] Could not find icon file at: " + internalPath);
         }
         return icon;
     }
@@ -902,7 +942,7 @@ public class MainWorker {
     protected static void openLink(String url) {
         try {
             if (debug) System.out.println("Opening link: " + url);
-            Desktop.getDesktop().browse(new java.net.URI(url));
+            Desktop.getDesktop().browse(new URI(url));
         } catch (Exception e) {
             if (debug) e.printStackTrace(System.err);
         }
@@ -970,7 +1010,7 @@ public class MainWorker {
 
             try {
                 if (debug) System.out.println("Copying to clipboard: " + copyString);
-                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new java.awt.datatransfer.StringSelection(copyString.toString()), null);
+                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(copyString.toString()), null);
             } catch (Exception e) {
                 if (debug) e.printStackTrace(System.err);
             }

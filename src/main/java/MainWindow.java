@@ -41,7 +41,8 @@ public class MainWindow extends JFrame {
             protected JPanel centerVerticalPanel;
 
                 protected JPanel centerVerticalPanelRow1;
-                    protected JLabel validURLLabel;
+                    protected static JLabel validURLLabel;
+                    public static boolean overrideValidURL;
                     protected static JCheckBox checkBoxAdvancedSettings;
                     protected static JCheckBox checkBoxCompatibility;
                     protected static JCheckBox checkBoxLogHistory;
@@ -247,11 +248,11 @@ public class MainWindow extends JFrame {
                             textField_URL.addKeyListener(new KeyAdapter() {
                                 public void keyReleased(KeyEvent e) {
                                     rawURL = textField_URL.getText().trim();
-                                    if (rawURL.isEmpty()) {
+                                    if (rawURL.isEmpty() && !overrideValidURL) {
                                         validURL = false;
                                     } else {
-                                        validURL = validURL(rawURL);
-                                        if (validURL) {
+                                        validURL = overrideValidURL || validURL(rawURL);
+                                        if (validURL && !overrideValidURL) {
                                             //find the char index of the videoID add 11 to get the end of the video ID
                                             int videoIDStart = rawURL.indexOf(videoID);
                                             int videoIDEnd = videoIDStart + 11;
@@ -260,14 +261,14 @@ public class MainWindow extends JFrame {
 
                                             textField_URL.setText(rawURL);
 
-
                                         }
                                         if (debug) System.out.println("RawURL: " + rawURL);
                                     }
-                                    validURLLabel.setText(validURL ? "URL is valid" : "URL is invalid");
+                                    if (!overrideValidURL) validURLLabel.setText(validURL ? "URL is valid" : "URL is invalid");
+                                    else validURLLabel.setText("FORCE - URL is valid");
                                     coloringModeChange();
 
-                                    if (validURL && !compatibilityMode) {
+                                    if ( validURL && !(compatibilityMode || overrideValidURL) ) {
                                         checkBoxAdvancedSettings.setEnabled(true);
                                     } else {
                                         checkBoxAdvancedSettings.setSelected(false);
@@ -376,7 +377,21 @@ public class MainWindow extends JFrame {
                     validURLLabel.setFont(new Font(fontName, Font.PLAIN, fontSize));
                     validURLLabel.setHorizontalTextPosition(SwingConstants.LEFT);
                     validURLLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                    validURLLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
                     centerVerticalPanelRow1.add(validURLLabel);
+
+                    validURLLabel.addMouseListener(new MouseAdapter() {
+                        @Override
+                        public void mouseClicked(MouseEvent e) {
+                            JPopupMenu popupMenu = new JPopupMenu();
+                            JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem("Force valid URL (Allow anything as URL)", overrideValidURL);
+                            menuItem.addActionListener((e1) -> overrideValidURL(!overrideValidURL));
+                            menuItem.setFont(new Font(fontName, Font.PLAIN, 14));
+                            popupMenu.add(menuItem);
+
+                            popupMenu.show(e.getComponent(), e.getX(), e.getY());
+                        }
+                    });
 
                     centerVerticalPanelRow1.add(Box.createRigidArea(new Dimension(10, 0)));
 
@@ -917,6 +932,14 @@ public class MainWindow extends JFrame {
             }
         }
 
+    }
+
+    public void overrideValidURL(boolean override) {
+        overrideValidURL = override;
+        validURL = override;
+        if (debug) System.out.println("Override URL: " + overrideValidURL);
+        //send a key released event to the text field to update the URL
+        simulateKeyEvent(textField_URL);
     }
 
     protected static void setHandCursorToClickableComponents(Container container) {

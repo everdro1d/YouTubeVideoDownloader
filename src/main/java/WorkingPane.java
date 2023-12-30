@@ -106,10 +106,10 @@ public class WorkingPane extends JFrame {
         confirmDialog = confirmPane.createDialog(workingFrame, "Cancel Download");
 
         JOptionPane cancelledPane = new JOptionPane("Download was cancelled.", JOptionPane.INFORMATION_MESSAGE);
-        cancelledDialog = cancelledPane.createDialog(null, "Cancelled");
+        cancelledDialog = cancelledPane.createDialog(frame, "Cancelled");
 
         JOptionPane saveProgressPane = new JOptionPane("Save download progress to resume later?", JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION);
-        saveProgressDialog = saveProgressPane.createDialog(null, "Save Progress");
+        saveProgressDialog = saveProgressPane.createDialog(frame, "Save Progress");
 
         cancelDialogArray[0] = confirmDialog;
         cancelDialogArray[1] = cancelledDialog;

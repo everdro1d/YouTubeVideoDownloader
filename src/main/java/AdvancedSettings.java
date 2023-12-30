@@ -184,8 +184,10 @@ public class AdvancedSettings {
 
     public static ArrayList<String> getAdvancedSettings() {
         ArrayList<String> arrayListAdvancedSettings = new ArrayList<>();
+        String ffmpegPath = jarPath + fileDiv + binaryFiles[1];
+
         arrayListAdvancedSettings.add("--ffmpeg-location");
-        arrayListAdvancedSettings.add(stringQuotes + (jarPath + fileDiv + binaryFiles[1]) + stringQuotes );
+        arrayListAdvancedSettings.add(stringQuotes + ffmpegPath + stringQuotes);
         arrayListAdvancedSettings.add("--restrict-filenames");
         arrayListAdvancedSettings.add("--progress");
         arrayListAdvancedSettings.add("--newline");
@@ -195,7 +197,8 @@ public class AdvancedSettings {
         }
 
         if (recode) {
-            arrayListAdvancedSettings.add("--recode " + arrayRecodeExt[recodeExt]);
+            arrayListAdvancedSettings.add("--recode");
+            arrayListAdvancedSettings.add(arrayRecodeExt[recodeExt]);
         }
 
         if (!advancedSettingsEnabled) {
@@ -205,20 +208,44 @@ public class AdvancedSettings {
             arrayListAdvancedSettings.add("--add-metadata");
 
 
-            arrayListAdvancedSettings.add("-f");
-            switch (videoAudio) {
-                case 0:
-                    arrayListAdvancedSettings.add(
-                            stringQuotes + "((bv[ext=mp4][height<=1080]" + (compatibilityMode ? "[vcodec~='^((he|a)vc|h26[45])']" : "[vcodec!*=vp09]") + "+ba[ext=m4a])/(b[ext=mp4][vcodec!*=vp09])/((bv+ba)/b))" + stringQuotes);
-                    break;
-                case 1:
-                    arrayListAdvancedSettings.add(
-                            stringQuotes + "((bv[ext=mp4][height<=1080]" + (compatibilityMode ? "[vcodec~='^((he|a)vc|h26[45])'])" : "[vcodec!*=vp09])") + "/bv)" + stringQuotes);
-                    break;
-                case 2:
-                    arrayListAdvancedSettings.add(
-                            stringQuotes + "((ba[ext=m4a])/ba)" + stringQuotes);
-                    break;
+            if (!overrideValidURL) {
+                arrayListAdvancedSettings.add("-f");
+                switch (videoAudio) {
+                    case 0:
+                        arrayListAdvancedSettings.add(
+                                stringQuotes + "((bv[ext=mp4][height<=1080]" + (compatibilityMode ? "[vcodec~='^((he|a)vc|h26[45])']" : "[vcodec!*=vp09]") + "+ba[ext=m4a])/(b[ext=mp4][vcodec!*=vp09])/((bv+ba)/b))" + stringQuotes);
+                        break;
+                    case 1:
+                        arrayListAdvancedSettings.add(
+                                stringQuotes + "(((bv[ext=mp4][height<=1080]" + (compatibilityMode ? "[vcodec~='^((he|a)vc|h26[45])'])" : "[vcodec!*=vp09])") + "/bv[ext=mp4])/bv)" + stringQuotes);
+                        break;
+                    case 2:
+                        arrayListAdvancedSettings.add(
+                                stringQuotes + "((ba[ext=m4a])/ba)" + stringQuotes);
+                        break;
+                }
+            } else {
+                switch (videoAudio) {
+                    case 0:
+                        arrayListAdvancedSettings.add("-f");
+                        arrayListAdvancedSettings.add(
+                                stringQuotes + "((bv[ext=mp4][height<=1080]" + (compatibilityMode ? "[vcodec~='^((he|a)vc|h26[45])']" : "[vcodec!*=vp09]") + "+ba[ext=m4a])/(b[ext=mp4][vcodec!*=vp09])/((bv+ba)/b))" + stringQuotes);
+                        break;
+                    case 1:
+                        arrayListAdvancedSettings.add("-f");
+                        arrayListAdvancedSettings.add(
+                                stringQuotes + "((b[ext=mp4][height<=1080]" + (compatibilityMode ? "[vcodec~='^((he|a)vc|h26[45])'])" : "[vcodec!*=vp09])") + "/b[ext=mp4])" + stringQuotes);
+                        arrayListAdvancedSettings.add("--exec");
+                        arrayListAdvancedSettings.add("after_video:" + ffmpegPath + " -i " + downloadDirectoryPath + fileDiv + videoFileName + ".mp4 -map 0 -c copy -an " + downloadDirectoryPath + fileDiv + "NoAudio_" + videoFileName + ".mp4");
+                        videoFileName = "NoAudio_" + videoFileName;
+                        break;
+                    case 2:
+                        arrayListAdvancedSettings.add("-x");
+
+                        arrayListAdvancedSettings.add("--audio-quality");
+                        arrayListAdvancedSettings.add("0");
+                        break;
+                }
             }
 
         } else {
