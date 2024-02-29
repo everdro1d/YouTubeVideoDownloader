@@ -12,7 +12,9 @@ public class DoNotAskAgainConfirmDialog extends JPanel {
         if (message instanceof Component) {
             add((Component) message);
         } else if (message != null) {
-            add(new JLabel(message.toString()));
+            JLabel messageLabel = new JLabel("<html>" + message + "</html>");
+            messageLabel.setFont(new Font(getFont().getFontName(), Font.PLAIN, 14));
+            add(messageLabel);
         }
 
         doNotAskAgainCheckBox = new JCheckBox("Don't ask me again");
@@ -21,9 +23,7 @@ public class DoNotAskAgainConfirmDialog extends JPanel {
         add(checkBoxPanel, BorderLayout.SOUTH);
     }
 
-    public boolean isDoNotAskAgainSelected() {
-        return doNotAskAgainCheckBox.isSelected();
-    }
+    public boolean isDoNotAskAgainSelected() { return doNotAskAgainCheckBox.isSelected(); }
 
     public static int showConfirmDialog(Component parentComponent, Object message, String title, int optionType, int messageType, String prefsKey) {
         int result;

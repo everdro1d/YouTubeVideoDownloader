@@ -19,8 +19,7 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.*;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.file.*;
@@ -37,6 +36,7 @@ import static main.java.WorkingPane.workingFrame;
 
 public class MainWorker {
     public static final String dro1dDevWebsite = "https://everdro1d.github.io/";
+    public static final String currentVersion = "1.2.3"; //TODO: update this with each release
     public static final String titleText = "YouTube Video Downloader";
     protected static boolean closeAfterInsert;
     protected static MainWindow window;
@@ -134,12 +134,8 @@ public class MainWorker {
             }
         });
 
-        // check for updates on launch ( disabled in debug mode )
-        if (!debug) {
-            checkUpdate();
-        } else {
-            System.out.println("Debug enabled, update check skipped.");
-        }
+        // check for updates on launch
+        checkUpdate();
     }
 
     private static void setLookAndFeel() {
@@ -401,22 +397,59 @@ public class MainWorker {
     }
 
     public static void checkUpdate() {
-        new Thread(MainWorker::updateProcess).start();
+        // checks project GitHub for latest version at launch
+        new Thread(MainWorker::updateCheckerDialog).start();
     }
 
-    private static void updateProcess() {
-        ProcessBuilder pb = new ProcessBuilder(Arrays.asList(downloadBinary, "-U"));
-        Process p;
-        try {
-            p = pb.start();
-            new Thread(new SyncPipe(p.getErrorStream(), System.err)).start();
-            new Thread(new SyncPipe(p.getInputStream(), System.out)).start();
-            p.waitFor();
-            if (debug) System.out.println(p.exitValue());
-
-        } catch (Exception e) {
-            if (debug) e.printStackTrace(System.err);
+    private static void updateCheckerDialog() {
+        String latestVersion = getLatestVersion();
+        if (latestVersion != null) {
+            if (latestVersion.equals(currentVersion)) {
+                if (debug) System.out.println("Application up to date.");
+            } else {
+                if (debug) System.out.println("Application update available.");
+                int dialogResult = DoNotAskAgainConfirmDialog.showConfirmDialog(frame,
+                        "An update is available.<br>Would you like to update now?<br><br>Current Version: v" + currentVersion + "<br>Latest Version: v" + latestVersion,
+                        "Update Available", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
+                        "doNotAskAgainUpdateDialog");
+                if (dialogResult == JOptionPane.YES_OPTION) {
+                    openLink(dro1dDevWebsite + "projects.html#youtube-video-downloader");
+                    System.exit(0);
+                }
+            }
+        } else {
+            if (debug) System.err.println("Failed to check for update. Latest Version returned null.");
         }
+    }
+
+    private static String getLatestVersion() {
+        String latestVersion = null;
+        URL url;
+        try {
+            url = new URI("https://github.com/everdro1d/YouTubeVideoDownloader/releases/latest/").toURL();
+        } catch (MalformedURLException | URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+        HttpURLConnection connection = null;
+        try {
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.setInstanceFollowRedirects(false);
+            connection.connect();
+            String location = connection.getHeaderField("Location");
+            if (location != null) {
+                latestVersion = location.split("/v")[1];
+                if (debug) System.out.println("Latest version: " + latestVersion);
+            }
+        } catch (IOException e) {
+            if (debug) e.printStackTrace(System.err);
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+
+        return latestVersion;
     }
 
     public static boolean containsAny(String[] matchingArray, String testString) {
@@ -428,7 +461,7 @@ public class MainWorker {
         return false;
     }
 
-    protected static boolean validURL(String url) { //TODO #1
+    protected static boolean validURL(String url) { //TODO #1 - see top of file comments
         if (url.isEmpty()) {
             if (debug) System.out.println("Failed url - empty.");
             return false;
@@ -824,6 +857,7 @@ public class MainWorker {
 
             // log download history
             HistoryLogger historyLogger = new HistoryLogger();
+            sanitizeVideoTitle();
             String[] data = { videoTitle, url, downloadStatus, getVideoAudioStatus(), getCurrentTime() };
             historyLogger.logHistory(data);
             if (debug) System.out.println("Logged download history: \n" + Arrays.toString(data));
@@ -831,6 +865,16 @@ public class MainWorker {
         } else if (debug) {
             System.out.println("Logging download history is disabled. Skipping.");
         }
+    }
+
+    private static void sanitizeVideoTitle() {
+        if (videoTitle.isEmpty()) {
+            videoTitle = "Untitled";
+        }
+        if (videoTitle.length() > 60) {
+            videoTitle = videoTitle.substring(0, 60);
+        }
+        videoTitle = videoTitle.replaceAll(",", "");
     }
 
     private static boolean downloadComplete(WorkingPane workingPane) {
