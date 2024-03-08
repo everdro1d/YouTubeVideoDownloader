@@ -1,6 +1,8 @@
-package main.java;
+package main.com.everdro1d.ytvd.ui;
 
 import com.formdev.flatlaf.FlatClientProperties;
+import main.com.everdro1d.ytvd.core.AdvancedSettings;
+import main.com.everdro1d.ytvd.core.MainWorker;
 
 import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
@@ -12,13 +14,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import static main.java.AdvancedSettings.*;
-import static main.java.MainWorker.*;
+import static main.com.everdro1d.ytvd.core.AdvancedSettings.*;
+import static main.com.everdro1d.ytvd.core.MainWorker.*;
 
 public class MainWindow extends JFrame {
     protected static HistoryWindow historyWindow;
 
-    protected static JFrame frame;
+    public static JFrame frame;
         protected JPanel mainPanel;
             protected JPanel northPanel;
                 protected JPanel northPanelBorder1;
@@ -34,7 +36,7 @@ public class MainWindow extends JFrame {
                         protected JToggleButton lightDarkModeButton;
                         protected JPanel northPanelCenterRow2;
                             protected JLabel labelURL;
-                            protected static JTextField textField_URL;
+                            public static JTextField textField_URL;
                             protected static JPopupMenu textFieldPopupMenu;
                             protected boolean validURL;
                             protected JComboBox<String> comboBoxType;
@@ -43,7 +45,7 @@ public class MainWindow extends JFrame {
                 protected JPanel centerVerticalPanelRow1;
                     protected static JLabel validURLLabel;
                     public static boolean overrideValidURL;
-                    protected static JCheckBox checkBoxAdvancedSettings;
+                    public static JCheckBox checkBoxAdvancedSettings;
                     protected static JCheckBox checkBoxCompatibility;
                     protected static JCheckBox checkBoxLogHistory;
 
@@ -56,11 +58,11 @@ public class MainWindow extends JFrame {
                         protected JLabel labelVideoVBR;
                         protected JLabel labelVideoCodec;
 
-                        protected static JComboBox<String> comboBoxVideoExt;
-                        protected static JComboBox<String> comboBoxVideoResolution;
-                        protected static JComboBox<String> comboBoxVideoFPS;
-                        protected static JComboBox<String> comboBoxVideoVBR;
-                        protected static JComboBox<String> comboBoxVideoCodec;
+                        public static JComboBox<String> comboBoxVideoExt;
+                        public static JComboBox<String> comboBoxVideoResolution;
+                        public static JComboBox<String> comboBoxVideoFPS;
+                        public static JComboBox<String> comboBoxVideoVBR;
+                        public static JComboBox<String> comboBoxVideoCodec;
 
                     protected JPanel advancedSettingsPanelRow2;
                         // Audio
@@ -70,16 +72,16 @@ public class MainWindow extends JFrame {
                         protected JLabel labelAudioASR;
                         protected JLabel labelAudioCodec;
 
-                        protected static JComboBox<String> comboBoxAudioChannels;
-                        protected static JComboBox<String> comboBoxAudioExt;
-                        protected static JComboBox<String> comboBoxAudioABR;
-                        protected static JComboBox<String> comboBoxAudioASR;
-                        protected static JComboBox<String> comboBoxAudioCodec;
+                        public static JComboBox<String> comboBoxAudioChannels;
+                        public static JComboBox<String> comboBoxAudioExt;
+                        public static JComboBox<String> comboBoxAudioABR;
+                        public static JComboBox<String> comboBoxAudioASR;
+                        public static JComboBox<String> comboBoxAudioCodec;
 
                     protected JPanel advancedSettingsPanelRow3;
                         protected static JCheckBox checkBoxRecode;
                         protected JLabel labelRecodeBox;
-                        protected static JComboBox<String> comboBoxRecodeExt;
+                        public static JComboBox<String> comboBoxRecodeExt;
                         protected static JCheckBox checkBoxWriteThumbnail;
                         protected static JComboBox<String> comboBoxWriteThumbnailExt;
                         protected static JCheckBox checkBoxEmbedThumbnail;
@@ -98,7 +100,7 @@ public class MainWindow extends JFrame {
     protected final int windowWidthExpanded = 980;
     protected int windowHeightExpanded = 360;
     protected final int fontSize = 18;
-    protected static final String fontName = "Tahoma";
+    public static final String fontName = "Tahoma";
 
 
     public MainWindow() {
@@ -482,13 +484,8 @@ public class MainWindow extends JFrame {
 
                         // Video ----------------------------------------------------------
                         labelVideoExt = new JLabel("Video Format: ");
-                        labelVideoExt.setFont(new Font(fontName, Font.PLAIN, fontSize));
-                        labelVideoExt.setAlignmentX(Component.LEFT_ALIGNMENT);
-                        advancedSettingsPanelRow1.add(labelVideoExt);
+                        comboBoxVideoExt = setupAdvancedSettingsComboBoxes(labelVideoExt, advancedSettingsPanelRow1, arrayVideoExtensions, videoExt);
 
-                        comboBoxVideoExt = new JComboBox<>(arrayVideoExtensions);
-                        comboBoxMaker(comboBoxVideoExt, videoExt);
-                        advancedSettingsPanelRow1.add(comboBoxVideoExt);
                         comboBoxVideoExt.addActionListener((e) -> {
                             videoExt = comboBoxVideoExt.getSelectedIndex();
 
@@ -505,13 +502,7 @@ public class MainWindow extends JFrame {
 
 
                         labelVideoResolution = new JLabel("Resolution: ");
-                        labelVideoResolution.setFont(new Font(fontName, Font.PLAIN, fontSize));
-                        labelVideoResolution.setAlignmentX(Component.LEFT_ALIGNMENT);
-                        advancedSettingsPanelRow1.add(labelVideoResolution);
-
-                        comboBoxVideoResolution = new JComboBox<>(arrayVideoResolution);
-                        comboBoxMaker(comboBoxVideoResolution, videoResolution);
-                        advancedSettingsPanelRow1.add(comboBoxVideoResolution);
+                        comboBoxVideoResolution = setupAdvancedSettingsComboBoxes(labelVideoResolution, advancedSettingsPanelRow1, arrayVideoResolution, videoResolution);
                         comboBoxVideoResolution.addActionListener((e) -> {
                             videoResolution = comboBoxVideoResolution.getSelectedIndex();
                             doCascadeFilter(comboBoxVideoResolution);
@@ -522,13 +513,7 @@ public class MainWindow extends JFrame {
 
 
                         labelVideoFPS = new JLabel("FPS: ");
-                        labelVideoFPS.setFont(new Font(fontName, Font.PLAIN, fontSize));
-                        labelVideoFPS.setAlignmentX(Component.LEFT_ALIGNMENT);
-                        advancedSettingsPanelRow1.add(labelVideoFPS);
-
-                        comboBoxVideoFPS = new JComboBox<>(arrayVideoFPS);
-                        comboBoxMaker(comboBoxVideoFPS, videoFPS);
-                        advancedSettingsPanelRow1.add(comboBoxVideoFPS);
+                        comboBoxVideoFPS = setupAdvancedSettingsComboBoxes(labelVideoFPS, advancedSettingsPanelRow1, arrayVideoFPS, videoFPS);
                         comboBoxVideoFPS.addActionListener((e) -> {
                             videoFPS = comboBoxVideoFPS.getSelectedIndex();
                             doCascadeFilter(comboBoxVideoFPS);
@@ -539,13 +524,7 @@ public class MainWindow extends JFrame {
 
 
                         labelVideoVBR = new JLabel("VBR: ");
-                        labelVideoVBR.setFont(new Font(fontName, Font.PLAIN, fontSize));
-                        labelVideoVBR.setAlignmentX(Component.LEFT_ALIGNMENT);
-                        advancedSettingsPanelRow1.add(labelVideoVBR);
-
-                        comboBoxVideoVBR = new JComboBox<>(arrayVideoVBR);
-                        comboBoxMaker(comboBoxVideoVBR, videoVBR);
-                        advancedSettingsPanelRow1.add(comboBoxVideoVBR);
+                        comboBoxVideoVBR = setupAdvancedSettingsComboBoxes(labelVideoVBR, advancedSettingsPanelRow1, arrayVideoVBR, videoVBR);
                         comboBoxVideoVBR.addActionListener((e) -> {
                             videoVBR = comboBoxVideoVBR.getSelectedIndex();
                             doCascadeFilter(comboBoxVideoVBR);
@@ -556,13 +535,7 @@ public class MainWindow extends JFrame {
 
 
                         labelVideoCodec = new JLabel("Codec: ");
-                        labelVideoCodec.setFont(new Font(fontName, Font.PLAIN, fontSize));
-                        labelVideoCodec.setAlignmentX(Component.LEFT_ALIGNMENT);
-                        advancedSettingsPanelRow1.add(labelVideoCodec);
-
-                        comboBoxVideoCodec = new JComboBox<>(arrayVideoCodec);
-                        comboBoxMaker(comboBoxVideoCodec, videoCodec);
-                        advancedSettingsPanelRow1.add(comboBoxVideoCodec);
+                        comboBoxVideoCodec = setupAdvancedSettingsComboBoxes(labelVideoCodec, advancedSettingsPanelRow1, arrayVideoCodec, videoCodec);
                         comboBoxVideoCodec.addActionListener((e) -> {
                             videoCodec = comboBoxVideoCodec.getSelectedIndex();
                             doCascadeFilter(comboBoxVideoCodec);
@@ -587,13 +560,7 @@ public class MainWindow extends JFrame {
 
                         // Audio ----------------------------------------------------------
                         labelAudioExt = new JLabel("Audio Format: ");
-                        labelAudioExt.setFont(new Font(fontName, Font.PLAIN, fontSize));
-                        labelAudioExt.setAlignmentX(Component.LEFT_ALIGNMENT);
-                        advancedSettingsPanelRow2.add(labelAudioExt);
-
-                        comboBoxAudioExt = new JComboBox<>(arrayAudioExtensions);
-                        comboBoxMaker(comboBoxAudioExt, audioExt);
-                        advancedSettingsPanelRow2.add(comboBoxAudioExt);
+                        comboBoxAudioExt = setupAdvancedSettingsComboBoxes(labelAudioExt, advancedSettingsPanelRow2, arrayAudioExtensions, audioExt);
                         comboBoxAudioExt.addActionListener((e) -> {
                             audioExt = comboBoxAudioExt.getSelectedIndex();
                             doCascadeFilter(comboBoxAudioExt);
@@ -605,13 +572,7 @@ public class MainWindow extends JFrame {
 
 
                         labelAudioChannels = new JLabel("Channels: ");
-                        labelAudioChannels.setFont(new Font(fontName, Font.PLAIN, fontSize));
-                        labelAudioChannels.setAlignmentX(Component.LEFT_ALIGNMENT);
-                        advancedSettingsPanelRow2.add(labelAudioChannels);
-
-                        comboBoxAudioChannels = new JComboBox<>(arrayAudioChannels);
-                        comboBoxMaker(comboBoxAudioChannels, audioChannels);
-                        advancedSettingsPanelRow2.add(comboBoxAudioChannels);
+                        comboBoxAudioChannels = setupAdvancedSettingsComboBoxes(labelAudioChannels, advancedSettingsPanelRow2, arrayAudioChannels, audioChannels);
                         comboBoxAudioChannels.addActionListener((e) -> {
                             audioChannels = comboBoxAudioChannels.getSelectedIndex();
                             doCascadeFilter(comboBoxAudioChannels);
@@ -622,13 +583,7 @@ public class MainWindow extends JFrame {
 
 
                         labelAudioABR = new JLabel("ABR: ");
-                        labelAudioABR.setFont(new Font(fontName, Font.PLAIN, fontSize));
-                        labelAudioABR.setAlignmentX(Component.LEFT_ALIGNMENT);
-                        advancedSettingsPanelRow2.add(labelAudioABR);
-
-                        comboBoxAudioABR = new JComboBox<>(arrayAudioABR);
-                        comboBoxMaker(comboBoxAudioABR, audioABR);
-                        advancedSettingsPanelRow2.add(comboBoxAudioABR);
+                        comboBoxAudioABR = setupAdvancedSettingsComboBoxes(labelAudioABR, advancedSettingsPanelRow2, arrayAudioABR, audioABR);
                         comboBoxAudioABR.addActionListener((e) -> {
                             audioABR = comboBoxAudioABR.getSelectedIndex();
                             doCascadeFilter(comboBoxAudioABR);
@@ -639,13 +594,7 @@ public class MainWindow extends JFrame {
 
 
                         labelAudioASR = new JLabel("ASR: ");
-                        labelAudioASR.setFont(new Font(fontName, Font.PLAIN, fontSize));
-                        labelAudioASR.setAlignmentX(Component.LEFT_ALIGNMENT);
-                        advancedSettingsPanelRow2.add(labelAudioASR);
-
-                        comboBoxAudioASR = new JComboBox<>(arrayAudioASR);
-                        comboBoxMaker(comboBoxAudioASR, audioASR);
-                        advancedSettingsPanelRow2.add(comboBoxAudioASR);
+                        comboBoxAudioASR = setupAdvancedSettingsComboBoxes(labelAudioASR, advancedSettingsPanelRow2, arrayAudioASR, audioASR);
                         comboBoxAudioASR.addActionListener((e) -> {
                             audioASR = comboBoxAudioASR.getSelectedIndex();
                             doCascadeFilter(comboBoxAudioASR);
@@ -653,13 +602,7 @@ public class MainWindow extends JFrame {
 
 
                         labelAudioCodec = new JLabel("Codec: ");
-                        labelAudioCodec.setFont(new Font(fontName, Font.PLAIN, fontSize));
-                        labelAudioCodec.setAlignmentX(Component.LEFT_ALIGNMENT);
-                        advancedSettingsPanelRow2.add(labelAudioCodec);
-
-                        comboBoxAudioCodec = new JComboBox<>(arrayAudioCodec);
-                        comboBoxMaker(comboBoxAudioCodec, audioCodec);
-                        advancedSettingsPanelRow2.add(comboBoxAudioCodec);
+                        comboBoxAudioCodec = setupAdvancedSettingsComboBoxes(labelAudioCodec, advancedSettingsPanelRow2, arrayAudioCodec, audioCodec);
                         comboBoxAudioCodec.addActionListener((e) -> {
                             audioCodec = comboBoxAudioCodec.getSelectedIndex();
                             doCascadeFilter(comboBoxAudioCodec);
@@ -967,7 +910,7 @@ public class MainWindow extends JFrame {
         simulateKeyEvent(textField_URL);
     }
 
-    protected void advancedSettingsEvent( boolean youtube ) {
+    public void advancedSettingsEvent(boolean youtube) {
         checkType();
 
         if (checkBoxAdvancedSettings.isSelected() && youtube && !compatibilityMode) {
@@ -1013,7 +956,7 @@ public class MainWindow extends JFrame {
         }
     }
 
-    protected void coloringModeChange() {
+    public void coloringModeChange() {
         // Colors
         Color backgroundColor = new Color(darkMode ? 0x2B2B2B : 0xE7E7E7);
 
@@ -1065,6 +1008,19 @@ public class MainWindow extends JFrame {
             WorkingPane.progressBar.setBackground(separatorButtonPanelColor);
 
         }
+    }
+
+    private JComboBox<String> setupAdvancedSettingsComboBoxes(
+            JLabel label, JPanel advSettingPanel,
+            String[] array, int selectedIndex) {
+        label.setFont(new Font(fontName, Font.PLAIN, fontSize));
+        label.setAlignmentX(Component.LEFT_ALIGNMENT);
+        advSettingPanel.add(label);
+
+        JComboBox<String> comboBox = new JComboBox<>(array);
+        comboBoxMaker(comboBox, selectedIndex);
+        advSettingPanel.add(comboBox);
+        return comboBox;
     }
 
     private void comboBoxMaker(JComboBox<String> comboBox, int selectedIndex) {
@@ -1172,18 +1128,7 @@ public class MainWindow extends JFrame {
 
 
         //Recode ------------------------------------------
-        switch (videoAudio) {
-            case 0:
-                arrayRecodeExt = arrayVARecodeExt;
-                break;
-            case 1:
-                arrayRecodeExt = arrayVORecodeExt;
-                break;
-            case 2:
-                arrayRecodeExt = arrayAORecodeExt;
-                break;
-        }
-        sortArrayValues("RECODE", arrayRecodeExt);
+        setRecodeExtArray();
 
         updateComboBox(arrayRecodeExt, comboBoxRecodeExt);
 

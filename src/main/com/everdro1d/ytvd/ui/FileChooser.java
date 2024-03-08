@@ -1,4 +1,6 @@
-package main.java;
+package main.com.everdro1d.ytvd.ui;
+
+import main.com.everdro1d.ytvd.core.MainWorker;
 
 import javax.swing.*;
 import java.awt.*;

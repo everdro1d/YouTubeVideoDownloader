@@ -1,4 +1,4 @@
-package main.java;
+package main.com.everdro1d.ytvd.ui;
 
 import com.formdev.flatlaf.FlatClientProperties;
 

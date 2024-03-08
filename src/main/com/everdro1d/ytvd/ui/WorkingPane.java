@@ -1,15 +1,15 @@
-package main.java;
+package main.com.everdro1d.ytvd.ui;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.util.Objects;
 
-import static main.java.MainWindow.frame;
-import static main.java.MainWorker.*;
+import static main.com.everdro1d.ytvd.core.MainWorker.*;
+import static main.com.everdro1d.ytvd.ui.MainWindow.frame;
 
 public class WorkingPane extends JFrame {
-    protected static JFrame workingFrame;
+    public static JFrame workingFrame;
     protected static JPanel panel;
     protected static JPanel panelRow2;
     protected static JLabel label1;

@@ -1,4 +1,6 @@
-package main.java;
+package main.com.everdro1d.ytvd.core;
+
+import main.com.everdro1d.ytvd.ui.HistoryWindow;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -10,8 +12,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import static main.java.MainWorker.isFileInUse;
-import static main.java.MainWorker.windows;
+import static main.com.everdro1d.ytvd.core.MainWorker.isFileInUse;
+import static main.com.everdro1d.ytvd.core.MainWorker.windows;
 
 public class HistoryLogger {
     public static final String historyFileName = "history.txt";

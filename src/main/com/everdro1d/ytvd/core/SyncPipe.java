@@ -1,9 +1,9 @@
-package main.java;
+package main.com.everdro1d.ytvd.core;
 
 import java.io.InputStream;
 import java.io.OutputStream;
 
-class SyncPipe implements Runnable
+public class SyncPipe implements Runnable
 {
     public SyncPipe(InputStream iStream, OutputStream oStream) {
         iStream_ = iStream;

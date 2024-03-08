@@ -1,4 +1,8 @@
-package main.java;
+package main.com.everdro1d.ytvd.ui;
+
+import main.com.everdro1d.ytvd.core.RequestFocusListener;
+import main.com.everdro1d.ytvd.core.HistoryLogger;
+import main.com.everdro1d.ytvd.core.MainWorker;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -10,10 +14,10 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
 
-import static main.java.HistoryLogger.*;
-import static main.java.MainWindow.fontName;
-import static main.java.MainWindow.frame;
-import static main.java.MainWorker.darkMode;
+import static main.com.everdro1d.ytvd.core.HistoryLogger.*;
+import static main.com.everdro1d.ytvd.ui.MainWindow.fontName;
+import static main.com.everdro1d.ytvd.ui.MainWindow.frame;
+import static main.com.everdro1d.ytvd.core.MainWorker.darkMode;
 
 public class HistoryWindow extends JDialog {
     private static final int historyWindowWidth = 1300;

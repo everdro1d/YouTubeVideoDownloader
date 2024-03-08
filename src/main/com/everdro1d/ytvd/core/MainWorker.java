@@ -6,10 +6,11 @@
         - when only ID is rawURL, then default to YouTube
  */
 
-package main.java;
+package main.com.everdro1d.ytvd.core;
 
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLightLaf;
+import main.com.everdro1d.ytvd.ui.*;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -29,18 +30,18 @@ import java.util.Arrays;
 import java.util.Scanner;
 import java.util.prefs.Preferences;
 
-import static main.java.AdvancedSettings.*;
-import static main.java.HistoryLogger.colUrl;
-import static main.java.MainWindow.*;
-import static main.java.WorkingPane.workingFrame;
+import static main.com.everdro1d.ytvd.core.AdvancedSettings.*;
+import static main.com.everdro1d.ytvd.core.HistoryLogger.colUrl;
+import static main.com.everdro1d.ytvd.ui.MainWindow.*;
+import static main.com.everdro1d.ytvd.ui.WorkingPane.workingFrame;
 
 public class MainWorker {
     public static final String dro1dDevWebsite = "https://everdro1d.github.io/";
     public static final String currentVersion = "1.2.3"; //TODO: update this with each release
     public static final String titleText = "YouTube Video Downloader";
-    protected static boolean closeAfterInsert;
+    public static boolean closeAfterInsert;
     protected static MainWindow window;
-    protected static int[] windowPosition = new int[]{0, 0, 0};
+    public static int[] windowPosition = new int[]{0, 0, 0};
     private static Process globalDefaultProcess;
     public static String rawURL = ""; // raw URL String from the text field
     public static String videoID; // the video ID from the URL
@@ -64,7 +65,7 @@ public class MainWorker {
             "Completed - Success", "Stopped - Fatal Error", "Stopped - Already Exists",
             "Canceled - Deleted Files", "Canceled - Saved Files", "OVERRIDE - EMPTY"
     };
-    protected static boolean downloadStarted = false;
+    public static boolean downloadStarted = false;
 
     /**
      * The binary files are
@@ -74,18 +75,18 @@ public class MainWorker {
      *     <li>[2] ffprobe</li>
      * </ul>
      */
-    protected static String[] binaryFiles = {"yt-dlp", "ffmpeg", "ffprobe"};
+    public static String[] binaryFiles = {"yt-dlp", "ffmpeg", "ffprobe"};
     protected static String binaryPath = "main/libs/"; // the path to the binary to run
-    protected static String downloadDirectoryPath = ""; // the path to download the video to
+    public static String downloadDirectoryPath = ""; // the path to download the video to
     public static boolean debug = false; // whether debug mode is enabled
-    protected static boolean darkMode = false; // whether dark mode is enabled
-    protected static boolean compatibilityMode = false; // if the compatability mode is enabled
-    protected static boolean logHistory = true; // whether to log the download history
-    static final Preferences prefs = Preferences.userNodeForPackage(MainWorker.class);
+    public static boolean darkMode = false; // whether dark mode is enabled
+    public static boolean compatibilityMode = false; // if the compatability mode is enabled
+    public static boolean logHistory = true; // whether to log the download history
+    public static final Preferences prefs = Preferences.userNodeForPackage(MainWorker.class);
     protected static String videoTitle = "";
     protected static String videoFileName = "";
     private static WorkingPane workingPane;
-    protected static boolean downloadCanceled = false;
+    public static boolean downloadCanceled = false;
     protected static boolean windows = false;
     protected static boolean macOS = false;
     protected static String jarPath;
@@ -338,7 +339,7 @@ public class MainWorker {
         }
     }
 
-    protected static void setLocationOnResize(JFrame frame) {
+    public static void setLocationOnResize(JFrame frame) {
         int[] framePosition = getFramePositionOnScreen(frame);
         setFramePosition(framePosition[0], framePosition[1], framePosition[2]);
     }
@@ -357,7 +358,7 @@ public class MainWorker {
         UIManager.put("FileChooser.noPlacesBar", Boolean.TRUE);
     }
 
-    protected static void lightDarkMode() {
+    public static void lightDarkMode() {
         if (darkMode) {
             try {
                 UIManager.setLookAndFeel( new FlatDarkLaf() );
@@ -461,7 +462,7 @@ public class MainWorker {
         return false;
     }
 
-    protected static boolean validURL(String url) { //TODO #1 - see top of file comments
+    public static boolean validURL(String url) { //TODO #1 - see top of file comments
         if (url.isEmpty()) {
             if (debug) System.out.println("Failed url - empty.");
             return false;
@@ -834,7 +835,7 @@ public class MainWorker {
         logDownloadHistory();
     }
 
-    protected static void logDownloadHistory() {
+    public static void logDownloadHistory() {
         if (logHistory) {
             System.out.println("Logging download history.");
             String url = rawURL;
@@ -935,7 +936,7 @@ public class MainWorker {
         }
     }
 
-    protected static String openFileChooser() {
+    public static String openFileChooser() {
         String output = System.getProperty("user.home");
 
         FileChooser fileChooser = new FileChooser();
@@ -952,7 +953,7 @@ public class MainWorker {
         return output;
     }
 
-    protected static void closeProcess(Process p, String binaryFile) {
+    public static void closeProcess(Process p, String binaryFile) {
         if (p == null) {
             p = globalDefaultProcess;
         }
@@ -968,7 +969,7 @@ public class MainWorker {
         }
     }
 
-    protected static Icon getApplicationIcon(String internalPath) {
+    public static Icon getApplicationIcon(String internalPath) {
         Icon icon = null;
         try (InputStream iconStream = MainWorker.class.getClassLoader().getResourceAsStream(internalPath)) {
             if (iconStream != null) {
@@ -983,7 +984,7 @@ public class MainWorker {
         return icon;
     }
 
-    protected static void openLink(String url) {
+    public static void openLink(String url) {
         try {
             if (debug) System.out.println("Opening link: " + url);
             Desktop.getDesktop().browse(new URI(url));
@@ -992,7 +993,7 @@ public class MainWorker {
         }
     }
 
-    protected static void openLinkFromTable(HistoryWindow historyWindow, JTable historyTable, int selectedRow) {
+    public static void openLinkFromTable(HistoryWindow historyWindow, JTable historyTable, int selectedRow) {
         if (selectedRow == -1) {
             // show an error dialog if no row is selected
             JOptionPane.showMessageDialog(historyWindow,
@@ -1006,7 +1007,7 @@ public class MainWorker {
         }
     }
 
-    protected static void insertURL(HistoryWindow historyWindow, JTable historyTable, int selectedRow) {
+    public static void insertURL(HistoryWindow historyWindow, JTable historyTable, int selectedRow) {
         if (selectedRow == -1) {
             // show an error dialog if no row is selected
             JOptionPane.showMessageDialog(historyWindow,
@@ -1032,7 +1033,7 @@ public class MainWorker {
         }
     }
 
-    protected static void copyRowToClipboard(HistoryWindow historyWindow, JTable historyTable, int selectedRow, int i) {
+    public static void copyRowToClipboard(HistoryWindow historyWindow, JTable historyTable, int selectedRow, int i) {
         if (selectedRow == -1) {
             // show an error dialog if no row is selected
             JOptionPane.showMessageDialog(historyWindow,
@@ -1064,7 +1065,7 @@ public class MainWorker {
     /** Simulates an ENTER keyReleased event on a component.
      * @param component the component to simulate the event on
      */
-    protected static void simulateKeyEvent(JComponent component) {
+    public static void simulateKeyEvent(JComponent component) {
         simulateKeyEvent(component, KeyEvent.VK_ENTER, '\n', 0, KeyEvent.KEY_RELEASED);
     }
 
@@ -1082,7 +1083,7 @@ public class MainWorker {
         component.dispatchEvent(keyEvent);
     }
 
-    protected static void deleteRelatedFiles() {
+    public static void deleteRelatedFiles() {
         // an array of all files in download directory that match the video file name
 
         String[] fileList = new File(downloadDirectoryPath + fileDiv).list((dir, name) -> name.startsWith(videoFileName));

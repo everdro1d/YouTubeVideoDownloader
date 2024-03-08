@@ -1,4 +1,4 @@
-package main.java;
+package main.com.everdro1d.ytvd.core;
 
 import javax.swing.*;
 import javax.swing.event.AncestorEvent;

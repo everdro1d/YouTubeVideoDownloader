@@ -1,58 +1,60 @@
-package main.java;
+package main.com.everdro1d.ytvd.core;
+
+import main.com.everdro1d.ytvd.ui.MainWindow;
 
 import javax.swing.*;
 import java.util.*;
 import java.util.function.Predicate;
 
-import static main.java.MainWindow.*;
-import static main.java.MainWorker.*;
-import static main.java.TableReaderFromConsole.scannerTableMap;
+import static main.com.everdro1d.ytvd.ui.MainWindow.*;
+import static main.com.everdro1d.ytvd.core.MainWorker.*;
+import static main.com.everdro1d.ytvd.core.TableReaderFromConsole.scannerTableMap;
 
 public class AdvancedSettings {
     protected static Map<String, Map<String, String>> tableMap; // the table of video options (--list-formats)
-    protected static int videoAudio = 0; // 0 = video and audio, 1 = audio only, 2 = video only
-    protected static boolean advancedSettingsEnabled = false; // if the advanced options are enabled
-    protected static volatile boolean getVideoOptions = false; // if the video options are enabled
+    public static int videoAudio = 0; // 0 = video and audio, 1 = audio only, 2 = video only
+    public static boolean advancedSettingsEnabled = false; // if the advanced options are enabled
+    public static volatile boolean getVideoOptions = false; // if the video options are enabled
 
-    protected static boolean recode = false; // if recode is enabled
-    protected static boolean writeThumbnail = false; // if write thumbnail is enabled
-    protected static boolean embedThumbnail = false; // if embed thumbnail is enabled
-    protected static boolean addMetadata = false; // if add metadata is enabled
+    public static boolean recode = false; // if recode is enabled
+    public static boolean writeThumbnail = false; // if write thumbnail is enabled
+    public static boolean embedThumbnail = false; // if embed thumbnail is enabled
+    public static boolean addMetadata = false; // if add metadata is enabled
 
-    protected static int videoExt = 0; // the video format to download
-    protected static int videoResolution = 0; // the video resolution to download
-    protected static int videoCodec = 0; // the video codec to download
-    protected static int videoFPS = 0; // the video FPS to download
-    protected static int videoVBR = 0; // the video VBR to download
+    public static int videoExt = 0; // the video format to download
+    public static int videoResolution = 0; // the video resolution to download
+    public static int videoCodec = 0; // the video codec to download
+    public static int videoFPS = 0; // the video FPS to download
+    public static int videoVBR = 0; // the video VBR to download
 
-    protected static int audioExt = 0; // the audio format to download
-    protected static int audioChannels = 0; // the audio channels to download
-    protected static int audioCodec = 0; // the audio codec to download
-    protected static int audioABR = 0; // the audio sample rate to download
-    protected static int audioASR = 0; // the audio sample rate to download
+    public static int audioExt = 0; // the audio format to download
+    public static int audioChannels = 0; // the audio channels to download
+    public static int audioCodec = 0; // the audio codec to download
+    public static int audioABR = 0; // the audio sample rate to download
+    public static int audioASR = 0; // the audio sample rate to download
 
-    protected static int recodeExt = 0; // the recode format to download
-    protected static int writeThumbnailExt = 0; // the write thumbnail format to download
+    public static int recodeExt = 0; // the recode format to download
+    public static int writeThumbnailExt = 0; // the write thumbnail format to download
 
-    protected static String[] arrayVideoExtensions = new String[] {""};
-    protected static String[] arrayVideoResolution = new String[] {""};
-    protected static String[] arrayVideoCodec = new String[] {""};
-    protected static String[] arrayVideoFPS = new String[] {""};
-    protected static String[] arrayVideoVBR = new String[] {""};
+    public static String[] arrayVideoExtensions = new String[] {""};
+    public static String[] arrayVideoResolution = new String[] {""};
+    public static String[] arrayVideoCodec = new String[] {""};
+    public static String[] arrayVideoFPS = new String[] {""};
+    public static String[] arrayVideoVBR = new String[] {""};
 
-    protected static String[] arrayAudioExtensions = new String[] {""};
-    protected static String[] arrayAudioChannels = new String[] {""};
-    protected static String[] arrayAudioCodec = new String[] {""};
-    protected static String[] arrayAudioABR = new String[] {""};
-    protected static String[] arrayAudioASR = new String[] {""};
+    public static String[] arrayAudioExtensions = new String[] {""};
+    public static String[] arrayAudioChannels = new String[] {""};
+    public static String[] arrayAudioCodec = new String[] {""};
+    public static String[] arrayAudioABR = new String[] {""};
+    public static String[] arrayAudioASR = new String[] {""};
     protected static final String[] arrayVARecodeExt = new String[] {"avi", "flv", "mkv", "mov", "mp4", "webm"};
     protected static final String[] arrayVORecodeExt = new String[] {"avi", "flv", "mkv", "gif", "mov", "mp4", "webm"};
     protected static final String[] arrayAORecodeExt = new String[] {"aac", "aiff", "flac", "m4a", "mka", "mp3", "ogg", "opus", "wav"};
-    protected static String[] arrayRecodeExt = new String[] {""}; // gets set depending on the videoAudio variable
+    public static String[] arrayRecodeExt = new String[] {""}; // gets set depending on the videoAudio variable
 
-    protected static final String[] arrayEmbedThumbnailSupported = new String[] // supported formats for embed thumbnail
+    public static final String[] arrayEmbedThumbnailSupported = new String[] // supported formats for embed thumbnail
             {"mp3", "mkv", "mka", "ogg", "opus", "flac", "m4a", "mp4", "m4v", "mov"};
-    protected static final String[] arrayWriteThumbnailExt = new String[] // supported formats for write thumbnail
+    public static final String[] arrayWriteThumbnailExt = new String[] // supported formats for write thumbnail
             {"png", "jpg", "webp"};
 
 
@@ -148,18 +150,7 @@ public class AdvancedSettings {
 
 
         //Recode ------------------------------------------
-        switch (videoAudio) {
-            case 0:
-                arrayRecodeExt = arrayVARecodeExt;
-                break;
-            case 1:
-                arrayRecodeExt = arrayVORecodeExt;
-                break;
-            case 2:
-                arrayRecodeExt = arrayAORecodeExt;
-                break;
-        }
-        sortArrayValues("RECODE", arrayRecodeExt);
+        setRecodeExtArray();
 
 
         // Update the GUI
@@ -179,6 +170,21 @@ public class AdvancedSettings {
 
         MainWindow.doCascadeFilter(comboBoxVideoExt);
         MainWindow.doCascadeFilter(comboBoxAudioExt);
+    }
+
+    public static void setRecodeExtArray() {
+        switch (videoAudio) {
+            case 0:
+                arrayRecodeExt = arrayVARecodeExt;
+                break;
+            case 1:
+                arrayRecodeExt = arrayVORecodeExt;
+                break;
+            case 2:
+                arrayRecodeExt = arrayAORecodeExt;
+                break;
+        }
+        sortArrayValues("RECODE", arrayRecodeExt);
     }
 
 

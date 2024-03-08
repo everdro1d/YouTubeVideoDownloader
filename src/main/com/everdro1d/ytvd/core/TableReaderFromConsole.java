@@ -1,4 +1,7 @@
-package main.java;
+package main.com.everdro1d.ytvd.core;
+
+import main.com.everdro1d.ytvd.core.AdvancedSettings;
+import main.com.everdro1d.ytvd.core.MainWorker;
 
 import javax.swing.*;
 import java.util.*;

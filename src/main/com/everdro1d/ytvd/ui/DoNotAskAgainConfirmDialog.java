@@ -1,10 +1,12 @@
-package main.java;
+package main.com.everdro1d.ytvd.ui;
+
+import main.com.everdro1d.ytvd.core.MainWorker;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class DoNotAskAgainConfirmDialog extends JPanel {
-    private JCheckBox doNotAskAgainCheckBox;
+    private final JCheckBox doNotAskAgainCheckBox;
 
     public DoNotAskAgainConfirmDialog(Object message) {
         setLayout(new BorderLayout());
