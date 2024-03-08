@@ -178,8 +178,6 @@ public class MainWorker {
                 // UI
                 System.setProperty("apple.awt.application.name", titleText);
                 System.setProperty("apple.awt.application.appearance", "system");
-                String appearance = System.getProperty("apple.awt.application.appearance");
-                System.out.println("Appearance: " + appearance);
             }
             default -> { // Anything not windows or macOS
                 System.err.println("This program is not compatible with your operating system.");
