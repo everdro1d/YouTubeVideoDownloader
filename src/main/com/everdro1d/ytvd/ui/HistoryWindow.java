@@ -1,6 +1,9 @@
 package main.com.everdro1d.ytvd.ui;
 
-import main.com.everdro1d.ytvd.core.RequestFocusListener;
+import com.everdro1d.libs.core.Utils;
+import com.everdro1d.libs.swing.RequestFocusListener;
+import com.everdro1d.libs.swing.SwingGUI;
+import com.everdro1d.libs.swing.components.DoNotAskAgainConfirmDialog;
 import main.com.everdro1d.ytvd.core.HistoryLogger;
 import main.com.everdro1d.ytvd.core.MainWorker;
 
@@ -15,49 +18,50 @@ import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
 
 import static main.com.everdro1d.ytvd.core.HistoryLogger.*;
+import static main.com.everdro1d.ytvd.core.MainWorker.darkMode;
 import static main.com.everdro1d.ytvd.ui.MainWindow.fontName;
 import static main.com.everdro1d.ytvd.ui.MainWindow.frame;
-import static main.com.everdro1d.ytvd.core.MainWorker.darkMode;
 
-public class HistoryWindow extends JDialog {
+public class HistoryWindow extends JFrame {
     private static final int historyWindowWidth = 1300;
     private static final int historyWindowHeight = 550;
 
-    protected JPanel mainPanel;
-        protected JPanel topPanel;
-            protected JLabel labelTitle;
-            protected static CustomSeparator separatorHistoryTitle;
-        protected JScrollPane scrollPane;
-            protected DefaultTableModel tableModel;
-            protected DefaultTableCellRenderer cellRenderer;
-            protected JTable historyTable;
-            protected JPopupMenu tablePopupMenu;
-            public static ArrayList<String[]> historyList;
-            protected int sortModeCol = colDate;
-            protected int selectedRow;
-        protected JPanel sidePanelLeft;
-        protected JPanel sidePanelRight;
-            protected JLabel labelRight;
-            protected JPanel buttonPanel;
-                protected JButton openLinkButton;
-                protected JButton clearButton;
-                protected JButton removeButton;
-                protected JButton insertButton;
-                protected JCheckBox closeAfterInsert;
+    public static JFrame historyFrame;
+        protected JPanel mainPanel;
+            protected JPanel topPanel;
+                protected JLabel labelTitle;
+                protected static CustomSeparator separatorHistoryTitle;
+            protected JScrollPane scrollPane;
+                protected DefaultTableModel tableModel;
+                protected DefaultTableCellRenderer cellRenderer;
+                protected JTable historyTable;
+                protected JPopupMenu tablePopupMenu;
+                public static ArrayList<String[]> historyList;
+                protected int sortModeCol = colDate;
+                protected int selectedRow;
+            protected JPanel sidePanelLeft;
+            protected JPanel sidePanelRight;
+                protected JLabel labelRight;
+                protected JPanel buttonPanel;
+                    protected JButton openLinkButton;
+                    protected JButton clearButton;
+                    protected JButton removeButton;
+                    protected JButton insertButton;
+                    protected JCheckBox closeAfterInsert;
 
-        protected JPanel verticalPanelBottom;
-            protected JPanel pagePanel;
-                protected JButton firstButton;
-                protected JButton previousButton;
-                protected JLabel labelPage;
-                protected JLabel labelPageNumber;
-                protected JLabel labelPageTotal;
-                protected JButton nextButton;
-                protected JButton lastButton;
-                protected static JButton closeButton;
+            protected JPanel verticalPanelBottom;
+                protected JPanel pagePanel;
+                    protected JButton firstButton;
+                    protected JButton previousButton;
+                    protected JLabel labelPage;
+                    protected JLabel labelPageNumber;
+                    protected JLabel labelPageTotal;
+                    protected JButton nextButton;
+                    protected JButton lastButton;
+                    protected static JButton closeButton;
 
-    public HistoryWindow(JFrame parent) {
-        super(parent, "Download History", false);
+    public HistoryWindow() {
+        super("Download History");
 
         initializeTableModel();
         initializeCellRenderer();
@@ -68,10 +72,11 @@ public class HistoryWindow extends JDialog {
 
         initializeHistoryWindowGUI();
 
-        MainWindow.setHandCursorToClickableComponents(this);
+        SwingGUI.setHandCursorToClickableComponents(this);
     }
 
     private void initializeWindowProperties() {
+        historyFrame = this;
         this.setSize(historyWindowWidth, historyWindowHeight);
         this.setResizable(false);
 
@@ -277,7 +282,7 @@ public class HistoryWindow extends JDialog {
                         int confirm = DoNotAskAgainConfirmDialog.showConfirmDialog(this,
                                 "Are you sure you want to clear the history?",
                                 "Clear History", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE,
-                                "doNotAskAgainClearButton");
+                                MainWorker.prefs, "doNotAskAgainClearButton");
 
                         if (confirm == JOptionPane.YES_OPTION) {
                             HistoryLogger historyLogger = new HistoryLogger();
@@ -500,7 +505,7 @@ public class HistoryWindow extends JDialog {
             int confirm = DoNotAskAgainConfirmDialog.showConfirmDialog(this,
                     "Are you sure you want to remove the selected entry?",
                     "Remove Entry", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE,
-                    "doNotAskAgainRemoveButton");
+                    MainWorker.prefs, "doNotAskAgainRemoveButton");
 
             if (confirm == JOptionPane.YES_OPTION) {
                 HistoryLogger historyLogger = new HistoryLogger();
@@ -528,9 +533,9 @@ public class HistoryWindow extends JDialog {
     }
 
     private void printHistoryList() {
-        int totalLineLength = 135;
-        int[] charAtColumnDivVertical = {63, 92, 110};
-        String tableFormat = "| %-60s | %-26s | %-15s | %-21s |%n| %-60s | %-26s | %-15s | %-21s |%n";
+        int totalLineLength = 125;
+        int[] charAtColumnDivVertical = {53, 82, 100};
+        String tableFormat = "| %-50s | %-26s | %-15s | %-21s |%n| %-50s | %-26s | %-15s | %-21s |%n";
         int historyListSize = historyList.size();
 
         StringBuilder sb = new StringBuilder();
@@ -538,13 +543,12 @@ public class HistoryWindow extends JDialog {
         String fullLengthDivider = "+" + "-".repeat(totalLineLength - 2) + "+";
         String fullLengthDividerPlus = fullLengthDivider;
         for (int i : charAtColumnDivVertical) {
-            fullLengthDividerPlus = replaceCharAt(fullLengthDividerPlus, i, "+");
+            fullLengthDividerPlus = Utils.replaceCharAt(fullLengthDividerPlus, i, "+");
         }
         String fullLengthDividerColumn = fullLengthDivider;
         for (int i : charAtColumnDivVertical) {
-            fullLengthDividerColumn = replaceCharAt(fullLengthDividerColumn, i, "|");
+            fullLengthDividerColumn = Utils.replaceCharAt(fullLengthDividerColumn, i, "|");
         }
-
 
 /*
 +-------------------------------------------------------------------------------------------------------------------------------------+
@@ -553,7 +557,7 @@ public class HistoryWindow extends JDialog {
 +--------------------------------------------------------------+----------------------------+-----------------+-----------------------+
 */
         sb.append(fullLengthDivider);
-        sb.append(String.format("%n| %-18s %,-112d |%n", "History List Size:", historyListSize));
+        sb.append(String.format("%n| %-18s %,-102d |%n", "History List Size:", historyListSize));
         sb.append("|").append(fullLengthDivider.replace("-", " "),
                 1, fullLengthDivider.length() - 1).append("|").append("\n");
         sb.append("|").append(fullLengthDividerPlus, 1, fullLengthDividerPlus.length() - 1).append("|").append("\n");
@@ -579,8 +583,9 @@ public class HistoryWindow extends JDialog {
 +--------------------------------------------------------------+----------------------------+-----------------+-----------------------+
 */
         for (String[] data : historyList) {
+            String titleTrimmed = data[colTitle].length() > 50 ? data[colTitle].substring(0, 47) + "..." : data[colTitle];
             sb.append(String.format(
-                    tableFormat, data[colTitle], data[colStatus], data[colType], data[colDate],
+                    tableFormat, titleTrimmed, data[colStatus], data[colType], data[colDate],
                     data[colUrl], "", "", "")
             );
 
@@ -593,10 +598,6 @@ public class HistoryWindow extends JDialog {
 
 
         System.out.print(sb);
-    }
-
-    private String replaceCharAt(String fullLengthDivider, int i, String s) {
-        return fullLengthDivider.substring(0, i) + s + fullLengthDivider.substring(i + s.length());
     }
 
     private void sortHistoryList(int col, boolean[] ascending) {

@@ -1,5 +1,7 @@
 package main.com.everdro1d.ytvd.ui;
 
+import com.everdro1d.libs.swing.SwingGUI;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
@@ -14,7 +16,7 @@ public class WorkingPane extends JFrame {
     protected static JPanel panelRow2;
     protected static JLabel label1;
     protected static JLabel labelMessage;
-    protected static JProgressBar progressBar;
+    public static JProgressBar progressBar;
     protected static JButton cancelButton;
 
     protected static JDialog cancelledDialog;
@@ -29,7 +31,7 @@ public class WorkingPane extends JFrame {
 
         workingFrame.setVisible(true);
         MainWindow.downloadButton.setEnabled(false); // disables so that the user cannot start another download while in progress
-        MainWindow.setHandCursorToClickableComponents(this);
+        SwingGUI.setHandCursorToClickableComponents(this);
     }
 
     private void initializeGUIComponents() {
@@ -203,21 +205,5 @@ public class WorkingPane extends JFrame {
 
     public void setMessage(String message) {
         labelMessage.setText(String.format("<html><body style='width: 300px'>%s</body></html>", message));
-    }
-
-    public void setProgress(int i) {
-        if (i < 0 || i > 100) {
-            if (progressBar.isIndeterminate()) return;
-            progressBar.setIndeterminate(true);
-            progressBar.setStringPainted(false);
-            return;
-        }
-        int ip = progressBar.getValue();
-        if (i > ip || ip == 100) {
-            progressBar.setIndeterminate(false);
-            progressBar.setValue(i);
-            progressBar.setStringPainted(true);
-            progressBar.setString(i + "%");
-        }
     }
 }

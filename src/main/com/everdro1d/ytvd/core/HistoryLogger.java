@@ -1,18 +1,17 @@
 package main.com.everdro1d.ytvd.core;
 
+import com.everdro1d.libs.io.Files;
 import main.com.everdro1d.ytvd.ui.HistoryWindow;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import static main.com.everdro1d.ytvd.core.MainWorker.isFileInUse;
 import static main.com.everdro1d.ytvd.core.MainWorker.windows;
 
 public class HistoryLogger {
@@ -61,7 +60,7 @@ public class HistoryLogger {
         if (MainWorker.debug) System.out.println("Clearing history file: " + historyFilePath);
 
         // Check if the history file is in use or locked
-        if (isFileInUse(Paths.get(historyFilePath))) {
+        if (Files.isFileInUse(Paths.get(historyFilePath))) {
             System.err.println("[ERROR] History file is in use.");
             return;
         } else {
@@ -70,7 +69,7 @@ public class HistoryLogger {
 
         // Clear the history file
         try {
-            Files.write(Paths.get(historyFilePath), new byte[0]);
+            java.nio.file.Files.write(Paths.get(historyFilePath), new byte[0]);
             if (MainWorker.debug) System.out.println("History file cleared successfully.");
         } catch (IOException e) {
             System.err.println("[ERROR] Failed to clear history file:");
@@ -129,10 +128,10 @@ public class HistoryLogger {
 
         Path filePath = Paths.get(historyFilePath);
         // check if history file exists
-        if (!Files.exists(filePath)) {
+        if (!java.nio.file.Files.exists(filePath)) {
             try {
-                Files.createFile(filePath);
-                if (MainWorker.windows) Files.setAttribute(filePath, "dos:hidden", true);
+                java.nio.file.Files.createFile(filePath);
+                if (MainWorker.windows) java.nio.file.Files.setAttribute(filePath, "dos:hidden", true);
                 if (MainWorker.macOS) {
                     new ProcessBuilder("chflags", "hidden", filePath.toString()).start();
                 }

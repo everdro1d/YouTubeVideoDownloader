@@ -1,7 +1,6 @@
 package main.com.everdro1d.ytvd.core;
 
-import main.com.everdro1d.ytvd.core.AdvancedSettings;
-import main.com.everdro1d.ytvd.core.MainWorker;
+import com.everdro1d.libs.core.Utils;
 
 import javax.swing.*;
 import java.util.*;
@@ -44,8 +43,8 @@ public class TableReaderFromConsole {
         //Get the table data in a HashMap
         AdvancedSettings.tableMap = parseTableToMap(table);
 
-        //Print the table
-        if (MainWorker.debug) printTableMap(AdvancedSettings.tableMap);
+        //Print the tableMap
+        if (MainWorker.debug) Utils.printNestedMapFormatted(AdvancedSettings.tableMap);
     }
 
     public static Map<String, Map<String, String>> parseTableToMap(String[][] table) {
@@ -169,12 +168,4 @@ public class TableReaderFromConsole {
         }
         return table;
     }
-
-    public static void printTableMap(Map<String, Map<String, String>> tableMap) {
-        // Print the tableMap
-        for (Map.Entry<String, Map<String, String>> entry : tableMap.entrySet()) {
-            System.out.println(entry.getKey() + " : " + entry.getValue());
-        }
-    }
-
 }

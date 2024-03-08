@@ -1,5 +1,8 @@
 package main.com.everdro1d.ytvd.ui;
 
+import com.everdro1d.libs.core.Utils;
+import com.everdro1d.libs.swing.SwingGUI;
+import com.everdro1d.libs.swing.components.DebugConsoleWindow;
 import com.formdev.flatlaf.FlatClientProperties;
 import main.com.everdro1d.ytvd.core.AdvancedSettings;
 import main.com.everdro1d.ytvd.core.MainWorker;
@@ -16,6 +19,7 @@ import java.util.Set;
 
 import static main.com.everdro1d.ytvd.core.AdvancedSettings.*;
 import static main.com.everdro1d.ytvd.core.MainWorker.*;
+import static main.com.everdro1d.ytvd.ui.WorkingPane.workingFrame;
 
 public class MainWindow extends JFrame {
     protected static HistoryWindow historyWindow;
@@ -99,8 +103,8 @@ public class MainWindow extends JFrame {
     protected final int windowHeight = 250;
     protected final int windowWidthExpanded = 980;
     protected int windowHeightExpanded = 360;
-    protected final int fontSize = 18;
     public static final String fontName = "Tahoma";
+    public static final int fontSize = 18;
 
 
     public MainWindow() {
@@ -110,11 +114,11 @@ public class MainWindow extends JFrame {
 
         frame.setVisible(true);
 
-        setHandCursorToClickableComponents(frame);
+        SwingGUI.setHandCursorToClickableComponents(frame);
     }
 
     private void initializeWindowProperties() {
-        frame = new JFrame();
+        frame = this;
         frame.setTitle(titleText);
         frame.setMinimumSize(new Dimension(windowWidth, windowHeight));
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -124,7 +128,7 @@ public class MainWindow extends JFrame {
         frame.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentMoved(ComponentEvent e) {
-                windowPosition = getFramePositionOnScreen(frame);
+                windowPosition = SwingGUI.getFramePositionOnScreen(frame);
             }
         });
     }
@@ -164,12 +168,12 @@ public class MainWindow extends JFrame {
                         historyButton.setAlignmentY(Component.BOTTOM_ALIGNMENT);
                         historyButton.setEnabled(logHistory);
                         historyButton.setIcon(
-                                getApplicationIcon(darkMode ? "images/historyIconDark.png" : "images/historyIcon.png")
+                                SwingGUI.getApplicationIcon(darkMode ? "images/historyIconDark.png" : "images/historyIcon.png", this.getClass(), MainWorker.debug)
                         );
                         northPanelWestBorder.add(historyButton);
 
                         historyButton.addActionListener((e) -> {
-                            historyWindow = new HistoryWindow(frame);
+                            historyWindow = new HistoryWindow();
                             historyWindow.setVisible(true);
                         });
 
@@ -194,7 +198,7 @@ public class MainWindow extends JFrame {
                             titleIconButton.setAlignmentX(Component.CENTER_ALIGNMENT);
                             northPanelCenterRow1.add(titleIconButton);
 
-                            titleIconButton.addActionListener((e) -> openLink(MainWorker.dro1dDevWebsite));
+                            titleIconButton.addActionListener((e) -> Utils.openLink(MainWorker.dro1dDevWebsite, debug));
 
                             int spacerWidth = 15;
                             northPanelCenterRow1.add(Box.createRigidArea(new Dimension(spacerWidth, 0)));
@@ -333,8 +337,8 @@ public class MainWindow extends JFrame {
                         lightDarkModeButton.setAlignmentX(Component.RIGHT_ALIGNMENT);
                         lightDarkModeButton.setAlignmentY(Component.CENTER_ALIGNMENT);
 
-                        Icon sunIcon = getApplicationIcon("images/sunIcon.png");
-                        Icon moonIcon = getApplicationIcon("images/moonIcon.png");
+                        Icon sunIcon = SwingGUI.getApplicationIcon("images/sunIcon.png", this.getClass(), MainWorker.debug);
+                        Icon moonIcon = SwingGUI.getApplicationIcon("images/moonIcon.png", this.getClass(), MainWorker.debug);
 
                         lightDarkModeButton.setSelectedIcon(darkMode ? sunIcon : moonIcon);
                         lightDarkModeButton.setIcon(darkMode ? moonIcon : sunIcon);
@@ -343,7 +347,7 @@ public class MainWindow extends JFrame {
 
                         lightDarkModeButton.addActionListener((e) -> {
                             darkMode = !darkMode;
-                            MainWorker.lightDarkMode();
+                            SwingGUI.lightOrDarkMode(darkMode, new JFrame[]{frame, workingFrame, DebugConsoleWindow.debugFrame, HistoryWindow.historyFrame});
                             coloringModeChange();
                             SwingUtilities.updateComponentTreeUI(frame);
                         });
@@ -408,7 +412,7 @@ public class MainWindow extends JFrame {
                         checkBoxCompatibility.setSelected(false);
                         compatibilityMode = false;
                         checkBoxCompatibility.setEnabled(!checkBoxAdvancedSettings.isSelected());
-                        advancedSettingsEvent(containsAny(new String[]{
+                        advancedSettingsEvent(Utils.containsAny(new String[]{
                                 "https://www.youtube.com/watch?v=",
                                 "https://youtu.be/",
                                 "https://www.youtube.com/shorts/"
@@ -650,21 +654,15 @@ public class MainWindow extends JFrame {
 
 
                         labelRecodeBox = new JLabel("to: ");
-                        labelRecodeBox.setFont(new Font(fontName, Font.PLAIN, fontSize));
-                        labelRecodeBox.setAlignmentX(Component.LEFT_ALIGNMENT);
                         labelRecodeBox.setEnabled(false);
-                        advancedSettingsPanelRow3.add(labelRecodeBox);
 
 
-                        advancedSettingsPanelRow3.add(Box.createRigidArea(new Dimension(5, 0)));
+                        advancedSettingsPanelRow3.add(Box.createRigidArea(new Dimension(4, 0)));
 
 
                         //add a new combobox
-                        comboBoxRecodeExt = new JComboBox<>(arrayRecodeExt);
-                        comboBoxMaker(comboBoxRecodeExt, recodeExt);
+                        comboBoxRecodeExt = setupAdvancedSettingsComboBoxes(labelRecodeBox, advancedSettingsPanelRow3, arrayRecodeExt, recodeExt);
                         comboBoxRecodeExt.setEnabled(false);
-                        advancedSettingsPanelRow3.add(comboBoxRecodeExt);
-
                         comboBoxRecodeExt.addActionListener((e) -> {
                             recodeExt = comboBoxRecodeExt.getSelectedIndex();
                             checkEmbedThumbnailSupported();
@@ -688,15 +686,12 @@ public class MainWindow extends JFrame {
                         });
 
 
-                        advancedSettingsPanelRow3.add(Box.createRigidArea(new Dimension(5, 0)));
+                        advancedSettingsPanelRow3.add(Box.createRigidArea(new Dimension(4, 0)));
 
 
                         //add a new combobox to the right of the write thumbnail checkbox
-                        comboBoxWriteThumbnailExt = new JComboBox<>(arrayWriteThumbnailExt);
-                        comboBoxMaker(comboBoxWriteThumbnailExt, writeThumbnailExt);
+                        comboBoxWriteThumbnailExt = setupAdvancedSettingsComboBoxes(new JLabel("as: "), advancedSettingsPanelRow3, arrayWriteThumbnailExt, writeThumbnailExt);
                         comboBoxWriteThumbnailExt.setEnabled(false);
-                        advancedSettingsPanelRow3.add(comboBoxWriteThumbnailExt);
-
                         comboBoxWriteThumbnailExt.addActionListener(
                                 (e) -> writeThumbnailExt = comboBoxWriteThumbnailExt.getSelectedIndex()
                         );
@@ -765,7 +760,7 @@ public class MainWindow extends JFrame {
                     fileChooserButton.setFont(new Font(fontName, Font.PLAIN, fontSize + 2));
                     fileChooserButton.setPreferredSize(new Dimension(185, 40));
                     fileChooserButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-                    fileChooserButton.setIcon(getApplicationIcon("images/folderIcon.png"));
+                    fileChooserButton.setIcon(SwingGUI.getApplicationIcon("images/folderIcon.png", this.getClass(), MainWorker.debug));
                     southPanelRow1.add(fileChooserButton);
 
                     fileChooserButton.addActionListener((e) -> MainWorker.downloadDirectoryPath = MainWorker.openFileChooser());
@@ -779,7 +774,7 @@ public class MainWindow extends JFrame {
                     downloadButton.setFont(new Font(fontName, Font.PLAIN, fontSize + 2));
                     downloadButton.setPreferredSize(new Dimension(160, 40));
                     downloadButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-                    downloadButton.setIcon(getApplicationIcon("images/downloadIcon.png"));
+                    downloadButton.setIcon(SwingGUI.getApplicationIcon("images/downloadIcon.png", this.getClass(), MainWorker.debug));
                     southPanelRow1.add(downloadButton);
 
                     downloadButton.addActionListener((e) -> MainWorker.downloadButtonClicked());
@@ -812,19 +807,19 @@ public class MainWindow extends JFrame {
                 ActionListener[] actions = {
                         (e) -> {
                             textField_URL.cut();
-                            requestFocusAndSimulateKeyEvent();
+                            SwingGUI.requestFocusAndSimulateKeyEvent(textField_URL);
                         },
                         (e) -> {
                             textField_URL.copy();
-                            requestFocusAndSimulateKeyEvent();
+                            SwingGUI.requestFocusAndSimulateKeyEvent(textField_URL);
                         },
                         (e) -> {
                             textField_URL.paste();
-                            requestFocusAndSimulateKeyEvent();
+                            SwingGUI.requestFocusAndSimulateKeyEvent(textField_URL);
                         },
                         (e) -> {
                             textField_URL.setText("");
-                            requestFocusAndSimulateKeyEvent();
+                            SwingGUI.requestFocusAndSimulateKeyEvent(textField_URL);
                         },
                         (e) -> {
                             textField_URL.selectAll();
@@ -882,32 +877,16 @@ public class MainWindow extends JFrame {
         validURL = override;
         if (debug) System.out.println("Override URL: " + overrideValidURL);
         //send a key released event to the text field to update the URL
-        simulateKeyEvent(textField_URL);
-    }
-
-    protected static void setHandCursorToClickableComponents(Container container) {
-        for (Component component : container.getComponents()) {
-            if (component instanceof AbstractButton || component instanceof JComboBox) {
-                component.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            } else if (component instanceof JTextField) {
-                component.setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
-            } else if (component instanceof Container) {
-                setHandCursorToClickableComponents((Container) component);
-            }
-        }
+        SwingGUI.simulateKeyEvent(textField_URL);
     }
 
     private Icon getTitleIcon() {
-        ImageIcon icon = (ImageIcon) getApplicationIcon(
+        ImageIcon icon = (ImageIcon) SwingGUI.getApplicationIcon(
                 darkMode ? "images/diskIconLargeDownloadArrowDark.png"
-                        : "images/diskIconLargeDownloadArrow.png"
+                        : "images/diskIconLargeDownloadArrow.png",
+                this.getClass(), MainWorker.debug
         );
         return new ImageIcon(icon.getImage().getScaledInstance(50, 50, Image.SCALE_SMOOTH));
-    }
-
-    private static void requestFocusAndSimulateKeyEvent() {
-        textField_URL.requestFocusInWindow();
-        simulateKeyEvent(textField_URL);
     }
 
     public void advancedSettingsEvent(boolean youtube) {
@@ -941,7 +920,7 @@ public class MainWindow extends JFrame {
         if (checkBoxAdvancedSettings.isSelected()) { //GUI if
             frame.setMinimumSize(new Dimension(windowWidthExpanded, windowHeightExpanded));
             frame.setSize(new Dimension(windowWidthExpanded, windowHeightExpanded));
-            setLocationOnResize(frame);
+            SwingGUI.setLocationOnResize(frame, false);
 
             advancedSettingsPanelRow2.setSize(advancedSettingsPanelRow1.getSize());
             advancedSettingsPanelRow3.setSize(advancedSettingsPanelRow1.getSize());
@@ -986,7 +965,7 @@ public class MainWindow extends JFrame {
         separatorButtonPanel.setBackground(separatorButtonPanelColor);
 
         historyButton.setIcon(
-                getApplicationIcon(darkMode ? "images/historyIconDark.png" : "images/historyIcon.png")
+                SwingGUI.getApplicationIcon(darkMode ? "images/historyIconDark.png" : "images/historyIcon.png", this.getClass(), MainWorker.debug)
         );
 
         titleIconButton.setIcon(getTitleIcon());
@@ -1008,6 +987,12 @@ public class MainWindow extends JFrame {
             WorkingPane.progressBar.setBackground(separatorButtonPanelColor);
 
         }
+
+        // History window colors
+        if (HistoryWindow.historyFrame != null) {
+            HistoryWindow.separatorHistoryTitle.setBackground(separatorTitleColor);
+            HistoryWindow.closeButton.setBackground(new Color(darkMode ? 0x375a81 : 0xffffff));
+        }
     }
 
     private JComboBox<String> setupAdvancedSettingsComboBoxes(
@@ -1018,111 +1003,31 @@ public class MainWindow extends JFrame {
         advSettingPanel.add(label);
 
         JComboBox<String> comboBox = new JComboBox<>(array);
-        comboBoxMaker(comboBox, selectedIndex);
+        SwingGUI.setupComboBox(comboBox, selectedIndex, fontName, fontSize);
         advSettingPanel.add(comboBox);
         return comboBox;
     }
 
-    private void comboBoxMaker(JComboBox<String> comboBox, int selectedIndex) {
-        comboBox.setFont(new Font(fontName, Font.PLAIN, fontSize));
-        comboBox.setAlignmentX(Component.LEFT_ALIGNMENT);
-        comboBox.setSelectedIndex(selectedIndex);
-    }
 
     private void checkType() {
+        JComponent[] videoComponents = {
+                labelVideoExt, labelVideoResolution, labelVideoFPS, labelVideoVBR, labelVideoCodec,
+                comboBoxVideoExt, comboBoxVideoResolution, comboBoxVideoFPS, comboBoxVideoVBR, comboBoxVideoCodec
+        };
+        JComponent[] audioComponents = {
+                labelAudioExt, labelAudioChannels, labelAudioABR, labelAudioASR, labelAudioCodec,
+                comboBoxAudioExt, comboBoxAudioChannels, comboBoxAudioABR, comboBoxAudioASR, comboBoxAudioCodec
+        };
         //Type ------------------------------------------
         switch (comboBoxType.getSelectedIndex()) {
             case 0: // video + audio (default)
-                //labels
-                labelVideoExt.setEnabled(true);
-                labelVideoResolution.setEnabled(true);
-                labelVideoFPS.setEnabled(true);
-                labelVideoVBR.setEnabled(true);
-                labelVideoCodec.setEnabled(true);
-
-                //comboBoxes
-                comboBoxVideoExt.setEnabled(true);
-                comboBoxVideoResolution.setEnabled(true);
-                comboBoxVideoFPS.setEnabled(true);
-                comboBoxVideoVBR.setEnabled(true);
-                comboBoxVideoCodec.setEnabled(true);
-
-
-                //labels
-                labelAudioExt.setEnabled(true);
-                labelAudioChannels.setEnabled(true);
-                labelAudioABR.setEnabled(true);
-                labelAudioASR.setEnabled(true);
-                labelAudioCodec.setEnabled(true);
-
-                //comboBoxes
-                comboBoxAudioExt.setEnabled(true);
-                comboBoxAudioChannels.setEnabled(true);
-                comboBoxAudioABR.setEnabled(true);
-                comboBoxAudioASR.setEnabled(true);
-                comboBoxAudioCodec.setEnabled(true);
+                setComponentsEnabled(videoComponents, true, audioComponents, true);
                 break;
-
             case 1: // video only
-                //labels
-                labelVideoExt.setEnabled(true);
-                labelVideoResolution.setEnabled(true);
-                labelVideoFPS.setEnabled(true);
-                labelVideoVBR.setEnabled(true);
-                labelVideoCodec.setEnabled(true);
-
-                //comboBoxes
-                comboBoxVideoExt.setEnabled(true);
-                comboBoxVideoResolution.setEnabled(true);
-                comboBoxVideoFPS.setEnabled(true);
-                comboBoxVideoVBR.setEnabled(true);
-                comboBoxVideoCodec.setEnabled(true);
-
-
-                //labels
-                labelAudioExt.setEnabled(false);
-                labelAudioChannels.setEnabled(false);
-                labelAudioABR.setEnabled(false);
-                labelAudioASR.setEnabled(false);
-                labelAudioCodec.setEnabled(false);
-
-                //comboBoxes
-                comboBoxAudioExt.setEnabled(false);
-                comboBoxAudioChannels.setEnabled(false);
-                comboBoxAudioABR.setEnabled(false);
-                comboBoxAudioASR.setEnabled(false);
-                comboBoxAudioCodec.setEnabled(false);
+                setComponentsEnabled(videoComponents, true, audioComponents, false);
                 break;
-
             case 2: // audio only
-                //labels
-                labelVideoExt.setEnabled(false);
-                labelVideoResolution.setEnabled(false);
-                labelVideoFPS.setEnabled(false);
-                labelVideoVBR.setEnabled(false);
-                labelVideoCodec.setEnabled(false);
-
-                //comboBoxes
-                comboBoxVideoExt.setEnabled(false);
-                comboBoxVideoResolution.setEnabled(false);
-                comboBoxVideoFPS.setEnabled(false);
-                comboBoxVideoVBR.setEnabled(false);
-                comboBoxVideoCodec.setEnabled(false);
-
-
-                //labels
-                labelAudioExt.setEnabled(true);
-                labelAudioChannels.setEnabled(true);
-                labelAudioABR.setEnabled(true);
-                labelAudioASR.setEnabled(true);
-                labelAudioCodec.setEnabled(true);
-
-                //comboBoxes
-                comboBoxAudioExt.setEnabled(true);
-                comboBoxAudioChannels.setEnabled(true);
-                comboBoxAudioABR.setEnabled(true);
-                comboBoxAudioASR.setEnabled(true);
-                comboBoxAudioCodec.setEnabled(true);
+                setComponentsEnabled(videoComponents, false, audioComponents, true);
                 break;
         }
 
@@ -1130,7 +1035,7 @@ public class MainWindow extends JFrame {
         //Recode ------------------------------------------
         setRecodeExtArray();
 
-        updateComboBox(arrayRecodeExt, comboBoxRecodeExt);
+        SwingGUI.updateComboBox(arrayRecodeExt, comboBoxRecodeExt);
 
 
         // clear the checkboxes
@@ -1153,6 +1058,15 @@ public class MainWindow extends JFrame {
         labelRecodeBox.setEnabled(recode);
         comboBoxRecodeExt.setEnabled(recode);
         checkEmbedThumbnailSupported();
+    }
+
+    private static void setComponentsEnabled(JComponent[] videoComponents, boolean videoEnabled, JComponent[] audioComponents, boolean audioEnabled) {
+        for (JComponent component : videoComponents) {
+            component.setEnabled(videoEnabled);
+        }
+        for (JComponent component : audioComponents) {
+            component.setEnabled(audioEnabled);
+        }
     }
 
     //Additive filters for the combo boxes
@@ -1263,52 +1177,29 @@ public class MainWindow extends JFrame {
             String[] arrayValues = values.toArray(new String[0]);
             sortArrayValues(property, arrayValues);
 
-            updateComboBox(arrayValues, comboBox);
+            SwingGUI.updateComboBox(arrayValues, comboBox);
             comboBox.setSelectedIndex(0);
         }
     }
 
-    public static void updateComboBox(String[] array, JComboBox<String> comboBox) {
-        comboBox.setModel(new DefaultComboBoxModel<>(array));
-
-        // Determine the maximum width among all items
-        int maxWidth = 0;
-        FontMetrics fontMetrics = comboBox.getFontMetrics(comboBox.getFont());
-
-        for (int i = 0; i < comboBox.getItemCount(); i++) {
-            int textWidth = fontMetrics.stringWidth(comboBox.getItemAt(i));
-            maxWidth = Math.max(maxWidth, textWidth);
-        }
-
-        // Add some padding to the maxWidth to accommodate borders and padding
-        int padding = 40; // Adjust this value as needed
-        int newMaxWidth = maxWidth + padding;
-
-        // Set the width of the JComboBox to the maximum width
-        Dimension dimension = new Dimension(newMaxWidth, comboBox.getPreferredSize().height);
-        comboBox.setMinimumSize(dimension);
-        comboBox.setPreferredSize(dimension);
-        comboBox.setMaximumSize(dimension);
-    }
-
     private static Set<String> getUniqueValuesForVideo(String property, Map<String, String> filterProperties) {
-        return getUniqueValues(property, option -> {
+        return Utils.extractUniqueValuesByPredicate(property, option -> {
             boolean match = option.get("ACODEC").equals("video only");
             for (Map.Entry<String, String> entry : filterProperties.entrySet()) {
                 match = match && option.get(entry.getKey()).equals(entry.getValue());
             }
             return match;
-        });
+        }, tableMap);
     }
 
     private static Set<String> getUniqueValuesForAudio(String property, Map<String, String> filterProperties) {
-        return getUniqueValues(property, option -> {
+        return Utils.extractUniqueValuesByPredicate(property, option -> {
             boolean match = option.get("VCODEC").equals("audio only");
             for (Map.Entry<String, String> entry : filterProperties.entrySet()) {
                 match = match && option.get(entry.getKey()).equals(entry.getValue());
             }
             return match;
-        });
+        }, tableMap);
     }
 
     protected static void checkEmbedThumbnailSupported() {
@@ -1330,7 +1221,7 @@ public class MainWindow extends JFrame {
             return;
         }
 
-        if (writeThumbnail && containsAny(arrayEmbedThumbnailSupported, ext) ) {
+        if (writeThumbnail && Utils.containsAny(arrayEmbedThumbnailSupported, ext) ) {
             checkBoxEmbedThumbnail.setEnabled(true);
         } else {
             checkBoxEmbedThumbnail.setSelected(false);

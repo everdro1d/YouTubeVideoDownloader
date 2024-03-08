@@ -8,37 +8,52 @@
 
 package main.com.everdro1d.ytvd.core;
 
-import com.formdev.flatlaf.FlatDarkLaf;
-import com.formdev.flatlaf.FlatLightLaf;
-import main.com.everdro1d.ytvd.ui.*;
+import com.everdro1d.libs.commands.CommandInterface;
+import com.everdro1d.libs.commands.CommandManager;
+import com.everdro1d.libs.core.ApplicationCore;
+import com.everdro1d.libs.core.Utils;
+import com.everdro1d.libs.io.Files;
+import com.everdro1d.libs.io.SyncPipe;
+import com.everdro1d.libs.swing.SwingGUI;
+import com.everdro1d.libs.swing.components.DebugConsoleWindow;
+import com.everdro1d.libs.swing.components.FileChooser;
+import main.com.everdro1d.ytvd.core.commands.DebugCommand;
+import main.com.everdro1d.ytvd.ui.HistoryWindow;
+import main.com.everdro1d.ytvd.ui.MainWindow;
+import main.com.everdro1d.ytvd.ui.WorkingPane;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.*;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
-import java.nio.file.*;
-import java.time.LocalDateTime;
+import java.net.URI;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.prefs.Preferences;
 
 import static main.com.everdro1d.ytvd.core.AdvancedSettings.*;
 import static main.com.everdro1d.ytvd.core.HistoryLogger.colUrl;
 import static main.com.everdro1d.ytvd.ui.MainWindow.*;
+import static main.com.everdro1d.ytvd.ui.WorkingPane.progressBar;
 import static main.com.everdro1d.ytvd.ui.WorkingPane.workingFrame;
 
 public class MainWorker {
     public static final String dro1dDevWebsite = "https://everdro1d.github.io/";
     public static final String currentVersion = "1.2.3"; //TODO: update this with each release
     public static final String titleText = "YouTube Video Downloader";
+    private static final Map<String, CommandInterface> CUSTOM_COMMANDS_MAP = Map.of(
+            "-debug", new DebugCommand()
+    );
+    public static CommandManager commandManager = new CommandManager(CUSTOM_COMMANDS_MAP);
+    public static DebugConsoleWindow debugConsoleWindow;
+    public static boolean debug = false; // whether debug mode is enabled
     public static boolean closeAfterInsert;
     protected static MainWindow window;
     public static int[] windowPosition = new int[]{0, 0, 0};
@@ -78,7 +93,6 @@ public class MainWorker {
     public static String[] binaryFiles = {"yt-dlp", "ffmpeg", "ffprobe"};
     protected static String binaryPath = "main/libs/"; // the path to the binary to run
     public static String downloadDirectoryPath = ""; // the path to download the video to
-    public static boolean debug = false; // whether debug mode is enabled
     public static boolean darkMode = false; // whether dark mode is enabled
     public static boolean compatibilityMode = false; // if the compatability mode is enabled
     public static boolean logHistory = true; // whether to log the download history
@@ -94,100 +108,96 @@ public class MainWorker {
     public static String stringQuotes = "\"";
 
     public static void main(String[] args) {
-        checkCommandLineArgs(args);
-        checkOSCompatability();
+        ApplicationCore.checkCLIArgs(args, commandManager);
+        checkOSCompatibility();
 
-        getJarPath();
-        // set icon
-        Icon frameIcon = getApplicationIcon("images/diskIconLargeDownloadArrow.png");
+        SwingGUI.setLookAndFeel(true, true, debug);
 
-        // binary temp file operations
+        loadPreferencesAndQueueSave();
+
+        SwingGUI.lightOrDarkMode(darkMode, new JFrame[]{frame, workingFrame, DebugConsoleWindow.debugFrame, HistoryWindow.historyFrame});
+        SwingGUI.uiSetup(darkMode, MainWindow.fontName, MainWindow.fontSize);
+
+        if (debug) showDebugConsole();
+
+        jarPath = Files.getJarPath(MainWorker.class, debug);
         copyBinaryTempFiles();
 
-        // set look and feel
-        setLookAndFeel();
+        startMainWindow();
 
-        // load preferences
-        prefs();
+        checkUpdate();
+    }
 
-        // set UI elements
-        lightDarkMode();
-        uiManager();
-
-        // start main window
+    private static void startMainWindow() {
         EventQueue.invokeLater(() -> {
             try {
                 window = new MainWindow();
-                setFramePosition(
+                SwingGUI.setFramePosition(
+                        frame,
                         prefs.getInt("framePosX", windowPosition[0]),
                         prefs.getInt("framePosY", windowPosition[1]),
                         prefs.getInt("activeMonitor", windowPosition[2])
                 );
-                if (frameIcon != null) {
-                    frame.setIconImage(((ImageIcon) frameIcon).getImage());
-                } else {
-                    System.err.println("Failed to set icon.");
-                }
+                SwingGUI.setFrameIcon(frame, "images/diskIconLargeDownloadArrow.png", MainWorker.class, debug);
+
                 window.coloringModeChange();
             } catch (Exception ex) {
                 if (debug) ex.printStackTrace(System.err);
                 System.err.println("Failed to start main window.");
             }
         });
-
-        // check for updates on launch
-        checkUpdate();
     }
 
-    private static void setLookAndFeel() {
-        if (macOS) {
-            System.setProperty("apple.awt.application.name", titleText);
-            System.setProperty("apple.awt.application.appearance", "system");
-            String appearance = System.getProperty("apple.awt.application.appearance");
-            System.out.println("Appearance: " + appearance);
-        }
-
-        FlatLightLaf.setup();
-        FlatDarkLaf.setup();
+    public static void checkOSCompatibility() {
+        String detectedOS = ApplicationCore.detectOS(debug);
+        executeOSSpecificCode(detectedOS);
     }
 
-    private static void checkCommandLineArgs(String[] args) {
-        if (args.length > 0) {
-            String arg = args[0];
-            if (arg.equals("-debug")) {
-                System.out.println("Debug mode enabled.");
-                debug = true;
-            } else {
-                System.err.println(
-                        "Unknown argument: " + arg +
-                                "\nValid arguments: -debug" +
-                                "\nContinuing without arguments."
-                );
+    public static void executeOSSpecificCode(String detectedOS) {
+        switch (detectedOS) {
+            case "Windows" -> {
+                // binary arg stuff
+                fileDiv = "\\";
+                stringQuotes = "\"";
+
+                // set binary path
+                binaryPath += "win/";
+                for (int i = 0; i < 3; i++) {
+                    binaryFiles[i] += ".exe";
+                }
+            }
+            case "macOS" -> {
+                // binary arg stuff
+                fileDiv = "/";
+                stringQuotes = "";
+
+                // set binary path
+                binaryPath += "mac/";
+                binaryFiles[0] = "yt-dlp_macos";
+
+                // UI
+                System.setProperty("apple.awt.application.name", titleText);
+                System.setProperty("apple.awt.application.appearance", "system");
+                String appearance = System.getProperty("apple.awt.application.appearance");
+                System.out.println("Appearance: " + appearance);
+            }
+            default -> { // Anything not windows or macOS
+                System.err.println("This program is not compatible with your operating system.");
+                JOptionPane.showMessageDialog(frame, "This program is not compatible with your operating system.", "Error!", JOptionPane.ERROR_MESSAGE);
+                System.exit(1);
             }
         }
     }
 
-    private static void checkOSCompatability() {
-        String osName = System.getProperty("os.name").toLowerCase();
-        windows = osName.contains("win");
-        macOS = osName.contains("mac");
-        if (!windows && !macOS) {
-            System.err.println("This program is not compatible with your operating system.");
-            JOptionPane.showMessageDialog(frame, "This program is not compatible with your operating system.", "Error!", JOptionPane.ERROR_MESSAGE);
-            System.exit(1);
-        }
-
-        fileDiv = (windows) ? "\\" : "/";
-        stringQuotes = (windows) ? "\"" : "";
-
-        if (windows) {
-            binaryPath += "win/";
-            for (int i = 0; i < 3; i++) {
-                binaryFiles[i] += ".exe";
-            }
+    public static void showDebugConsole() {
+        if (debugConsoleWindow == null) {
+            debugConsoleWindow = new DebugConsoleWindow(MainWindow.frame, MainWindow.fontName, 14, prefs, debug);
+            if (debug) System.out.println("Debug console created.");
+        } else if (!debugConsoleWindow.isVisible()) {
+            debugConsoleWindow.setVisible(true);
+            if (debug) System.out.println("Debug console shown.");
         } else {
-            binaryPath += "mac/";
-            binaryFiles[0] = "yt-dlp_macos";
+            if (debug) System.out.println("Debug console already open.");
         }
     }
 
@@ -205,10 +215,10 @@ public class MainWorker {
                 }
                 Path outputPath = new File((jarPath + fileDiv + binaryFile)).toPath();
 
-                Files.copy(binaryPathStream, outputPath, StandardCopyOption.REPLACE_EXISTING);
+                java.nio.file.Files.copy(binaryPathStream, outputPath, StandardCopyOption.REPLACE_EXISTING);
 
                 // set binary file to hidden
-                if (windows) Files.setAttribute(outputPath, "dos:hidden", true);
+                if (windows) java.nio.file.Files.setAttribute(outputPath, "dos:hidden", true);
                 // set binary file to executable (and hidden on macOS)
                 if (macOS) {
                     new ProcessBuilder("chflags", "hidden", outputPath.toString()).start();
@@ -245,221 +255,54 @@ public class MainWorker {
         }
     }
 
-    private static void prefs() {
-        // load preferences
+    private static void loadPreferencesAndQueueSave() {
+        loadUserSettings();
+        loadWindowPosition();
+
+        savePreferencesOnExit();
+    }
+
+    private static void savePreferencesOnExit() {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            saveUserSettings();
+            saveWindowPosition();
+        }));
+    }
+
+    private static void loadUserSettings() {
         darkMode = prefs.getBoolean("darkMode", false);
         downloadDirectoryPath = prefs.get("filePath", (System.getProperty("user.home") + "\\Downloads"));
         compatibilityMode = prefs.getBoolean("compatibilityMode", false);
         logHistory = prefs.getBoolean("logHistory", true);
         closeAfterInsert = prefs.getBoolean("closeAfterInsert", false);
+    }
 
+    private static void saveUserSettings() {
+        prefs.putBoolean("darkMode", darkMode);
+        prefs.put("filePath", downloadDirectoryPath);
+        prefs.putBoolean("compatibilityMode", compatibilityMode);
+        prefs.putBoolean("logHistory", logHistory);
+        prefs.putBoolean("closeAfterInsert", closeAfterInsert);
+    }
+
+    private static void loadWindowPosition() {
         windowPosition[0] = prefs.getInt("framePosX", 0);
         windowPosition[1] = prefs.getInt("framePosY", 0);
         windowPosition[2] = prefs.getInt("activeMonitor", 0);
-
-        // save preferences on exit
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            prefs.put("filePath", downloadDirectoryPath);
-            prefs.putBoolean("darkMode", darkMode);
-            prefs.putBoolean("compatibilityMode", compatibilityMode);
-            prefs.putBoolean("logHistory", logHistory);
-            prefs.putBoolean("closeAfterInsert", closeAfterInsert);
-
-            prefs.putInt("framePosX", windowPosition[0]);
-            prefs.putInt("framePosY", windowPosition[1]);
-            prefs.putInt("activeMonitor", windowPosition[2]);
-        }));
     }
 
-
-    /**
-     * Gets the window's position on the current monitor.
-     * @return int[] = {x, y, activeMonitor}
-     */
-    public static int[] getFramePositionOnScreen(JFrame frame) {
-        int[] framePosition = new int[]{0, 0, 0};
-        Point frameLocation = frame.getLocationOnScreen();
-
-        // get the monitor that frame is on
-        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        GraphicsDevice[] gs = ge.getScreenDevices();
-
-        for (int i = 0; i < gs.length; i++) {
-            GraphicsDevice gd = gs[i];
-            GraphicsConfiguration[] gc = gd.getConfigurations();
-            Rectangle screenBounds = gc[0].getBounds();
-            int screenWidth = screenBounds.width;
-            int screenHeight = screenBounds.height;
-
-            framePosition[0] = frameLocation.x;
-            framePosition[1] = frameLocation.y;
-
-            if (frameLocation.x >= screenBounds.x && frameLocation.x <= screenBounds.x + screenWidth) {
-                if (frameLocation.y >= screenBounds.y && frameLocation.y <= screenBounds.y + screenHeight) {
-                    framePosition[2] = i;
-                    break;
-                }
-            }
-        }
-
-        return framePosition;
-    }
-
-    private static void setFramePosition(int framePosX, int framePosY, int activeMonitor) {
-        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        GraphicsDevice[] gs = ge.getScreenDevices();
-
-        if (activeMonitor > -1 && activeMonitor < gs.length) {
-            GraphicsDevice gd = gs[activeMonitor];
-            GraphicsConfiguration[] gc = gd.getConfigurations();
-            Rectangle screenBounds = gc[0].getBounds();
-            Insets screenInsets = Toolkit.getDefaultToolkit().getScreenInsets(gc[0]);
-            int screenWidth = screenBounds.width;
-            int screenHeight = screenBounds.height;
-
-            // check if the window is on the screen and account for taskbar
-            if (framePosY > screenBounds.height - frame.getHeight() - screenInsets.bottom) {
-                windowPosition[1] = framePosY = Math.min( Math.max(0, framePosY),
-                        screenBounds.height - frame.getHeight() - screenInsets.bottom
-                );
-            }
-
-            if (framePosX == 0 && framePosY == 0) {
-                //center on screen 0
-                framePosX = screenBounds.x + (screenWidth - frame.getWidth()) / 2;
-                framePosY = screenBounds.y + (screenHeight - frame.getHeight()) / 2;
-            }
-
-            if (framePosX >= screenBounds.x && framePosX <= screenBounds.x + screenWidth) {
-                if (framePosY >= screenBounds.y && framePosY <= screenBounds.y + screenHeight) {
-
-                    frame.setLocation(framePosX, framePosY);
-                }
-            }
-        }
-    }
-
-    public static void setLocationOnResize(JFrame frame) {
-        int[] framePosition = getFramePositionOnScreen(frame);
-        setFramePosition(framePosition[0], framePosition[1], framePosition[2]);
-    }
-
-    private static void uiManager() {
-        UIManager.put("Component.arc", 10);
-        UIManager.put("TextComponent.arc", 10);
-        UIManager.put("Separator.stripeWidth", 10);
-        UIManager.put("RootPane.background", new Color(darkMode ? 0x2B2B2B : 0xe1e1e1));
-        UIManager.put("RootPane.foreground", new Color(darkMode ? 0xbbbbbb : 0x000000));
-
-        UIManager.put("OptionPane.minimumSize",new Dimension(300, 100));
-        UIManager.put("OptionPane.messageFont", new Font(fontName, Font.PLAIN, 14));
-        UIManager.put("OptionPane.buttonFont", new Font(fontName, Font.PLAIN, 16));
-
-        UIManager.put("FileChooser.noPlacesBar", Boolean.TRUE);
-    }
-
-    public static void lightDarkMode() {
-        if (darkMode) {
-            try {
-                UIManager.setLookAndFeel( new FlatDarkLaf() );
-                UIManager.put("RootPane.background", new Color(0x2B2B2B));
-                UIManager.put("RootPane.foreground", new Color(0xbbbbbb));
-
-                if (frame != null) { // because for some reason the title bar color doesn't change with the L&F
-                    frame.getRootPane().putClientProperty("JRootPane.titleBarBackground", new Color(0x2B2B2B));
-                    frame.getRootPane().putClientProperty("JRootPane.titleBarForeground", new Color(0xbbbbbb));
-                }
-                if (workingFrame != null) {
-                    workingFrame.getRootPane().putClientProperty("JRootPane.titleBarBackground", new Color(0x2B2B2B));
-                    workingFrame.getRootPane().putClientProperty("JRootPane.titleBarForeground", new Color(0xbbbbbb));
-                }
-            } catch (Exception ex) {
-                System.err.println("Could not set look and feel of application.");
-            }
-        } else {
-            try {
-                UIManager.setLookAndFeel( new FlatLightLaf() );
-                UIManager.put("RootPane.background", new Color(0xe1e1e1));
-                UIManager.put("RootPane.foreground", new Color(0x000000));
-
-                if (frame != null) { // because for some reason the title bar color doesn't change with the L&F
-                    frame.getRootPane().putClientProperty("JRootPane.titleBarBackground", new Color(0xe1e1e1));
-                    frame.getRootPane().putClientProperty("JRootPane.titleBarForeground", Color.BLACK);
-                }
-                if (workingFrame != null) {
-                    workingFrame.getRootPane().putClientProperty("JRootPane.titleBarBackground", new Color(0xe1e1e1));
-                    workingFrame.getRootPane().putClientProperty("JRootPane.titleBarForeground", Color.BLACK);
-                }
-            } catch (Exception ex) {
-                System.err.println("Could not set look and feel of application.");
-            }
-        }
-
+    private static void saveWindowPosition() {
+        prefs.putInt("framePosX", windowPosition[0]);
+        prefs.putInt("framePosY", windowPosition[1]);
+        prefs.putInt("activeMonitor", windowPosition[2]);
     }
 
     public static void checkUpdate() {
         // checks project GitHub for latest version at launch
-        new Thread(MainWorker::updateCheckerDialog).start();
-    }
-
-    private static void updateCheckerDialog() {
-        String latestVersion = getLatestVersion();
-        if (latestVersion != null) {
-            if (latestVersion.equals(currentVersion)) {
-                if (debug) System.out.println("Application up to date.");
-            } else {
-                if (debug) System.out.println("Application update available.");
-                int dialogResult = DoNotAskAgainConfirmDialog.showConfirmDialog(frame,
-                        "An update is available.<br>Would you like to update now?<br><br>Current Version: v" + currentVersion + "<br>Latest Version: v" + latestVersion,
-                        "Update Available", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
-                        "doNotAskAgainUpdateDialog");
-                if (dialogResult == JOptionPane.YES_OPTION) {
-                    openLink(dro1dDevWebsite + "projects.html#youtube-video-downloader");
-                    System.exit(0);
-                }
-            }
-        } else {
-            if (debug) System.err.println("Failed to check for update. Latest Version returned null.");
-        }
-    }
-
-    private static String getLatestVersion() {
-        String latestVersion = null;
-        URL url;
-        try {
-            url = new URI("https://github.com/everdro1d/YouTubeVideoDownloader/releases/latest/").toURL();
-        } catch (MalformedURLException | URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
-        HttpURLConnection connection = null;
-        try {
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("GET");
-            connection.setInstanceFollowRedirects(false);
-            connection.connect();
-            String location = connection.getHeaderField("Location");
-            if (location != null) {
-                latestVersion = location.split("/v")[1];
-                if (debug) System.out.println("Latest version: " + latestVersion);
-            }
-        } catch (IOException e) {
-            if (debug) e.printStackTrace(System.err);
-        } finally {
-            if (connection != null) {
-                connection.disconnect();
-            }
-        }
-
-        return latestVersion;
-    }
-
-    public static boolean containsAny(String[] matchingArray, String testString) {
-        for (String s : matchingArray) {
-            if (testString.contains(s)) {
-                return true;
-            }
-        }
-        return false;
+        new Thread(() -> SwingGUI.updateCheckerDialog(currentVersion, null, debug,
+                "https://github.com/everdro1d/YouTubeVideoDownloader/releases/latest/",
+                dro1dDevWebsite + "projects.html#youtube-video-downloader", prefs))
+                .start();
     }
 
     public static boolean validURL(String url) { //TODO #1 - see top of file comments
@@ -484,7 +327,7 @@ public class MainWorker {
                     "instagram.com/reel/"
             };
 
-            if (containsAny(validURLs, rawURL)) {
+            if (Utils.containsAny(validURLs, rawURL)) {
                 if (!validatedURL(url, validURLs)) {
                     if (debug) System.out.println("Failed url - validatedURL check.");
                     return false;
@@ -572,7 +415,7 @@ public class MainWorker {
 
             if (!downloadCanceled) {
                 // get download command
-                ArrayList<String> cmd = getCommand();
+                ArrayList<String> cmd = getDownloadCommandList();
                 if (debug) System.out.println("Download command: " + cmd.toString().replace(",", ""));
 
                 // start download
@@ -625,7 +468,7 @@ public class MainWorker {
         videoFileName = fileName.replaceAll("#", "").trim();
     }
 
-    public static ArrayList<String> getCommand() {
+    public static ArrayList<String> getDownloadCommandList() {
         // the options to pass to the binary
         ArrayList<String> advancedSettings = getAdvancedSettings();
         ArrayList<String> cmdList = new ArrayList<>();
@@ -773,11 +616,11 @@ public class MainWorker {
                             if (recode) {
                                 workingPane.setTitle("Recoding Video...");
                                 workingPane.setMessage(String.format("<html><body style='width: 300px'>%s</body></html>", message));
-                                workingPane.setProgress(-1);
+                                SwingGUI.setProgressPercent(-1, progressBar);
                             } else {
                                 workingPane.setTitle("Merging...");
                                 workingPane.setMessage(" Merging audio and video...");
-                                workingPane.setProgress(-1);
+                                SwingGUI.setProgressPercent(-1, progressBar);
                             }
                         } else {
                             if (recode) {
@@ -790,11 +633,11 @@ public class MainWorker {
                                         break;
                                 }
                                 workingPane.setMessage(String.format("<html><body style='width: 300px'>%s</body></html>", message));
-                                workingPane.setProgress(-1);
+                                SwingGUI.setProgressPercent(-1, progressBar);
                             } else {
                                 workingPane.setTitle("Finishing...");
                                 workingPane.setMessage(" Finishing up...");
-                                workingPane.setProgress(-1);
+                                SwingGUI.setProgressPercent(-1, progressBar);
                             }
                         }
 
@@ -847,7 +690,7 @@ public class MainWorker {
             }
 
             // check if the download failed somehow
-            if ( !containsAny(validDownloadStatus, downloadStatus) ) {
+            if ( !Utils.containsAny(validDownloadStatus, downloadStatus) ) {
                 // if the download was canceled by the program (error from process, likely by an invalid url),
                 // show the dialog and skip logging download history
                 if (debug) System.out.println(
@@ -859,7 +702,7 @@ public class MainWorker {
             // log download history
             HistoryLogger historyLogger = new HistoryLogger();
             sanitizeVideoTitle();
-            String[] data = { videoTitle, url, downloadStatus, getVideoAudioStatus(), getCurrentTime() };
+            String[] data = { videoTitle, url, downloadStatus, getVideoAudioStatus(), Utils.getCurrentTime(true, true, false) };
             historyLogger.logHistory(data);
             if (debug) System.out.println("Logged download history: \n" + Arrays.toString(data));
 
@@ -872,8 +715,8 @@ public class MainWorker {
         if (videoTitle.isEmpty()) {
             videoTitle = "Untitled";
         }
-        if (videoTitle.length() > 60) {
-            videoTitle = videoTitle.substring(0, 60);
+        if (videoTitle.length() > 50) {
+            videoTitle = videoTitle.substring(0, 47).concat("...");
         }
         videoTitle = videoTitle.replaceAll(",", "");
     }
@@ -903,16 +746,6 @@ public class MainWorker {
         };
     }
 
-    private static String getCurrentTime() {
-        return LocalDateTime.now()
-                .toString()
-                .replace("T", " ")
-                .replace("Z", "")
-                .split("\\.")[0];
-        // 2021-08-01T18:00:00.000Z
-        // 2021-08-01 18:00:00
-    }
-
     private static void setWorkingPaneMessage(WorkingPane workingPane, String s) {
         int dC = Math.max(1, Math.min(downloadCount, downloadMax));
 
@@ -931,7 +764,7 @@ public class MainWorker {
             String progress = joinedMessage1.split("%")[0].replace(".", "").replace(" ", "");
             if (!progress.isEmpty()) {
                 int progressInt = Math.round(Float.parseFloat(progress) / 10);
-                workingPane.setProgress(progressInt);
+                SwingGUI.setProgressPercent(progressInt, progressBar);
             }
         }
     }
@@ -939,16 +772,14 @@ public class MainWorker {
     public static String openFileChooser() {
         String output = System.getProperty("user.home");
 
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setVisible(true);
+        FileChooser fileChooser = new FileChooser(output, "Select Download Location", false);
 
         int returnValue = fileChooser.showOpenDialog(frame);
         if (returnValue == JFileChooser.APPROVE_OPTION) {
             output = fileChooser.getSelectedFile().getAbsolutePath();
             JOptionPane.showMessageDialog(frame, "Download location set to: " + output, "Download Location", JOptionPane.INFORMATION_MESSAGE);
-        } else {
-            if ( !downloadDirectoryPath.isEmpty() ) output = downloadDirectoryPath;
-        }
+
+        } else if (!downloadDirectoryPath.isEmpty()) output = downloadDirectoryPath;
 
         return output;
     }
@@ -969,30 +800,6 @@ public class MainWorker {
         }
     }
 
-    public static Icon getApplicationIcon(String internalPath) {
-        Icon icon = null;
-        try (InputStream iconStream = MainWorker.class.getClassLoader().getResourceAsStream(internalPath)) {
-            if (iconStream != null) {
-                icon = new ImageIcon(ImageIO.read(iconStream));
-            }
-        } catch (Exception e) {
-            if (debug) e.printStackTrace(System.err);
-        }
-        if (icon == null) {
-            System.err.println("[ERROR] Could not find icon file at: " + internalPath);
-        }
-        return icon;
-    }
-
-    public static void openLink(String url) {
-        try {
-            if (debug) System.out.println("Opening link: " + url);
-            Desktop.getDesktop().browse(new URI(url));
-        } catch (Exception e) {
-            if (debug) e.printStackTrace(System.err);
-        }
-    }
-
     public static void openLinkFromTable(HistoryWindow historyWindow, JTable historyTable, int selectedRow) {
         if (selectedRow == -1) {
             // show an error dialog if no row is selected
@@ -1003,7 +810,7 @@ public class MainWorker {
         } else {
             // get the string in the first column of the selected row
             String url = (String) historyTable.getValueAt(selectedRow, colUrl);
-            openLink(url);
+            Utils.openLink(url, debug);
         }
     }
 
@@ -1021,7 +828,7 @@ public class MainWorker {
                 if (debug) System.out.println("Inserting link: " + url);
                 textField_URL.setText(url);
                 textField_URL.requestFocus();
-                simulateKeyEvent(textField_URL, KeyEvent.VK_ENTER, '\n', 0, KeyEvent.KEY_RELEASED);
+                SwingGUI.simulateKeyEvent(textField_URL, KeyEvent.VK_ENTER, '\n', 0, KeyEvent.KEY_RELEASED);
                 textField_URL.selectAll();
             } catch (Exception e) {
                 if (debug) e.printStackTrace(System.err);
@@ -1053,34 +860,8 @@ public class MainWorker {
                 copyString = new StringBuilder((String) historyTable.getValueAt(selectedRow, i));
             }
 
-            try {
-                if (debug) System.out.println("Copying to clipboard: " + copyString);
-                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(copyString.toString()), null);
-            } catch (Exception e) {
-                if (debug) e.printStackTrace(System.err);
-            }
+            Utils.copyToClipboard(copyString.toString(), debug);
         }
-    }
-
-    /** Simulates an ENTER keyReleased event on a component.
-     * @param component the component to simulate the event on
-     */
-    public static void simulateKeyEvent(JComponent component) {
-        simulateKeyEvent(component, KeyEvent.VK_ENTER, '\n', 0, KeyEvent.KEY_RELEASED);
-    }
-
-    /**
-     * Simulates a keyEvent event on a component.
-     * @param component the component to simulate the event on
-     * @param keyCode ex: KeyEvent.VK_ENTER for ENTER
-     * @param keyChar ex: '\n' for ENTER
-     * @param modifiers KeyEvent.CTRL_MASK, KeyEvent.SHIFT_MASK, KeyEvent.ALT_MASK, KeyEvent.META_MASK
-     * @param event KeyEvent.KEY_PRESSED, KeyEvent.KEY_RELEASED, or KeyEvent.KEY_TYPED
-     */
-    @SuppressWarnings("SameParameterValue")
-    protected static void simulateKeyEvent(JComponent component, int keyCode, char keyChar, int modifiers, int event) {
-        KeyEvent keyEvent = new KeyEvent(component, event, System.currentTimeMillis(), modifiers, keyCode, keyChar);
-        component.dispatchEvent(keyEvent);
     }
 
     public static void deleteRelatedFiles() {
@@ -1106,7 +887,7 @@ public class MainWorker {
             Path pathToDelete = Paths.get(downloadDirectoryPath + "\\" + file);
             for (int tries = 0; tries < 5; tries++) {
                 try {
-                    Files.delete(pathToDelete);
+                    java.nio.file.Files.delete(pathToDelete);
                     if (debug) System.out.println("Deleted file: " + pathToDelete.getFileName());
                     break;
                 } catch (IOException e1) {
@@ -1118,29 +899,6 @@ public class MainWorker {
                     );
                 }
             }
-        }
-    }
-
-    protected static void getJarPath() {
-        try {
-            jarPath = Paths.get(MainWorker.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParent().toString();
-            if (debug) System.out.println("Jar Path: " + jarPath);
-        } catch (URISyntaxException e) {
-            if (debug) e.printStackTrace(System.err);
-            System.err.println("[ERROR] Failed to get jar path.");
-        }
-    }
-
-    public static boolean isFileInUse(Path filePath) {
-        try (FileChannel channel = FileChannel.open(filePath, StandardOpenOption.WRITE);
-             FileLock lock = channel.tryLock()) {
-
-            // If the lock is null, then the file is already locked
-            return lock == null;
-
-        } catch (IOException e) {
-            // An exception occurred, which means the file is likely in use
-            return true;
         }
     }
 }

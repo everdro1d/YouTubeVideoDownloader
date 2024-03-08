@@ -1,17 +1,19 @@
 package main.com.everdro1d.ytvd.core;
 
+import com.everdro1d.libs.core.Utils;
+import com.everdro1d.libs.io.SyncPipe;
+import com.everdro1d.libs.swing.SwingGUI;
 import main.com.everdro1d.ytvd.ui.MainWindow;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.function.Predicate;
 
-import static main.com.everdro1d.ytvd.ui.MainWindow.*;
 import static main.com.everdro1d.ytvd.core.MainWorker.*;
 import static main.com.everdro1d.ytvd.core.TableReaderFromConsole.scannerTableMap;
+import static main.com.everdro1d.ytvd.ui.MainWindow.*;
 
 public class AdvancedSettings {
-    protected static Map<String, Map<String, String>> tableMap; // the table of video options (--list-formats)
+    public static Map<String, Map<String, String>> tableMap; // the table of video options (--list-formats)
     public static int videoAudio = 0; // 0 = video and audio, 1 = audio only, 2 = video only
     public static boolean advancedSettingsEnabled = false; // if the advanced options are enabled
     public static volatile boolean getVideoOptions = false; // if the video options are enabled
@@ -98,54 +100,54 @@ public class AdvancedSettings {
 
         //Video ------------------------------------------
         arrayVideoExtensions =
-                getUniqueValues( "EXT", option -> option.get("ACODEC").equals("video only") )
-                .toArray(new String[0]);
+                Utils.extractUniqueValuesByPredicate( "EXT", option -> option.get("ACODEC").equals("video only"),
+                                tableMap).toArray(new String[0]);
 
         arrayVideoResolution =
-                getUniqueValues( "RESOLUTION", option -> option.get("ACODEC").equals("video only") )
-                .toArray(new String[0]);
+                Utils.extractUniqueValuesByPredicate( "RESOLUTION", option -> option.get("ACODEC").equals("video only"),
+                        tableMap ).toArray(new String[0]);
         sortArrayValues("RESOLUTION", arrayVideoResolution);
 
         arrayVideoFPS =
-                getUniqueValues( "FPS", option -> option.get("ACODEC").equals("video only") )
-                .toArray(new String[0]);
+                Utils.extractUniqueValuesByPredicate( "FPS", option -> option.get("ACODEC").equals("video only"),
+                                tableMap ).toArray(new String[0]);
         sortArrayValues("FPS", arrayVideoFPS);
 
         arrayVideoVBR =
-                getUniqueValues( "VBR", option -> option.get("ACODEC").equals("video only") )
-                .toArray(new String[0]);
+                Utils.extractUniqueValuesByPredicate( "VBR", option -> option.get("ACODEC").equals("video only"),
+                                tableMap ).toArray(new String[0]);
         sortArrayValues("VBR", arrayVideoVBR);
 
         arrayVideoCodec =
-                getUniqueValues( "VCODEC", option -> option.get("ACODEC").equals("video only") )
-                .toArray(new String[0]);
+                Utils.extractUniqueValuesByPredicate( "VCODEC", option -> option.get("ACODEC").equals("video only"),
+                                tableMap ).toArray(new String[0]);
         sortArrayValues("VCODEC", arrayVideoCodec);
 
 
         //Audio ------------------------------------------
 
         arrayAudioExtensions =
-                getUniqueValues( "EXT", option -> option.get("CH").matches("[0-9]")
-                                && option.get("VCODEC").equals("audio only") ).toArray(new String[0]);
+                Utils.extractUniqueValuesByPredicate( "EXT", option -> option.get("CH").matches("[0-9]")
+                                && option.get("VCODEC").equals("audio only"), tableMap ).toArray(new String[0]);
 
         arrayAudioChannels =
-                getUniqueValues( "CH", option -> option.get("CH").matches("[0-9]"))
-                .toArray(new String[0]);
+                Utils.extractUniqueValuesByPredicate( "CH", option -> option.get("CH").matches("[0-9]"),
+                        tableMap ).toArray(new String[0]);
         sortArrayValues("CH", arrayAudioChannels);
 
         arrayAudioCodec =
-                getUniqueValues( "ACODEC", option -> option.get("CH").matches("[0-9]")
-                                && option.get("VCODEC").equals("audio only") ).toArray(new String[0]);
+                Utils.extractUniqueValuesByPredicate( "ACODEC", option -> option.get("CH").matches("[0-9]")
+                                && option.get("VCODEC").equals("audio only"), tableMap ).toArray(new String[0]);
         sortArrayValues("ACODEC", arrayAudioCodec);
 
         arrayAudioABR =
-                getUniqueValues( "ABR", option -> option.get("CH").matches("[0-9]")
-                                && option.get("VCODEC").equals("audio only") ).toArray(new String[0]);
+                Utils.extractUniqueValuesByPredicate( "ABR", option -> option.get("CH").matches("[0-9]")
+                                && option.get("VCODEC").equals("audio only"), tableMap ).toArray(new String[0]);
         sortArrayValues("ABR", arrayAudioABR);
 
         arrayAudioASR =
-                getUniqueValues( "ASR", option -> option.get("CH").matches("[0-9]")
-                                && option.get("VCODEC").equals("audio only") ).toArray(new String[0]);
+                Utils.extractUniqueValuesByPredicate( "ASR", option -> option.get("CH").matches("[0-9]")
+                                && option.get("VCODEC").equals("audio only"), tableMap ).toArray(new String[0]);
         sortArrayValues("ASR", arrayAudioASR);
 
 
@@ -154,19 +156,19 @@ public class AdvancedSettings {
 
 
         // Update the GUI
-        MainWindow.updateComboBox( arrayVideoExtensions, comboBoxVideoExt );
-        MainWindow.updateComboBox( arrayVideoResolution, MainWindow.comboBoxVideoResolution );
-        MainWindow.updateComboBox( arrayVideoFPS, MainWindow.comboBoxVideoFPS );
-        MainWindow.updateComboBox( arrayVideoVBR, MainWindow.comboBoxVideoVBR );
-        MainWindow.updateComboBox( arrayVideoCodec, MainWindow.comboBoxVideoCodec );
+        SwingGUI.updateComboBox( arrayVideoExtensions, comboBoxVideoExt );
+        SwingGUI.updateComboBox( arrayVideoResolution, MainWindow.comboBoxVideoResolution );
+        SwingGUI.updateComboBox( arrayVideoFPS, MainWindow.comboBoxVideoFPS );
+        SwingGUI.updateComboBox( arrayVideoVBR, MainWindow.comboBoxVideoVBR );
+        SwingGUI.updateComboBox( arrayVideoCodec, MainWindow.comboBoxVideoCodec );
 
-        MainWindow.updateComboBox( arrayAudioExtensions, MainWindow.comboBoxAudioExt );
-        MainWindow.updateComboBox( arrayAudioChannels, MainWindow.comboBoxAudioChannels );
-        MainWindow.updateComboBox( arrayAudioABR, MainWindow.comboBoxAudioABR );
-        MainWindow.updateComboBox( arrayAudioASR, MainWindow.comboBoxAudioASR );
-        MainWindow.updateComboBox( arrayAudioCodec, MainWindow.comboBoxAudioCodec );
+        SwingGUI.updateComboBox( arrayAudioExtensions, MainWindow.comboBoxAudioExt );
+        SwingGUI.updateComboBox( arrayAudioChannels, MainWindow.comboBoxAudioChannels );
+        SwingGUI.updateComboBox( arrayAudioABR, MainWindow.comboBoxAudioABR );
+        SwingGUI.updateComboBox( arrayAudioASR, MainWindow.comboBoxAudioASR );
+        SwingGUI.updateComboBox( arrayAudioCodec, MainWindow.comboBoxAudioCodec );
 
-        MainWindow.updateComboBox( arrayRecodeExt, MainWindow.comboBoxRecodeExt );
+        SwingGUI.updateComboBox( arrayRecodeExt, MainWindow.comboBoxRecodeExt );
 
         MainWindow.doCascadeFilter(comboBoxVideoExt);
         MainWindow.doCascadeFilter(comboBoxAudioExt);
@@ -300,19 +302,6 @@ public class AdvancedSettings {
         }
 
         return arrayListAdvancedSettings;
-    }
-
-    // Example call for getUniqueValues() method:
-    //        Set<String> uniqueValues = getUniqueValues("EXT", option -> option.get("ACODEC").equals("video only"));
-    //        System.out.println(uniqueValues);
-    public static Set<String> getUniqueValues(String property, Predicate<Map<String, String>> filter) {
-        Set<String> uniqueValues = new HashSet<>();
-        for (Map<String, String> option : tableMap.values()) {
-            if (filter == null || filter.test(option)) {
-                uniqueValues.add(option.get(property));
-            }
-        }
-        return uniqueValues;
     }
 
     //// Example call for getKey() method:
