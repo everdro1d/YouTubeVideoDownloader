@@ -22,17 +22,15 @@ import static main.com.everdro1d.ytvd.core.MainWorker.*;
 import static main.com.everdro1d.ytvd.ui.WorkingPane.workingFrame;
 
 public class MainWindow extends JFrame {
-    protected static HistoryWindow historyWindow;
-
+    public static HistoryWindow historyWindow;
     public static JFrame frame;
         protected JPanel mainPanel;
             protected JPanel northPanel;
                 protected JPanel northPanelBorder1;
                     protected JPanel northPanelWestBorder;
-                        protected JButton historyButton;
+                        protected JButton openWindowMenuButton;
                     protected JPanel northPanelCenter;
                         protected JPanel northPanelCenterRow1;
-                            protected JButton titleIconButton;
                             protected JPanel northPanelCenterRow1YPanel;
                                 protected JLabel labelTitle;
                                 protected CustomSeparator separatorTitle;
@@ -160,23 +158,51 @@ public class MainWindow extends JFrame {
                         //create Y spacing
                         northPanelWestBorder.add(Box.createRigidArea(new Dimension(0, 10)));
 
-                        // add a history button in the west of the northPanelWestBorder
-                        historyButton = new JButton();
-                        historyButton.setBorderPainted(false);
-                        historyButton.setContentAreaFilled(false);
-                        historyButton.setAlignmentX(Component.LEFT_ALIGNMENT);
-                        historyButton.setAlignmentY(Component.BOTTOM_ALIGNMENT);
-                        historyButton.setEnabled(logHistory);
-                        historyButton.setIcon(
-                                SwingGUI.getApplicationIcon(darkMode ? "images/historyIconDark.png" : "images/historyIcon.png", this.getClass(), MainWorker.debug)
+                        // add a button in the west of the northPanelWestBorder
+                        openWindowMenuButton = new JButton();
+                        openWindowMenuButton.setBorderPainted(false);
+                        openWindowMenuButton.setContentAreaFilled(false);
+                        openWindowMenuButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+                        openWindowMenuButton.setAlignmentY(Component.BOTTOM_ALIGNMENT);
+                        openWindowMenuButton.setIcon(
+                                SwingGUI.getApplicationIcon(darkMode ? "images/historyIconDark.png" : "images/historyIcon.png", this.getClass())
                         );
-                        northPanelWestBorder.add(historyButton);
+                        northPanelWestBorder.add(openWindowMenuButton);
 
-                        historyButton.addActionListener((e) -> {
-                            historyWindow = new HistoryWindow();
-                            historyWindow.setVisible(true);
+                        openWindowMenuButton.addActionListener((e) -> {
+                            JPopupMenu popupMenu = new JPopupMenu();
+                            {
+                                String[] menuItems = {"Open History Window","Open Debug Console","Toggle debug mode On/Off","Open dro1dDev Website"};
+                                ActionListener[] actions = {
+                                        (e1) -> showHistoryWindow(),
+                                        (e1) -> showDebugConsole(),
+                                        (e1) -> debug = !debug,
+                                        (e1) -> Utils.openLink(dro1dDevWebsite)
+                                };
+
+                                for (int i = 0; i < menuItems.length; i++) {
+                                    JMenuItem menuItem = new JMenuItem(menuItems[i]);
+                                    menuItem.addActionListener(actions[i]);
+                                    popupMenu.add(menuItem);
+                                    menuItem.setEnabled(true);
+                                    menuItem.setFont(new Font(fontName, Font.PLAIN, 14));
+                                }
+
+                                popupMenu.addPopupMenuListener(new PopupMenuListener() {
+                                    @Override
+                                    public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                                        popupMenu.getComponent(0).setEnabled(logHistory);
+                                        popupMenu.getComponent(1).setEnabled(debug);
+                                    }
+
+                                    @Override
+                                    public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {}
+                                    @Override
+                                    public void popupMenuCanceled(PopupMenuEvent e) {}
+                                });
+                            }
+                            popupMenu.show(openWindowMenuButton, openWindowMenuButton.getWidth(), 0);
                         });
-
                     }
                     // add a new JPanel in the center of the northPanelBorder1
                     northPanelCenter = new JPanel();
@@ -192,16 +218,9 @@ public class MainWindow extends JFrame {
                         northPanelCenterRow1.setLayout(new BoxLayout(northPanelCenterRow1, BoxLayout.X_AXIS));
                         northPanelCenter.add(northPanelCenterRow1);
                         {
-                            Icon titleIcon = getTitleIcon();
-                            titleIconButton = new JButton(titleIcon);
-                            titleIconButton.setContentAreaFilled(false);
-                            titleIconButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-                            northPanelCenterRow1.add(titleIconButton);
-
-                            titleIconButton.addActionListener((e) -> Utils.openLink(MainWorker.dro1dDevWebsite, debug));
-
                             int spacerWidth = 15;
                             northPanelCenterRow1.add(Box.createRigidArea(new Dimension(spacerWidth, 0)));
+
 
                             northPanelCenterRow1YPanel = new JPanel();
                             northPanelCenterRow1YPanel.setLayout(new BoxLayout(northPanelCenterRow1YPanel, BoxLayout.Y_AXIS));
@@ -209,19 +228,19 @@ public class MainWindow extends JFrame {
                             {
                                 // add a new title label in the north of the northPanelRow1
                                 labelTitle = new JLabel(titleText);
-                                labelTitle.setFont(new Font(fontName, Font.BOLD, 24));
+                                labelTitle.setFont(new Font(fontName, Font.BOLD, 32));
                                 labelTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
                                 northPanelCenterRow1YPanel.add(labelTitle);
 
-                                northPanelCenterRow1YPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+                                northPanelCenterRow1YPanel.add(Box.createRigidArea(new Dimension(0, 5)));
 
                                 // add a new separator in the north of the northPanelRow1
-                                separatorTitle = new CustomSeparator(false, 2, 3);
+                                separatorTitle = new CustomSeparator(true, 3, 3);
                                 northPanelCenterRow1YPanel.add(separatorTitle);
                             }
 
-                            // x spacing to account for the icon
-                            northPanelCenterRow1.add(Box.createRigidArea(new Dimension(titleIcon.getIconWidth() + spacerWidth, 0)));
+
+                            northPanelCenterRow1.add(Box.createRigidArea(new Dimension(spacerWidth, 0)));
                         }
 
                         northPanelCenter.add(Box.createRigidArea(new Dimension(0, 20)));
@@ -337,8 +356,8 @@ public class MainWindow extends JFrame {
                         lightDarkModeButton.setAlignmentX(Component.RIGHT_ALIGNMENT);
                         lightDarkModeButton.setAlignmentY(Component.CENTER_ALIGNMENT);
 
-                        Icon sunIcon = SwingGUI.getApplicationIcon("images/sunIcon.png", this.getClass(), MainWorker.debug);
-                        Icon moonIcon = SwingGUI.getApplicationIcon("images/moonIcon.png", this.getClass(), MainWorker.debug);
+                        Icon sunIcon = SwingGUI.getApplicationIcon("images/sunIcon.png", this.getClass());
+                        Icon moonIcon = SwingGUI.getApplicationIcon("images/moonIcon.png", this.getClass());
 
                         lightDarkModeButton.setSelectedIcon(darkMode ? sunIcon : moonIcon);
                         lightDarkModeButton.setIcon(darkMode ? moonIcon : sunIcon);
@@ -457,12 +476,9 @@ public class MainWindow extends JFrame {
 
                     if (prefs.getBoolean("logHistory", true)) {
                         checkBoxLogHistory.setSelected(logHistory);
-                        historyButton.setEnabled(logHistory);
+                        openWindowMenuButton.setEnabled(logHistory);
                     }
-                    checkBoxLogHistory.addActionListener((e) -> {
-                        logHistory = checkBoxLogHistory.isSelected();
-                        historyButton.setEnabled(logHistory);
-                    });
+                    checkBoxLogHistory.addActionListener((e) -> logHistory = checkBoxLogHistory.isSelected());
                 }
 
                 centerVerticalPanel.add(Box.createRigidArea(new Dimension(0, 20)));
@@ -760,7 +776,7 @@ public class MainWindow extends JFrame {
                     fileChooserButton.setFont(new Font(fontName, Font.PLAIN, fontSize + 2));
                     fileChooserButton.setPreferredSize(new Dimension(185, 40));
                     fileChooserButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-                    fileChooserButton.setIcon(SwingGUI.getApplicationIcon("images/folderIcon.png", this.getClass(), MainWorker.debug));
+                    fileChooserButton.setIcon(SwingGUI.getApplicationIcon("images/folderIcon.png", this.getClass()));
                     southPanelRow1.add(fileChooserButton);
 
                     fileChooserButton.addActionListener((e) -> MainWorker.downloadDirectoryPath = MainWorker.openFileChooser());
@@ -774,7 +790,7 @@ public class MainWindow extends JFrame {
                     downloadButton.setFont(new Font(fontName, Font.PLAIN, fontSize + 2));
                     downloadButton.setPreferredSize(new Dimension(160, 40));
                     downloadButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-                    downloadButton.setIcon(SwingGUI.getApplicationIcon("images/downloadIcon.png", this.getClass(), MainWorker.debug));
+                    downloadButton.setIcon(SwingGUI.getApplicationIcon("images/downloadIcon.png", this.getClass()));
                     southPanelRow1.add(downloadButton);
 
                     downloadButton.addActionListener((e) -> MainWorker.downloadButtonClicked());
@@ -880,15 +896,6 @@ public class MainWindow extends JFrame {
         SwingGUI.simulateKeyEvent(textField_URL);
     }
 
-    private Icon getTitleIcon() {
-        ImageIcon icon = (ImageIcon) SwingGUI.getApplicationIcon(
-                darkMode ? "images/diskIconLargeDownloadArrowDark.png"
-                        : "images/diskIconLargeDownloadArrow.png",
-                this.getClass(), MainWorker.debug
-        );
-        return new ImageIcon(icon.getImage().getScaledInstance(50, 50, Image.SCALE_SMOOTH));
-    }
-
     public void advancedSettingsEvent(boolean youtube) {
         checkType();
 
@@ -964,18 +971,19 @@ public class MainWindow extends JFrame {
         separatorTitle.setBackground(separatorTitleColor);
         separatorButtonPanel.setBackground(separatorButtonPanelColor);
 
-        historyButton.setIcon(
-                SwingGUI.getApplicationIcon(darkMode ? "images/historyIconDark.png" : "images/historyIcon.png", this.getClass(), MainWorker.debug)
+        openWindowMenuButton.setIcon(
+                SwingGUI.getApplicationIcon(
+                        darkMode ? "images/historyIconDark.png"
+                                : "images/historyIcon.png",
+                        this.getClass())
         );
-
-        titleIconButton.setIcon(getTitleIcon());
-
 
         // Advanced Settings Panel colors
         centerVerticalPanelRow2.setBackground(advSettingsPanelColor);
         advancedSettingsPanelRow1.setBackground(advSettingsPanelColor);
         advancedSettingsPanelRow2.setBackground(advSettingsPanelColor);
         advancedSettingsPanelRow3.setBackground(advSettingsPanelColor);
+
 
         // Working Pane colors
         if (WorkingPane.workingFrame != null) {
@@ -988,11 +996,16 @@ public class MainWindow extends JFrame {
 
         }
 
+
         // History window colors
         if (HistoryWindow.historyFrame != null) {
             HistoryWindow.separatorHistoryTitle.setBackground(separatorTitleColor);
             HistoryWindow.closeButton.setBackground(new Color(darkMode ? 0x375a81 : 0xffffff));
         }
+
+
+        // Debug console colors
+        DebugConsoleWindow.expandWindowButtonColorChange(textColor);
     }
 
     private JComboBox<String> setupAdvancedSettingsComboBoxes(
