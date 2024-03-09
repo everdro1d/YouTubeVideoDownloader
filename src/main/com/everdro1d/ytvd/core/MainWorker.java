@@ -110,17 +110,20 @@ public class MainWorker {
     public static void main(String[] args) {
         ApplicationCore.checkCLIArgs(args, commandManager);
         checkOSCompatibility();
-
-        SwingGUI.setLookAndFeel(true, true, debug);
+        SwingGUI.setLookAndFeel(true, true);
 
         loadPreferencesAndQueueSave();
 
         SwingGUI.lightOrDarkMode(darkMode, new JFrame[]{frame, workingFrame, DebugConsoleWindow.debugFrame, HistoryWindow.historyFrame});
         SwingGUI.uiSetup(darkMode, MainWindow.fontName, MainWindow.fontSize);
 
-        if (debug) showDebugConsole();
+        if (debug) {
+            showDebugConsole();
+            System.out.println("Starting " + titleText + " v" + currentVersion + "...");
+            System.out.println("Detected OS: " + ApplicationCore.detectOS());
+        }
 
-        jarPath = Files.getJarPath(MainWorker.class, debug);
+        jarPath = Files.getJarPath(MainWorker.class);
         copyBinaryTempFiles();
 
         startMainWindow();
@@ -138,7 +141,7 @@ public class MainWorker {
                         prefs.getInt("framePosY", windowPosition[1]),
                         prefs.getInt("activeMonitor", windowPosition[2])
                 );
-                SwingGUI.setFrameIcon(frame, "images/diskIconLargeDownloadArrow.png", MainWorker.class, debug);
+                SwingGUI.setFrameIcon(frame, "images/diskIconLargeDownloadArrow.png", MainWorker.class);
 
                 window.coloringModeChange();
             } catch (Exception ex) {
@@ -149,7 +152,7 @@ public class MainWorker {
     }
 
     public static void checkOSCompatibility() {
-        String detectedOS = ApplicationCore.detectOS(debug);
+        String detectedOS = ApplicationCore.detectOS();
         executeOSSpecificCode(detectedOS);
     }
 
@@ -192,12 +195,28 @@ public class MainWorker {
     public static void showDebugConsole() {
         if (debugConsoleWindow == null) {
             debugConsoleWindow = new DebugConsoleWindow(MainWindow.frame, MainWindow.fontName, 14, prefs, debug);
-            if (debug) System.out.println("Debug console created.");
+            if (debug) System.out.println("Debug console started.");
         } else if (!debugConsoleWindow.isVisible()) {
             debugConsoleWindow.setVisible(true);
             if (debug) System.out.println("Debug console shown.");
         } else {
             if (debug) System.out.println("Debug console already open.");
+            EventQueue.invokeLater(() -> {
+                debugConsoleWindow.toFront();
+            });
+        }
+    }
+
+    public static void showHistoryWindow() {
+        if (historyWindow == null) {
+            historyWindow = new HistoryWindow();
+            historyWindow.setVisible(true);
+        } else if (!historyWindow.isVisible()) {
+            historyWindow.setVisible(true);
+        } else {
+            EventQueue.invokeLater(() -> {
+                historyWindow.toFront();
+            });
         }
     }
 
@@ -810,7 +829,7 @@ public class MainWorker {
         } else {
             // get the string in the first column of the selected row
             String url = (String) historyTable.getValueAt(selectedRow, colUrl);
-            Utils.openLink(url, debug);
+            Utils.openLink(url);
         }
     }
 
@@ -860,7 +879,7 @@ public class MainWorker {
                 copyString = new StringBuilder((String) historyTable.getValueAt(selectedRow, i));
             }
 
-            Utils.copyToClipboard(copyString.toString(), debug);
+            Utils.copyToClipboard(copyString.toString());
         }
     }
 
