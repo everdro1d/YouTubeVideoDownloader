@@ -199,9 +199,7 @@ public class MainWorker {
             if (debug) System.out.println("Debug console shown.");
         } else {
             if (debug) System.out.println("Debug console already open.");
-            EventQueue.invokeLater(() -> {
-                debugConsoleWindow.toFront();
-            });
+            EventQueue.invokeLater(() -> debugConsoleWindow.toFront());
         }
     }
 
@@ -212,9 +210,7 @@ public class MainWorker {
         } else if (!historyWindow.isVisible()) {
             historyWindow.setVisible(true);
         } else {
-            EventQueue.invokeLater(() -> {
-                historyWindow.toFront();
-            });
+            EventQueue.invokeLater(() -> historyWindow.toFront());
         }
     }
 
