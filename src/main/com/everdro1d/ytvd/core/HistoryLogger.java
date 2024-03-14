@@ -18,7 +18,6 @@ public class HistoryLogger {
     public static final String historyFileName = "history.txt";
     public static String historyFilePath;
     private final ArrayList<String[]> historyList;
-    public static final String[] columnNames = {"Title", "URL", "Status", "Type", "Date"};
     public static final int colTitle = 0;
     public static final int colUrl = 1;
     public static final int colStatus = 2;

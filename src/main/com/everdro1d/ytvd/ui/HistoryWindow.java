@@ -16,6 +16,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.TreeMap;
 
 import static main.com.everdro1d.ytvd.core.HistoryLogger.*;
 import static main.com.everdro1d.ytvd.core.MainWorker.darkMode;
@@ -31,37 +33,63 @@ public class HistoryWindow extends JFrame {
         private JPanel mainPanel;
             private JPanel topPanel;
                 private JLabel labelTitle;
+                    private String titleText = "Download History";
                 protected static CustomSeparator separatorHistoryTitle;
             private JScrollPane scrollPane;
                 private DefaultTableModel tableModel;
                 private DefaultTableCellRenderer cellRenderer;
                 private JTable historyTable;
-                private JPopupMenu tablePopupMenu;
+                    private String[] columnNames = {"Title", "URL", "Status", "Type", "Date"};
+                    private JPopupMenu tablePopupMenu;
+                    private String[] tablePopupMenuItems = {"Open Link", "Remove Entry", "Insert URL"};
+                        private String tablePopupMenuCopyItem = "Copy";
+                        private String[] copySubMenuItems = {"All", "Title", "URL", "Status", "Type", "Date"};
                 public static ArrayList<String[]> historyList;
                 private int sortModeCol = colDate;
                 private int selectedRow;
             private JPanel sidePanelLeft;
             private JPanel sidePanelRight;
                 private JLabel labelRight;
+                    private String optionsLabelText = "Options";
                 private JPanel buttonPanel;
                     private JButton openLinkButton;
+                        private String openLinkButtonText = "Open Link";
                     private JButton clearButton;
+                        private String clearButtonText = "Clear History";
+                        private String clearHistoryDialogMessageText = "Are you sure you want to clear the history?";
+                        private String clearHistoryDialogTitleText = "Clear History";
                     private JButton removeButton;
+                        private String removeButtonText = "Remove Entry";
+                        private String removeRowErrorDialogMessageText = "No row is selected to remove.";
+                        private String removeRowErrorDialogTitleText = "Remove Entry Error";
+                        private String removeRowConfirmDialogMessageText = "Are you sure you want to remove the selected entry?";
+                        private String removeRowConfirmDialogTitleText = "Remove Entry";
                     private JButton insertButton;
+                        private String insertButtonText = "Insert URL";
                     private JCheckBox closeAfterInsert;
+                        private String closeAfterInsertCheckBoxText = "Close History Window After Inserting URL";
             private JPanel verticalPanelBottom;
                 private JPanel pagePanel;
                     private JButton firstButton;
                     private JButton previousButton;
                     private JLabel labelPage;
+                        private String pageLabelText = "Page";
                     private JLabel labelPageNumber;
                     private JLabel labelPageTotal;
+                        private String ofText = "of";
                     private JButton nextButton;
                     private JButton lastButton;
                     protected static JButton closeButton;
+                        private String closeButtonText = "Close";
 
     public HistoryWindow() {
-        super("Download History");
+        super();
+
+        // if the locale does not contain the class, add it and it's components
+        if (!localeManager.getClassesInLocaleMap().contains("HistoryWindow")) {
+            addClassToLocale();
+        }
+        useLocale();
 
         initializeTableModel();
         initializeCellRenderer();
@@ -69,17 +97,106 @@ public class HistoryWindow extends JFrame {
         historyList = new HistoryLogger().getHistory();
 
         initializeWindowProperties();
-
         initializeHistoryWindowGUI();
 
         SwingGUI.setHandCursorToClickableComponents(this);
+    }
+
+    private void addClassToLocale() {
+        Map<String, Map<String, String>> classMap = new TreeMap<>();
+            classMap.put("Main", new TreeMap<>());
+            Map<String, String> mainMap = classMap.get("Main");
+                mainMap.put("titleText", titleText);
+                mainMap.put("optionsLabelText", optionsLabelText);
+                mainMap.put("openLinkButtonText", openLinkButtonText);
+                mainMap.put("clearButtonText", clearButtonText);
+                mainMap.put("clearHistoryDialogMessageText", clearHistoryDialogMessageText);
+                mainMap.put("clearHistoryDialogTitleText", clearHistoryDialogTitleText);
+                mainMap.put("removeButtonText", removeButtonText);
+                mainMap.put("removeRowErrorDialogMessageText", removeRowErrorDialogMessageText);
+                mainMap.put("removeRowErrorDialogTitleText", removeRowErrorDialogTitleText);
+                mainMap.put("removeRowConfirmDialogMessageText", removeRowConfirmDialogMessageText);
+                mainMap.put("removeRowConfirmDialogTitleText", removeRowConfirmDialogTitleText);
+                mainMap.put("insertButtonText", insertButtonText);
+                mainMap.put("closeAfterInsertCheckBoxText", closeAfterInsertCheckBoxText);
+                mainMap.put("pageLabelText", pageLabelText);
+                mainMap.put("ofText", ofText);
+                mainMap.put("closeButtonText", closeButtonText);
+
+            classMap.put("ColumnHeaderNames", new TreeMap<>());
+            Map<String, String> columnHeaderNamesMap = classMap.get("ColumnHeaderNames");
+                columnHeaderNamesMap.put("Title", columnNames[0]);
+                columnHeaderNamesMap.put("URL", columnNames[1]);
+                columnHeaderNamesMap.put("Status", columnNames[2]);
+                columnHeaderNamesMap.put("Type", columnNames[3]);
+                columnHeaderNamesMap.put("Date", columnNames[4]);
+
+            classMap.put("TablePopupMenu", new TreeMap<>());
+            Map<String, String> tablePopupMenuMap = classMap.get("TablePopupMenu");
+                tablePopupMenuMap.put("tablePopupMenuOpenItem", tablePopupMenuItems[0]);
+                tablePopupMenuMap.put("tablePopupMenuRemoveItem", tablePopupMenuItems[1]);
+                tablePopupMenuMap.put("tablePopupMenuInsertItem", tablePopupMenuItems[2]);
+                tablePopupMenuMap.put("tablePopupMenuCopyItem", tablePopupMenuCopyItem);
+
+            classMap.put("CopySubMenuMap", new TreeMap<>());
+                Map<String, String> copySubMenuMap = classMap.get("CopySubMenuMap");
+                    copySubMenuMap.put("All", copySubMenuItems[0]);
+                    copySubMenuMap.put("Title", copySubMenuItems[1]);
+                    copySubMenuMap.put("URL", copySubMenuItems[2]);
+                    copySubMenuMap.put("Status", copySubMenuItems[3]);
+                    copySubMenuMap.put("Type", copySubMenuItems[4]);
+                    copySubMenuMap.put("Date", copySubMenuItems[5]);
+
+        localeManager.addClassSpecificMap("HistoryWindow", classMap);
+    }
+
+    private void useLocale() {
+        Map<String, Map<String, String>> classMap = localeManager.getClassSpecificMap("HistoryWindow");
+        Map<String, String> mainMap = classMap.get("Main");
+            titleText = mainMap.getOrDefault("titleText", titleText);
+            optionsLabelText = mainMap.getOrDefault("optionsLabelText", optionsLabelText);
+            openLinkButtonText = mainMap.getOrDefault("openLinkButtonText", openLinkButtonText);
+            clearButtonText = mainMap.getOrDefault("clearButtonText", clearButtonText);
+            clearHistoryDialogMessageText = mainMap.getOrDefault("clearHistoryDialogMessageText", clearHistoryDialogMessageText);
+            clearHistoryDialogTitleText = mainMap.getOrDefault("clearHistoryDialogTitleText", clearHistoryDialogTitleText);
+            removeButtonText = mainMap.getOrDefault("removeButtonText", removeButtonText);
+            removeRowErrorDialogMessageText = mainMap.getOrDefault("removeRowErrorDialogMessageText", removeRowErrorDialogMessageText);
+            removeRowErrorDialogTitleText = mainMap.getOrDefault("removeRowErrorDialogTitleText", removeRowErrorDialogTitleText);
+            removeRowConfirmDialogMessageText = mainMap.getOrDefault("removeRowConfirmDialogMessageText", removeRowConfirmDialogMessageText);
+            removeRowConfirmDialogTitleText = mainMap.getOrDefault("removeRowConfirmDialogTitleText", removeRowConfirmDialogTitleText);
+            insertButtonText = mainMap.getOrDefault("insertButtonText", insertButtonText);
+            closeAfterInsertCheckBoxText = mainMap.getOrDefault("closeAfterInsertCheckBoxText", closeAfterInsertCheckBoxText);
+            pageLabelText = mainMap.getOrDefault("pageLabelText", pageLabelText);
+            ofText = mainMap.getOrDefault("ofText", ofText);
+            closeButtonText = mainMap.getOrDefault("closeButtonText", closeButtonText);
+
+        Map<String, String> columnHeaderNamesMap = classMap.get("ColumnHeaderNames");
+            columnNames[0] = columnHeaderNamesMap.getOrDefault("Title", columnNames[0]);
+            columnNames[1] = columnHeaderNamesMap.getOrDefault("URL", columnNames[1]);
+            columnNames[2] = columnHeaderNamesMap.getOrDefault("Status", columnNames[2]);
+            columnNames[3] = columnHeaderNamesMap.getOrDefault("Type", columnNames[3]);
+            columnNames[4] = columnHeaderNamesMap.getOrDefault("Date", columnNames[4]);
+
+        Map<String, String> tablePopupMenuMap = classMap.get("TablePopupMenu");
+            tablePopupMenuItems[0] = tablePopupMenuMap.getOrDefault("tablePopupMenuOpenItem", tablePopupMenuItems[0]);
+            tablePopupMenuItems[1] = tablePopupMenuMap.getOrDefault("tablePopupMenuRemoveItem", tablePopupMenuItems[1]);
+            tablePopupMenuItems[2] = tablePopupMenuMap.getOrDefault("tablePopupMenuInsertItem", tablePopupMenuItems[2]);
+            tablePopupMenuCopyItem = tablePopupMenuMap.getOrDefault("tablePopupMenuCopyItem", tablePopupMenuCopyItem);
+
+        Map<String, String> copySubMenuMap = classMap.get("CopySubMenuMap");
+            copySubMenuItems[0] = copySubMenuMap.getOrDefault("All", copySubMenuItems[0]);
+            copySubMenuItems[1] = copySubMenuMap.getOrDefault("Title", copySubMenuItems[1]);
+            copySubMenuItems[2] = copySubMenuMap.getOrDefault("URL", copySubMenuItems[2]);
+            copySubMenuItems[3] = copySubMenuMap.getOrDefault("Status", copySubMenuItems[3]);
+            copySubMenuItems[4] = copySubMenuMap.getOrDefault("Type", copySubMenuItems[4]);
+            copySubMenuItems[5] = copySubMenuMap.getOrDefault("Date", copySubMenuItems[5]);
     }
 
     private void initializeWindowProperties() {
         historyFrame = this;
         this.setSize(historyWindowWidth, historyWindowHeight);
         this.setResizable(false);
-
+        this.setTitle(titleText);
         this.setLocationRelativeTo(frame);
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
     }
@@ -113,7 +230,7 @@ public class HistoryWindow extends JFrame {
             mainPanel.add(topPanel, BorderLayout.NORTH);
             {
                 // create a label at the top of the border panel
-                labelTitle = new JLabel("Download History");
+                labelTitle = new JLabel(titleText);
                 labelTitle.setFont(new Font(fontName, Font.BOLD, 24));
                 labelTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
                 labelTitle.setHorizontalAlignment(JLabel.CENTER);
@@ -226,6 +343,37 @@ public class HistoryWindow extends JFrame {
                     }
                 });
 
+                tablePopupMenu = new JPopupMenu();
+                {
+                    JMenu copySubMenu = getCopySubMenu();
+                    tablePopupMenu.add(copySubMenu);
+
+                    ActionListener[] actions = {
+                            e -> {
+                                System.out.println("POPUPMENU: Open Link selected");
+                                selectedRow = historyTable.getSelectedRow();
+                                MainWorker.openLinkFromTable(HistoryWindow.this, historyTable, selectedRow);
+                            },
+                            e -> {
+                                System.out.println("POPUPMENU: Remove Entry selected");
+                                selectedRow = historyTable.getSelectedRow();
+                                removeHistoryRow(selectedRow);
+                            },
+                            e -> {
+                                System.out.println("POPUPMENU: Insert URL selected");
+                                selectedRow = historyTable.getSelectedRow();
+                                MainWorker.insertURL(HistoryWindow.this, historyTable, selectedRow);
+                            }
+                    };
+
+                    for (int i = 0; i < tablePopupMenuItems.length; i++) {
+                        JMenuItem menuItem = new JMenuItem(tablePopupMenuItems[i]);
+                        menuItem.addActionListener(actions[i]);
+                        tablePopupMenu.add(menuItem);
+                        menuItem.setFont(new Font(fontName, Font.PLAIN, 14));
+                    }
+                }
+
             }
 
             // create a side panel on the right of the border panel
@@ -236,7 +384,7 @@ public class HistoryWindow extends JFrame {
             mainPanel.add(sidePanelRight, BorderLayout.EAST);
             {
                 // create a label in the side panel
-                labelRight = new JLabel("Options:");
+                labelRight = new JLabel(optionsLabelText);
                 labelRight.setAlignmentX(Component.CENTER_ALIGNMENT);
                 labelRight.setHorizontalTextPosition(JLabel.CENTER);
                 sidePanelRight.add(labelRight);
@@ -252,7 +400,7 @@ public class HistoryWindow extends JFrame {
                 sidePanelRight.add(buttonPanel);
                 {
                     // create a open link button in the button panel
-                    openLinkButton = new JButton("Open Link");
+                    openLinkButton = new JButton(openLinkButtonText);
                     openLinkButton.setFont(new Font(fontName, Font.PLAIN, 14));
                     openLinkButton.setAlignmentX(Component.CENTER_ALIGNMENT);
                     openLinkButton.setMinimumSize(new Dimension(125, 25));
@@ -269,7 +417,7 @@ public class HistoryWindow extends JFrame {
                     buttonPanel.add(Box.createRigidArea(new Dimension(0, 10)));
 
                     // create a clear history button in the button panel
-                    clearButton = new JButton("Clear History");
+                    clearButton = new JButton(clearButtonText);
                     clearButton.setFont(new Font(fontName, Font.PLAIN, 14));
                     clearButton.setAlignmentX(Component.CENTER_ALIGNMENT);
                     clearButton.setMinimumSize(new Dimension(125, 25));
@@ -280,8 +428,8 @@ public class HistoryWindow extends JFrame {
                         if (MainWorker.debug) System.out.println("Clear button pressed.");
 
                         int confirm = DoNotAskAgainConfirmDialog.showConfirmDialog(this,
-                                "Are you sure you want to clear the history?",
-                                "Clear History", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE,
+                                clearHistoryDialogMessageText,
+                                clearHistoryDialogTitleText, JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE,
                                 MainWorker.prefs, "doNotAskAgainClearButton", localeManager);
 
                         if (confirm == JOptionPane.YES_OPTION) {
@@ -297,7 +445,7 @@ public class HistoryWindow extends JFrame {
                     buttonPanel.add(Box.createRigidArea(new Dimension(0, 10)));
 
                     // create a remove selection button in the button panel
-                    removeButton = new JButton("Remove Entry");
+                    removeButton = new JButton(removeButtonText);
                     removeButton.setFont(new Font(fontName, Font.PLAIN, 14));
                     removeButton.setAlignmentX(Component.CENTER_ALIGNMENT);
                     removeButton.setMinimumSize(new Dimension(125, 25));
@@ -314,7 +462,7 @@ public class HistoryWindow extends JFrame {
                     buttonPanel.add(Box.createRigidArea(new Dimension(0, 10)));
 
                     // create an insert url button in the button panel
-                    insertButton = new JButton("Insert URL");
+                    insertButton = new JButton(insertButtonText);
                     insertButton.setFont(new Font(fontName, Font.PLAIN, 14));
                     insertButton.setAlignmentX(Component.CENTER_ALIGNMENT);
                     insertButton.setMinimumSize(new Dimension(125, 25));
@@ -331,7 +479,7 @@ public class HistoryWindow extends JFrame {
                     buttonPanel.add(Box.createRigidArea(new Dimension(0, 15)));
 
                     // create a closeAfterInsert checkbox in the button panel
-                    closeAfterInsert = new JCheckBox("<html>Close History Window After Inserting URL</html>");
+                    closeAfterInsert = new JCheckBox("<html>" + closeAfterInsertCheckBoxText + "</html>");
                     closeAfterInsert.setFont(new Font(fontName, Font.PLAIN, 14));
                     closeAfterInsert.setAlignmentX(Component.CENTER_ALIGNMENT);
                     closeAfterInsert.setMinimumSize(new Dimension(125, 60));
@@ -379,7 +527,7 @@ public class HistoryWindow extends JFrame {
                     });
 
                     // create a label in the page panel
-                    labelPage = new JLabel("Page:");
+                    labelPage = new JLabel(pageLabelText);
                     labelPage.setFont(new Font(fontName, Font.PLAIN, 16));
                     pagePanel.add(labelPage);
 
@@ -389,7 +537,7 @@ public class HistoryWindow extends JFrame {
                     pagePanel.add(labelPageNumber);
 
                     // create a page total label in the page panel
-                    labelPageTotal = new JLabel("of 1");
+                    labelPageTotal = new JLabel(ofText + " 1");
                     labelPageTotal.setFont(new Font(fontName, Font.PLAIN, 16));
                     pagePanel.add(labelPageTotal);
 
@@ -423,7 +571,7 @@ public class HistoryWindow extends JFrame {
                     pagePanel.add(Box.createRigidArea(new Dimension(x, 0)));
 
                     // create a close button in the button panel
-                    closeButton = new JButton("Close");
+                    closeButton = new JButton(closeButtonText);
                     closeButton.setFont(new Font(fontName, Font.PLAIN, 14));
                     closeButton.setPreferredSize(new Dimension(125, 25));
                     closeButton.setBackground(new Color(darkMode ? 0x375a81 : 0xffffff));
@@ -434,53 +582,19 @@ public class HistoryWindow extends JFrame {
                 }
             }
 
-
-            tablePopupMenu = new JPopupMenu();
-            {
-                JMenu copySubMenu = getCopySubMenu();
-                tablePopupMenu.add(copySubMenu);
-
-                String[] menuItems = {"Open Link", "Remove Entry", "Insert URL"};
-                ActionListener[] actions = {
-                        e -> {
-                            System.out.println("POPUPMENU: Open Link selected");
-                            selectedRow = historyTable.getSelectedRow();
-                            MainWorker.openLinkFromTable(HistoryWindow.this, historyTable, selectedRow);
-                        },
-                        e -> {
-                            System.out.println("POPUPMENU: Remove Entry selected");
-                            selectedRow = historyTable.getSelectedRow();
-                            removeHistoryRow(selectedRow);
-                        },
-                        e -> {
-                            System.out.println("POPUPMENU: Insert URL selected");
-                            selectedRow = historyTable.getSelectedRow();
-                            MainWorker.insertURL(HistoryWindow.this, historyTable, selectedRow);
-                        }
-                };
-
-                for (int i = 0; i < menuItems.length; i++) {
-                    JMenuItem menuItem = new JMenuItem(menuItems[i]);
-                    menuItem.addActionListener(actions[i]);
-                    tablePopupMenu.add(menuItem);
-                    menuItem.setFont(new Font(fontName, Font.PLAIN, 14));
-                }
-            }
-
             setHistoryTable();
         }
     }
 
     private JMenu getCopySubMenu() {
-        JMenu copySubMenu = new JMenu("Copy");
+        JMenu copySubMenu = new JMenu(tablePopupMenuCopyItem);
         copySubMenu.setFont(new Font(fontName, Font.PLAIN, 14));
-        String[] options = {"All", "Title", "URL", "Status", "Type", "Date"};
         int[] indices = {-1, colTitle, colUrl, colStatus, colType, colDate};
 
-        for (int i = 0; i < options.length; i++) {
-            JMenuItem menuItem = new JMenuItem(options[i]);
+        for (int i = 0; i < copySubMenuItems.length; i++) {
+            JMenuItem menuItem = new JMenuItem(copySubMenuItems[i]);
             final int index = indices[i];
-            final String option = options[i];
+            final String option = copySubMenuItems[i];
 
             menuItem.addActionListener(e -> {
                 System.out.println("POPUPMENU: Copy " + option + " selected");
@@ -498,13 +612,13 @@ public class HistoryWindow extends JFrame {
         if (selectedRow == -1) {
             // show an error dialog if no row is selected
             JOptionPane.showMessageDialog(this,
-                    "No row selected. Please select a row and try again.",
-                    "Error", JOptionPane.ERROR_MESSAGE);
+                    removeRowErrorDialogMessageText,
+                    removeRowErrorDialogTitleText, JOptionPane.ERROR_MESSAGE);
 
         } else {
             int confirm = DoNotAskAgainConfirmDialog.showConfirmDialog(this,
-                    "Are you sure you want to remove the selected entry?",
-                    "Remove Entry", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE,
+                    removeRowConfirmDialogMessageText,
+                    removeRowConfirmDialogTitleText, JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE,
                     MainWorker.prefs, "doNotAskAgainRemoveButton", localeManager);
 
             if (confirm == JOptionPane.YES_OPTION) {
@@ -636,7 +750,7 @@ public class HistoryWindow extends JFrame {
         }
     }
 
-    protected void setTablePage(int pageNum) {
+    private void setTablePage(int pageNum) {
         int maxRowsPerPage = 25;
 
         // get the total number of pages in the list
@@ -644,7 +758,7 @@ public class HistoryWindow extends JFrame {
 
         // set the page number labels
         labelPageNumber.setText(String.valueOf(pageNum));
-        labelPageTotal.setText("of " + (totalPages == 0 ? (totalPages = 1) : totalPages));
+        labelPageTotal.setText(ofText + " " + (totalPages == 0 ? (totalPages = 1) : totalPages));
         if (MainWorker.debug) System.out.println("Page number: " + pageNum + " Total Pages: " + totalPages);
 
         // check to enable/disable the page buttons
