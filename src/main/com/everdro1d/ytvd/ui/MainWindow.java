@@ -16,18 +16,23 @@ import java.awt.event.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import static main.com.everdro1d.ytvd.core.AdvancedSettings.*;
 import static main.com.everdro1d.ytvd.core.MainWorker.*;
 import static main.com.everdro1d.ytvd.ui.WorkingPane.workingFrame;
 
 public class MainWindow extends JFrame {
+    // Variables ------------------------------------------------------------------------------------------------------|
+
+    // Swing components - Follow tab hierarchy for organization -----------|
     public static JFrame frame;
         private JPanel mainPanel;
             private JPanel northPanel;
                 private JPanel northPanelBorder1;
                     private JPanel northPanelWestBorder;
                         private JButton openWindowMenuButton;
+                        private String[] windowMenuItems = {"Open History Window", "Open Debug Console", "Toggle Debug Mode On/Off", "Open dro1dDev website"};
                     private JPanel northPanelCenter;
                         private JPanel northPanelCenterRow1;
                             private JPanel northPanelCenterRow1YPanel;
@@ -38,26 +43,41 @@ public class MainWindow extends JFrame {
                         private JToggleButton lightDarkModeButton;
                         private JPanel northPanelCenterRow2;
                             private JLabel labelURL;
+                                private String urlLabelText = "URL:";
                             public static JTextField textField_URL;
-                            private static JPopupMenu textFieldPopupMenu;
+                                private static JPopupMenu textFieldPopupMenu;
+                                    private String[] textFieldPopupMenuItems = {"Cut", "Copy", "Paste", "Delete", "Select All"};
                             private boolean validURL;
                             private JComboBox<String> comboBoxType;
+                                private final String[] typeComboBoxOptions = {"Video + Audio", "Only Video", "Only Audio"};
             private JPanel centerVerticalPanel;
                 private JPanel centerVerticalPanelRow1;
                     private static JLabel validURLLabel;
+                        private String validURLLabelAcceptText = "URL is valid";
+                        private String validURLLabelDenyText = "URL is invalid";
+                        private String validURLLabelOverrideText = "URL is valid (Override)";
+                        private String validURLLabelOverridePopupText = "Force valid URL (Allow anything as URL)";
                     public static boolean overrideValidURL;
                     public static JCheckBox checkBoxAdvancedSettings;
+                        private String advancedSettingsCheckBoxText = "Advanced Settings";
                     private static JCheckBox checkBoxCompatibility;
+                        private String compatabilityModeCheckBoxText = "Compatibility Mode";
                     private static JCheckBox checkBoxLogHistory;
+                        private String logHistoryCheckBoxText = "Log History";
 
                 private JPanel centerVerticalPanelRow2;
                     private JPanel advancedSettingsPanelRow1;
                         // Video
                         private JLabel labelVideoExt;
+                            private String videoExtLabelText = "Video Format:";
                         private JLabel labelVideoResolution;
+                            private String videoResolutionLabelText = "Resolution:";
                         private JLabel labelVideoFPS;
+                            private String videoFPSLabelText = "FPS:";
                         private JLabel labelVideoVBR;
+                            private String videoVBRLabelText = "VBR:";
                         private JLabel labelVideoCodec;
+                            private String videoCodecLabelText = "Codec:";
 
                         public static JComboBox<String> comboBoxVideoExt;
                         public static JComboBox<String> comboBoxVideoResolution;
@@ -68,10 +88,15 @@ public class MainWindow extends JFrame {
                     private JPanel advancedSettingsPanelRow2;
                         // Audio
                         private JLabel labelAudioExt;
+                            private String audioExtLabelText = "Audio Format:";
                         private JLabel labelAudioChannels;
+                            private String audioChannelsLabelText = "Channels:";
                         private JLabel labelAudioABR;
+                            private String audioABRLabelText = "ABR:";
                         private JLabel labelAudioASR;
+                            private String audioASRLabelText = "ASR:";
                         private JLabel labelAudioCodec;
+                            private String audioCodecLabelText = "Codec:";
 
                         public static JComboBox<String> comboBoxAudioChannels;
                         public static JComboBox<String> comboBoxAudioExt;
@@ -81,21 +106,31 @@ public class MainWindow extends JFrame {
 
                     private JPanel advancedSettingsPanelRow3;
                         private static JCheckBox checkBoxRecode;
+                            private String recodeVideoCheckBoxText = "Recode Video";
                         private JLabel labelRecodeBox;
+                            private String recodeComboBoxLabelText = "to:";
                         public static JComboBox<String> comboBoxRecodeExt;
                         private static JCheckBox checkBoxWriteThumbnail;
+                            private String writeThumbnailCheckBoxText = "Write Thumbnail";
                         private static JComboBox<String> comboBoxWriteThumbnailExt;
+                            private String writeThumbnailComboBoxLabelText = "as:";
                         private static JCheckBox checkBoxEmbedThumbnail;
+                            private String embedThumbnailCheckBoxText = "Embed Thumbnail";
                         private static JCheckBox checkBoxMetadata;
+                            private String embedMetadataCheckBoxText = "Embed Metadata";
 
             private JPanel southPanel;
                 private CustomSeparator separatorButtonPanel;
                 private JPanel southPanelRow1;
-                    private JButton fileChooserButton;
+                    private JButton directoryChooserButton;
+                        private String directoryChooserButtonText = "Choose Folder";
                     protected static JButton downloadButton;
+                        private String downloadButtonText = "Download";
             private JPanel eastPanel;
             private JPanel westPanel;
-    private final String[] typeComboBoxOptions = {"Video + Audio", "Only Video", "Only Audio"};
+
+    // End of Swing components --------------------------------------------|
+
     protected static final int windowWidth = 840;
     protected final int windowHeight = 250;
     protected final int windowWidthExpanded = 980;
@@ -103,15 +138,128 @@ public class MainWindow extends JFrame {
     public static final String fontName = "Tahoma";
     public static final int fontSize = 18;
 
+    // End of variables -----------------------------------------------------------------------------------------------|
+
 
     public MainWindow() {
-        initializeWindowProperties();
+        // if the locale does not contain the class, add it and it's components
+        if (!localeManager.getClassesInLocaleMap().contains("MainWindow")) {
+            addClassToLocale();
+        }
+        useLocale();
 
+        initializeWindowProperties();
         initializeGUIComponents();
 
         frame.setVisible(true);
 
         SwingGUI.setHandCursorToClickableComponents(frame);
+    }
+
+    private void addClassToLocale() {
+        Map<String, Map<String, String>> classMap = new TreeMap<>();
+            classMap.put("Main", new TreeMap<>());
+            Map<String, String> mainMap = classMap.get("Main");
+                mainMap.put("titleText", titleText);
+                mainMap.put("urlLabelText", urlLabelText);
+                mainMap.put("validURLLabelAcceptText", validURLLabelAcceptText);
+                mainMap.put("validURLLabelDenyText", validURLLabelDenyText);
+                mainMap.put("validURLLabelOverrideText", validURLLabelOverrideText);
+                mainMap.put("validURLLabelOverridePopupText", validURLLabelOverridePopupText);
+                mainMap.put("advancedSettingsCheckBoxText", advancedSettingsCheckBoxText);
+                mainMap.put("compatabilityModeCheckBoxText", compatabilityModeCheckBoxText);
+                mainMap.put("logHistoryCheckBoxText", logHistoryCheckBoxText);
+                mainMap.put("videoExtLabelText", videoExtLabelText);
+                mainMap.put("videoResolutionLabelText", videoResolutionLabelText);
+                mainMap.put("videoFPSLabelText", videoFPSLabelText);
+                mainMap.put("videoVBRLabelText", videoVBRLabelText);
+                mainMap.put("videoCodecLabelText", videoCodecLabelText);
+                mainMap.put("audioExtLabelText", audioExtLabelText);
+                mainMap.put("audioChannelsLabelText", audioChannelsLabelText);
+                mainMap.put("audioABRLabelText", audioABRLabelText);
+                mainMap.put("audioASRLabelText", audioASRLabelText);
+                mainMap.put("audioCodecLabelText", audioCodecLabelText);
+                mainMap.put("recodeVideoCheckBoxText", recodeVideoCheckBoxText);
+                mainMap.put("recodeComboBoxLabelText", recodeComboBoxLabelText);
+                mainMap.put("writeThumbnailCheckBoxText", writeThumbnailCheckBoxText);
+                mainMap.put("writeThumbnailComboBoxLabelText", writeThumbnailComboBoxLabelText);
+                mainMap.put("embedThumbnailCheckBoxText", embedThumbnailCheckBoxText);
+                mainMap.put("embedMetadataCheckBoxText", embedMetadataCheckBoxText);
+                mainMap.put("directoryChooserButtonText", directoryChooserButtonText);
+                mainMap.put("downloadButtonText", downloadButtonText);
+
+            classMap.put("TextFieldPopupMenu", new TreeMap<>());
+            Map<String, String> textFieldPopupMenuMap = classMap.get("TextFieldPopupMenu");
+                textFieldPopupMenuMap.put("textFieldPopupMenuCutText", textFieldPopupMenuItems[0]);
+                textFieldPopupMenuMap.put("textFieldPopupMenuCopyText", textFieldPopupMenuItems[1]);
+                textFieldPopupMenuMap.put("textFieldPopupMenuPasteText", textFieldPopupMenuItems[2]);
+                textFieldPopupMenuMap.put("textFieldPopupMenuDeleteText", textFieldPopupMenuItems[3]);
+                textFieldPopupMenuMap.put("textFieldPopupMenuSelectAllText", textFieldPopupMenuItems[4]);
+
+            classMap.put("WindowMenu", new TreeMap<>());
+            Map<String, String> windowMenuMap = classMap.get("WindowMenu");
+                windowMenuMap.put("Open History Window", windowMenuItems[0]);
+                windowMenuMap.put("Open Debug Console", windowMenuItems[1]);
+                windowMenuMap.put("Toggle Debug Mode On/Off", windowMenuItems[2]);
+                windowMenuMap.put("Open dro1dDev website", windowMenuItems[3]);
+
+            classMap.put("TypeComboBoxMap", new TreeMap<>());
+            Map<String, String> typeComboBoxMap = classMap.get("TypeComboBoxMap");
+                typeComboBoxMap.put("Video + Audio", typeComboBoxOptions[0]);
+                typeComboBoxMap.put("Only Video", typeComboBoxOptions[1]);
+                typeComboBoxMap.put("Only Audio", typeComboBoxOptions[2]);
+
+        localeManager.addClassSpecificMap("MainWindow", classMap);
+    }
+
+    private void useLocale() {
+        Map<String, Map<String, String>> classMap = localeManager.getClassSpecificMap("MainWindow");
+            Map<String, String> mainMap = classMap.get("Main");
+                titleText = mainMap.getOrDefault("titleText", titleText);
+                urlLabelText = mainMap.getOrDefault("urlLabelText", urlLabelText);
+                validURLLabelAcceptText = mainMap.getOrDefault("validURLLabelAcceptText", validURLLabelAcceptText);
+                validURLLabelDenyText = mainMap.getOrDefault("validURLLabelDenyText", validURLLabelDenyText);
+                validURLLabelOverrideText = mainMap.getOrDefault("validURLLabelOverrideText", validURLLabelOverrideText);
+                validURLLabelOverridePopupText = mainMap.getOrDefault("validURLLabelOverridePopupText", validURLLabelOverridePopupText);
+                advancedSettingsCheckBoxText = mainMap.getOrDefault("advancedSettingsCheckBoxText", advancedSettingsCheckBoxText);
+                compatabilityModeCheckBoxText = mainMap.getOrDefault("compatabilityModeCheckBoxText", compatabilityModeCheckBoxText);
+                logHistoryCheckBoxText = mainMap.getOrDefault("logHistoryCheckBoxText", logHistoryCheckBoxText);
+                videoExtLabelText = mainMap.getOrDefault("videoExtLabelText", videoExtLabelText);
+                videoResolutionLabelText = mainMap.getOrDefault("videoResolutionLabelText", videoResolutionLabelText);
+                videoFPSLabelText = mainMap.getOrDefault("videoFPSLabelText", videoFPSLabelText);
+                videoVBRLabelText = mainMap.getOrDefault("videoVBRLabelText", videoVBRLabelText);
+                videoCodecLabelText = mainMap.getOrDefault("videoCodecLabelText", videoCodecLabelText);
+                audioExtLabelText = mainMap.getOrDefault("audioExtLabelText", audioExtLabelText);
+                audioChannelsLabelText = mainMap.getOrDefault("audioChannelsLabelText", audioChannelsLabelText);
+                audioABRLabelText = mainMap.getOrDefault("audioABRLabelText", audioABRLabelText);
+                audioASRLabelText = mainMap.getOrDefault("audioASRLabelText", audioASRLabelText);
+                audioCodecLabelText = mainMap.getOrDefault("audioCodecLabelText", audioCodecLabelText);
+                recodeVideoCheckBoxText = mainMap.getOrDefault("recodeVideoCheckBoxText", recodeVideoCheckBoxText);
+                recodeComboBoxLabelText = mainMap.getOrDefault("recodeComboBoxLabelText", recodeComboBoxLabelText);
+                writeThumbnailCheckBoxText = mainMap.getOrDefault("writeThumbnailCheckBoxText", writeThumbnailCheckBoxText);
+                writeThumbnailComboBoxLabelText = mainMap.getOrDefault("writeThumbnailComboBoxLabelText", writeThumbnailComboBoxLabelText);
+                embedThumbnailCheckBoxText = mainMap.getOrDefault("embedThumbnailCheckBoxText", embedThumbnailCheckBoxText);
+                embedMetadataCheckBoxText = mainMap.getOrDefault("embedMetadataCheckBoxText", embedMetadataCheckBoxText);
+                directoryChooserButtonText = mainMap.getOrDefault("directoryChooserButtonText", directoryChooserButtonText);
+                downloadButtonText = mainMap.getOrDefault("downloadButtonText", downloadButtonText);
+
+            Map<String, String> textFieldPopupMenuMap = classMap.get("TextFieldPopupMenu");
+                textFieldPopupMenuItems[0] = textFieldPopupMenuMap.getOrDefault("textFieldPopupMenuCutText", textFieldPopupMenuItems[0]);
+                textFieldPopupMenuItems[1] = textFieldPopupMenuMap.getOrDefault("textFieldPopupMenuCopyText", textFieldPopupMenuItems[1]);
+                textFieldPopupMenuItems[2] = textFieldPopupMenuMap.getOrDefault("textFieldPopupMenuPasteText", textFieldPopupMenuItems[2]);
+                textFieldPopupMenuItems[3] = textFieldPopupMenuMap.getOrDefault("textFieldPopupMenuDeleteText", textFieldPopupMenuItems[3]);
+                textFieldPopupMenuItems[4] = textFieldPopupMenuMap.getOrDefault("textFieldPopupMenuSelectAllText", textFieldPopupMenuItems[4]);
+
+            Map<String, String> windowMenuMap = classMap.get("WindowMenu");
+                windowMenuItems[0] = windowMenuMap.getOrDefault("Open History Window", windowMenuItems[0]);
+                windowMenuItems[1] = windowMenuMap.getOrDefault("Open Debug Console", windowMenuItems[1]);
+                windowMenuItems[2] = windowMenuMap.getOrDefault("Toggle Debug Mode On/Off", windowMenuItems[2]);
+                windowMenuItems[3] = windowMenuMap.getOrDefault("Open dro1dDev website", windowMenuItems[3]);
+
+            Map<String, String> typeComboBoxMap = classMap.get("TypeComboBoxMap");
+                typeComboBoxOptions[0] = typeComboBoxMap.getOrDefault("Video + Audio", typeComboBoxOptions[0]);
+                typeComboBoxOptions[1] = typeComboBoxMap.getOrDefault("Only Video", typeComboBoxOptions[1]);
+                typeComboBoxOptions[2] = typeComboBoxMap.getOrDefault("Only Audio", typeComboBoxOptions[2]);
     }
 
     private void initializeWindowProperties() {
@@ -171,7 +319,6 @@ public class MainWindow extends JFrame {
                         openWindowMenuButton.addActionListener((e) -> {
                             JPopupMenu popupMenu = new JPopupMenu();
                             {
-                                String[] menuItems = {"Open History Window","Open Debug Console","Toggle debug mode On/Off","Open dro1dDev Website"};
                                 ActionListener[] actions = {
                                         (e1) -> showHistoryWindow(),
                                         (e1) -> showDebugConsole(),
@@ -179,8 +326,8 @@ public class MainWindow extends JFrame {
                                         (e1) -> Utils.openLink(dro1dDevWebsite)
                                 };
 
-                                for (int i = 0; i < menuItems.length; i++) {
-                                    JMenuItem menuItem = new JMenuItem(menuItems[i]);
+                                for (int i = 0; i < windowMenuItems.length; i++) {
+                                    JMenuItem menuItem = new JMenuItem(windowMenuItems[i]);
                                     menuItem.addActionListener(actions[i]);
                                     popupMenu.add(menuItem);
                                     menuItem.setEnabled(true);
@@ -255,7 +402,7 @@ public class MainWindow extends JFrame {
                             northPanelCenterRow2.add(Box.createRigidArea(new Dimension(20, 0)));
 
                             //add a new label on the left side of the north panel underneath the title
-                            labelURL = new JLabel("URL: ");
+                            labelURL = new JLabel(urlLabelText + " ");
                             labelURL.setFont(new Font(fontName, Font.PLAIN, fontSize));
                             labelURL.setHorizontalAlignment(SwingConstants.LEFT);
                             labelURL.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -288,8 +435,8 @@ public class MainWindow extends JFrame {
                                         }
                                         if (debug) System.out.println("RawURL: " + rawURL);
                                     }
-                                    if (!overrideValidURL) validURLLabel.setText(validURL ? "URL is valid" : "URL is invalid");
-                                    else validURLLabel.setText("FORCE - URL is valid");
+                                    if (!overrideValidURL) validURLLabel.setText(validURL ? validURLLabelAcceptText : validURLLabelDenyText);
+                                    else validURLLabel.setText(validURLLabelOverrideText);
                                     coloringModeChange();
 
                                     if ( validURL && !(compatibilityMode || overrideValidURL) ) {
@@ -319,6 +466,72 @@ public class MainWindow extends JFrame {
                                     }
                                 }
                             });
+                            textFieldPopupMenu = new JPopupMenu();
+                            {
+                                ActionListener[] actions = {
+                                        (e) -> {
+                                            textField_URL.cut();
+                                            SwingGUI.requestFocusAndSimulateKeyEvent(textField_URL);
+                                        },
+                                        (e) -> {
+                                            textField_URL.copy();
+                                            SwingGUI.requestFocusAndSimulateKeyEvent(textField_URL);
+                                        },
+                                        (e) -> {
+                                            textField_URL.paste();
+                                            SwingGUI.requestFocusAndSimulateKeyEvent(textField_URL);
+                                        },
+                                        (e) -> {
+                                            textField_URL.setText("");
+                                            SwingGUI.requestFocusAndSimulateKeyEvent(textField_URL);
+                                        },
+                                        (e) -> {
+                                            textField_URL.selectAll();
+                                            textField_URL.requestFocus();
+                                        }
+                                };
+
+                                for (int i = 0; i < textFieldPopupMenuItems.length; i++) {
+                                    JMenuItem menuItem = new JMenuItem(textFieldPopupMenuItems[i]);
+                                    menuItem.addActionListener(actions[i]);
+                                    textFieldPopupMenu.add(menuItem);
+                                    menuItem.setEnabled(false);
+                                    menuItem.setFont(new Font(fontName, Font.PLAIN, 14));
+                                }
+
+                                //check if the text field is empty
+                                textFieldPopupMenu.addPopupMenuListener(new PopupMenuListener() {
+                                    @Override
+                                    public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                                        //enable/disable the select all menu item based on whether there is text in the text field
+                                        textFieldPopupMenu.getComponent(4).setEnabled(!textField_URL.getText().isEmpty());
+
+                                        //enable/disable the paste menu item based on whether the clipboard contains text
+                                        for (DataFlavor flavor : Toolkit.getDefaultToolkit().getSystemClipboard().getAvailableDataFlavors()) {
+                                            if (flavor.equals(DataFlavor.stringFlavor)) {
+                                                textFieldPopupMenu.getComponent(2).setEnabled(true);
+                                                break;
+                                            } else {
+                                                textFieldPopupMenu.getComponent(2).setEnabled(false);
+                                            }
+                                        }
+
+                                        //enable/disable the cut, copy, delete menu items based on whether there is text selected
+                                        boolean isTextSelected = textField_URL.getSelectedText() != null;
+                                        textFieldPopupMenu.getComponent(0).setEnabled(isTextSelected);
+                                        textFieldPopupMenu.getComponent(1).setEnabled(isTextSelected);
+                                        textFieldPopupMenu.getComponent(3).setEnabled(isTextSelected);
+                                    }
+
+                                    @Override
+                                    public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+                                    }
+
+                                    @Override
+                                    public void popupMenuCanceled(PopupMenuEvent e) {
+                                    }
+                                });
+                            }
 
 
                             northPanelCenterRow2.add(Box.createRigidArea(new Dimension(10, 0)));
@@ -397,7 +610,7 @@ public class MainWindow extends JFrame {
                     //add a JLabel on the left side of the centerVerticalPanelRow1
                     centerVerticalPanelRow1.add(Box.createRigidArea(new Dimension(20, 0)));
 
-                    validURLLabel = new JLabel(validURL ? "URL is valid  " : "URL is invalid");
+                    validURLLabel = new JLabel(validURL ? validURLLabelAcceptText : validURLLabelDenyText);
                     validURLLabel.setFont(new Font(fontName, Font.PLAIN, fontSize));
                     validURLLabel.setHorizontalTextPosition(SwingConstants.LEFT);
                     validURLLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -408,7 +621,7 @@ public class MainWindow extends JFrame {
                         @Override
                         public void mouseClicked(MouseEvent e) {
                             JPopupMenu popupMenu = new JPopupMenu();
-                            JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem("Force valid URL (Allow anything as URL)", overrideValidURL);
+                            JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem(validURLLabelOverridePopupText, overrideValidURL);
                             menuItem.addActionListener((e1) -> overrideValidURL(!overrideValidURL));
                             menuItem.setFont(new Font(fontName, Font.PLAIN, 14));
                             popupMenu.add(menuItem);
@@ -420,7 +633,7 @@ public class MainWindow extends JFrame {
                     centerVerticalPanelRow1.add(Box.createRigidArea(new Dimension(10, 0)));
 
                     //add a new checkbox in the center-right of the centerVerticalPanelRow1
-                    checkBoxAdvancedSettings = new JCheckBox("Advanced Settings");
+                    checkBoxAdvancedSettings = new JCheckBox(advancedSettingsCheckBoxText);
                     checkBoxAdvancedSettings.setFont(new Font(fontName, Font.PLAIN, fontSize));
                     checkBoxAdvancedSettings.setAlignmentX(Component.CENTER_ALIGNMENT);
                     checkBoxAdvancedSettings.setEnabled(false);
@@ -440,7 +653,7 @@ public class MainWindow extends JFrame {
                     centerVerticalPanelRow1.add(Box.createRigidArea(new Dimension(10, 0)));
 
                     //add a compatability checkbox to the right of the advanced settings checkbox
-                    checkBoxCompatibility = new JCheckBox("Compatibility Mode");
+                    checkBoxCompatibility = new JCheckBox(compatabilityModeCheckBoxText);
                     checkBoxCompatibility.setFont(new Font(fontName, Font.PLAIN, fontSize));
                     checkBoxCompatibility.setAlignmentX(Component.CENTER_ALIGNMENT);
                     checkBoxCompatibility.setEnabled(true);
@@ -467,7 +680,7 @@ public class MainWindow extends JFrame {
 
                     centerVerticalPanelRow1.add(Box.createRigidArea(new Dimension(10, 0)));
 
-                    checkBoxLogHistory = new JCheckBox("Log History");
+                    checkBoxLogHistory = new JCheckBox(logHistoryCheckBoxText);
                     checkBoxLogHistory.setFont(new Font(fontName, Font.PLAIN, fontSize));
                     checkBoxLogHistory.setAlignmentX(Component.CENTER_ALIGNMENT);
                     checkBoxLogHistory.setEnabled(true);
@@ -502,7 +715,7 @@ public class MainWindow extends JFrame {
                         advancedSettingsPanelRow1.add(Box.createRigidArea(new Dimension(10, 0)));
 
                         // Video ----------------------------------------------------------
-                        labelVideoExt = new JLabel("Video Format: ");
+                        labelVideoExt = new JLabel(videoExtLabelText + " ");
                         comboBoxVideoExt = setupAdvancedSettingsComboBoxes(labelVideoExt, advancedSettingsPanelRow1, arrayVideoExtensions, videoExt);
 
                         comboBoxVideoExt.addActionListener((e) -> {
@@ -520,7 +733,7 @@ public class MainWindow extends JFrame {
                         advancedSettingsPanelRow1.add(Box.createRigidArea(new Dimension(5, 0)));
 
 
-                        labelVideoResolution = new JLabel("Resolution: ");
+                        labelVideoResolution = new JLabel(videoResolutionLabelText + " ");
                         comboBoxVideoResolution = setupAdvancedSettingsComboBoxes(labelVideoResolution, advancedSettingsPanelRow1, arrayVideoResolution, videoResolution);
                         comboBoxVideoResolution.addActionListener((e) -> {
                             videoResolution = comboBoxVideoResolution.getSelectedIndex();
@@ -531,7 +744,7 @@ public class MainWindow extends JFrame {
                         advancedSettingsPanelRow1.add(Box.createRigidArea(new Dimension(5, 0)));
 
 
-                        labelVideoFPS = new JLabel("FPS: ");
+                        labelVideoFPS = new JLabel(videoFPSLabelText + " ");
                         comboBoxVideoFPS = setupAdvancedSettingsComboBoxes(labelVideoFPS, advancedSettingsPanelRow1, arrayVideoFPS, videoFPS);
                         comboBoxVideoFPS.addActionListener((e) -> {
                             videoFPS = comboBoxVideoFPS.getSelectedIndex();
@@ -542,7 +755,7 @@ public class MainWindow extends JFrame {
                         advancedSettingsPanelRow1.add(Box.createRigidArea(new Dimension(5, 0)));
 
 
-                        labelVideoVBR = new JLabel("VBR: ");
+                        labelVideoVBR = new JLabel(videoVBRLabelText + " ");
                         comboBoxVideoVBR = setupAdvancedSettingsComboBoxes(labelVideoVBR, advancedSettingsPanelRow1, arrayVideoVBR, videoVBR);
                         comboBoxVideoVBR.addActionListener((e) -> {
                             videoVBR = comboBoxVideoVBR.getSelectedIndex();
@@ -553,14 +766,12 @@ public class MainWindow extends JFrame {
                         advancedSettingsPanelRow1.add(Box.createRigidArea(new Dimension(5, 0)));
 
 
-                        labelVideoCodec = new JLabel("Codec: ");
+                        labelVideoCodec = new JLabel(videoCodecLabelText + " ");
                         comboBoxVideoCodec = setupAdvancedSettingsComboBoxes(labelVideoCodec, advancedSettingsPanelRow1, arrayVideoCodec, videoCodec);
                         comboBoxVideoCodec.addActionListener((e) -> {
                             videoCodec = comboBoxVideoCodec.getSelectedIndex();
                             doCascadeFilter(comboBoxVideoCodec);
                         });
-
-
                     }
 
 
@@ -578,7 +789,7 @@ public class MainWindow extends JFrame {
                         advancedSettingsPanelRow2.add(Box.createRigidArea(new Dimension(10, 0)));
 
                         // Audio ----------------------------------------------------------
-                        labelAudioExt = new JLabel("Audio Format: ");
+                        labelAudioExt = new JLabel(audioExtLabelText + " ");
                         comboBoxAudioExt = setupAdvancedSettingsComboBoxes(labelAudioExt, advancedSettingsPanelRow2, arrayAudioExtensions, audioExt);
                         comboBoxAudioExt.addActionListener((e) -> {
                             audioExt = comboBoxAudioExt.getSelectedIndex();
@@ -590,7 +801,7 @@ public class MainWindow extends JFrame {
                         advancedSettingsPanelRow2.add(Box.createRigidArea(new Dimension(5, 0)));
 
 
-                        labelAudioChannels = new JLabel("Channels: ");
+                        labelAudioChannels = new JLabel(audioChannelsLabelText + " ");
                         comboBoxAudioChannels = setupAdvancedSettingsComboBoxes(labelAudioChannels, advancedSettingsPanelRow2, arrayAudioChannels, audioChannels);
                         comboBoxAudioChannels.addActionListener((e) -> {
                             audioChannels = comboBoxAudioChannels.getSelectedIndex();
@@ -601,7 +812,7 @@ public class MainWindow extends JFrame {
                         advancedSettingsPanelRow2.add(Box.createRigidArea(new Dimension(5, 0)));
 
 
-                        labelAudioABR = new JLabel("ABR: ");
+                        labelAudioABR = new JLabel(audioABRLabelText + " ");
                         comboBoxAudioABR = setupAdvancedSettingsComboBoxes(labelAudioABR, advancedSettingsPanelRow2, arrayAudioABR, audioABR);
                         comboBoxAudioABR.addActionListener((e) -> {
                             audioABR = comboBoxAudioABR.getSelectedIndex();
@@ -612,7 +823,7 @@ public class MainWindow extends JFrame {
                         advancedSettingsPanelRow2.add(Box.createRigidArea(new Dimension(5, 0)));
 
 
-                        labelAudioASR = new JLabel("ASR: ");
+                        labelAudioASR = new JLabel(audioASRLabelText + " ");
                         comboBoxAudioASR = setupAdvancedSettingsComboBoxes(labelAudioASR, advancedSettingsPanelRow2, arrayAudioASR, audioASR);
                         comboBoxAudioASR.addActionListener((e) -> {
                             audioASR = comboBoxAudioASR.getSelectedIndex();
@@ -620,7 +831,7 @@ public class MainWindow extends JFrame {
                         });
 
 
-                        labelAudioCodec = new JLabel("Codec: ");
+                        labelAudioCodec = new JLabel(audioCodecLabelText + " ");
                         comboBoxAudioCodec = setupAdvancedSettingsComboBoxes(labelAudioCodec, advancedSettingsPanelRow2, arrayAudioCodec, audioCodec);
                         comboBoxAudioCodec.addActionListener((e) -> {
                             audioCodec = comboBoxAudioCodec.getSelectedIndex();
@@ -644,7 +855,7 @@ public class MainWindow extends JFrame {
 
                         //re-code checkbox and combobox
                         //add a new checkbox
-                        checkBoxRecode = new JCheckBox("Recode Video");
+                        checkBoxRecode = new JCheckBox(recodeVideoCheckBoxText);
                         checkBoxRecode.setFont(new Font(fontName, Font.PLAIN, fontSize));
                         checkBoxRecode.setAlignmentX(Component.LEFT_ALIGNMENT);
                         advancedSettingsPanelRow3.add(checkBoxRecode);
@@ -668,7 +879,7 @@ public class MainWindow extends JFrame {
                         advancedSettingsPanelRow3.add(Box.createRigidArea(new Dimension(5, 0)));
 
 
-                        labelRecodeBox = new JLabel("to: ");
+                        labelRecodeBox = new JLabel(recodeComboBoxLabelText + " ");
                         labelRecodeBox.setEnabled(false);
 
 
@@ -688,7 +899,7 @@ public class MainWindow extends JFrame {
 
 
                         //add a new checkbox for thumbnail writing
-                        checkBoxWriteThumbnail = new JCheckBox("Write Thumbnail");
+                        checkBoxWriteThumbnail = new JCheckBox(writeThumbnailCheckBoxText);
                         checkBoxWriteThumbnail.setFont(new Font(fontName, Font.PLAIN, fontSize));
                         checkBoxWriteThumbnail.setAlignmentX(Component.LEFT_ALIGNMENT);
                         advancedSettingsPanelRow3.add(checkBoxWriteThumbnail);
@@ -705,7 +916,9 @@ public class MainWindow extends JFrame {
 
 
                         //add a new combobox to the right of the write thumbnail checkbox
-                        comboBoxWriteThumbnailExt = setupAdvancedSettingsComboBoxes(new JLabel("as: "), advancedSettingsPanelRow3, arrayWriteThumbnailExt, writeThumbnailExt);
+                        comboBoxWriteThumbnailExt = setupAdvancedSettingsComboBoxes(
+                                new JLabel(writeThumbnailComboBoxLabelText + " "),
+                                advancedSettingsPanelRow3, arrayWriteThumbnailExt, writeThumbnailExt);
                         comboBoxWriteThumbnailExt.setEnabled(false);
                         comboBoxWriteThumbnailExt.addActionListener(
                                 (e) -> writeThumbnailExt = comboBoxWriteThumbnailExt.getSelectedIndex()
@@ -716,7 +929,7 @@ public class MainWindow extends JFrame {
 
 
                         //add a new checkbox for thumbnail embedding (needs writeThumbnail to be enabled)
-                        checkBoxEmbedThumbnail = new JCheckBox("Embed Thumbnail");
+                        checkBoxEmbedThumbnail = new JCheckBox(embedThumbnailCheckBoxText);
                         checkBoxEmbedThumbnail.setFont(new Font(fontName, Font.PLAIN, fontSize));
                         checkBoxEmbedThumbnail.setAlignmentX(Component.LEFT_ALIGNMENT);
                         checkBoxEmbedThumbnail.setEnabled(false);
@@ -728,7 +941,7 @@ public class MainWindow extends JFrame {
                         advancedSettingsPanelRow3.add(Box.createRigidArea(new Dimension(10, 0)));
 
 
-                        checkBoxMetadata = new JCheckBox("Embed Metadata");
+                        checkBoxMetadata = new JCheckBox(embedMetadataCheckBoxText);
                         checkBoxMetadata.setFont(new Font(fontName, Font.PLAIN, fontSize));
                         checkBoxMetadata.setAlignmentX(Component.LEFT_ALIGNMENT);
                         advancedSettingsPanelRow3.add(checkBoxMetadata);
@@ -771,21 +984,21 @@ public class MainWindow extends JFrame {
                 southPanel.add(southPanelRow1, BorderLayout.SOUTH);
                 {
                     //add a new FileChooser button in the center of the southPanel
-                    fileChooserButton = new JButton("Choose Folder");
-                    fileChooserButton.setFont(new Font(fontName, Font.PLAIN, fontSize + 2));
-                    fileChooserButton.setPreferredSize(new Dimension(185, 40));
-                    fileChooserButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-                    fileChooserButton.setIcon(SwingGUI.getApplicationIcon("images/folderIcon.png", this.getClass()));
-                    southPanelRow1.add(fileChooserButton);
+                    directoryChooserButton = new JButton(directoryChooserButtonText);
+                    directoryChooserButton.setFont(new Font(fontName, Font.PLAIN, fontSize + 2));
+                    directoryChooserButton.setPreferredSize(new Dimension(185, 40));
+                    directoryChooserButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+                    directoryChooserButton.setIcon(SwingGUI.getApplicationIcon("images/folderIcon.png", this.getClass()));
+                    southPanelRow1.add(directoryChooserButton);
 
-                    fileChooserButton.addActionListener((e) -> MainWorker.downloadDirectoryPath = MainWorker.openFileChooser());
+                    directoryChooserButton.addActionListener((e) -> MainWorker.downloadDirectoryPath = MainWorker.openFileChooser());
 
 
                     southPanelRow1.add(Box.createRigidArea(new Dimension(20, 0)));
 
 
                     // add a new button in the center of the southPanel
-                    downloadButton = new JButton("Download");
+                    downloadButton = new JButton(downloadButtonText);
                     downloadButton.setFont(new Font(fontName, Font.PLAIN, fontSize + 2));
                     downloadButton.setPreferredSize(new Dimension(160, 40));
                     downloadButton.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -814,74 +1027,6 @@ public class MainWindow extends JFrame {
             mainPanel.add(westPanel, BorderLayout.WEST);
             {
                 westPanel.add(Box.createRigidArea(new Dimension(20, 0)));
-            }
-
-            textFieldPopupMenu = new JPopupMenu();
-            {
-                String[] menuItems = {"Cut", "Copy", "Paste", "Delete", "Select All"};
-                ActionListener[] actions = {
-                        (e) -> {
-                            textField_URL.cut();
-                            SwingGUI.requestFocusAndSimulateKeyEvent(textField_URL);
-                        },
-                        (e) -> {
-                            textField_URL.copy();
-                            SwingGUI.requestFocusAndSimulateKeyEvent(textField_URL);
-                        },
-                        (e) -> {
-                            textField_URL.paste();
-                            SwingGUI.requestFocusAndSimulateKeyEvent(textField_URL);
-                        },
-                        (e) -> {
-                            textField_URL.setText("");
-                            SwingGUI.requestFocusAndSimulateKeyEvent(textField_URL);
-                        },
-                        (e) -> {
-                            textField_URL.selectAll();
-                            textField_URL.requestFocus();
-                        }
-                };
-
-                for (int i = 0; i < menuItems.length; i++) {
-                    JMenuItem menuItem = new JMenuItem(menuItems[i]);
-                    menuItem.addActionListener(actions[i]);
-                    textFieldPopupMenu.add(menuItem);
-                    menuItem.setEnabled(false);
-                    menuItem.setFont(new Font(fontName, Font.PLAIN, 14));
-                }
-
-                //check if the text field is empty
-                textFieldPopupMenu.addPopupMenuListener(new PopupMenuListener() {
-                    @Override
-                    public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-                        //enable/disable the select all menu item based on whether there is text in the text field
-                        textFieldPopupMenu.getComponent(4).setEnabled(!textField_URL.getText().isEmpty());
-
-                        //enable/disable the paste menu item based on whether the clipboard contains text
-                        for (DataFlavor flavor : Toolkit.getDefaultToolkit().getSystemClipboard().getAvailableDataFlavors()) {
-                            if (flavor.equals(DataFlavor.stringFlavor)) {
-                                textFieldPopupMenu.getComponent(2).setEnabled(true);
-                                break;
-                            } else {
-                                textFieldPopupMenu.getComponent(2).setEnabled(false);
-                            }
-                        }
-
-                        //enable/disable the cut, copy, delete menu items based on whether there is text selected
-                        boolean isTextSelected = textField_URL.getSelectedText() != null;
-                        textFieldPopupMenu.getComponent(0).setEnabled(isTextSelected);
-                        textFieldPopupMenu.getComponent(1).setEnabled(isTextSelected);
-                        textFieldPopupMenu.getComponent(3).setEnabled(isTextSelected);
-                    }
-
-                    @Override
-                    public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-                    }
-
-                    @Override
-                    public void popupMenuCanceled(PopupMenuEvent e) {
-                    }
-                });
             }
         }
 
@@ -1081,13 +1226,13 @@ public class MainWindow extends JFrame {
         }
     }
 
-    //Additive filters for the combo boxes
-    //Example: if the user selects "mp4" in the video format combobox, the video resolution combobox should only show
-    //resolutions that are available for mp4 files
-    //Then, if the user selects "1920x1080" in the video resolution combobox, the video FPS combobox should only show
-    //FPS values that are available for 1920x1080 mp4 files
-    //Then, if the user selects "30" in the video FPS combobox, the video codec combobox should only show codecs that
-    //are available for 1920x1080 30fps mp4 files
+    // Additive filters for the combo boxes
+    // Example: if the user selects "mp4" in the video format combobox, the video resolution combobox should only show
+    // resolutions that are available for mp4 files
+    // Then, if the user selects "1920x1080" in the video resolution combobox, the video FPS combobox should only show
+    // FPS values that are available for 1920x1080 mp4 files
+    // Then, if the user selects "30" in the video FPS combobox, the video codec combobox should only show codecs that
+    // are available for 1920x1080 30fps mp4 files
     // I dislike that this code works the way I want it to, or rather, that I didn't find a cleaner way to do it
     public static void doCascadeFilter(JComboBox<String> comboBox) {
         // Video

@@ -11,6 +11,7 @@ package main.com.everdro1d.ytvd.core;
 import com.everdro1d.libs.commands.CommandInterface;
 import com.everdro1d.libs.commands.CommandManager;
 import com.everdro1d.libs.core.ApplicationCore;
+import com.everdro1d.libs.core.LocaleManager;
 import com.everdro1d.libs.core.Utils;
 import com.everdro1d.libs.io.Files;
 import com.everdro1d.libs.io.SyncPipe;
@@ -32,10 +33,7 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 import java.util.prefs.Preferences;
 
 import static main.com.everdro1d.ytvd.core.AdvancedSettings.*;
@@ -97,6 +95,8 @@ public class MainWorker {
     public static boolean compatibilityMode = false; // if the compatability mode is enabled
     public static boolean logHistory = true; // whether to log the download history
     public static final Preferences prefs = Preferences.userNodeForPackage(MainWorker.class);
+    public static final LocaleManager localeManager = new LocaleManager("locale_eng", MainWorker.class);
+    private static String currentLocale = "eng";
     protected static String videoTitle = "";
     protected static String videoFileName = "";
     private static WorkingPane workingPane;
@@ -116,6 +116,8 @@ public class MainWorker {
 
         SwingGUI.lightOrDarkMode(darkMode, new JFrame[]{frame, workingFrame, DebugConsoleWindow.debugFrame, HistoryWindow.historyFrame});
         SwingGUI.uiSetup(darkMode, MainWindow.fontName, MainWindow.fontSize);
+
+        localeManager.loadLocaleFromFile("locale_" + currentLocale);
 
         if (debug) {
             showDebugConsole();
@@ -192,7 +194,7 @@ public class MainWorker {
 
     public static void showDebugConsole() {
         if (debugConsoleWindow == null) {
-            debugConsoleWindow = new DebugConsoleWindow(MainWindow.frame, MainWindow.fontName, 14, prefs, debug);
+            debugConsoleWindow = new DebugConsoleWindow(MainWindow.frame, MainWindow.fontName, 14, prefs, debug, localeManager);
             if (debug) System.out.println("Debug console started.");
         } else if (!debugConsoleWindow.isVisible()) {
             debugConsoleWindow.setVisible(true);
@@ -272,6 +274,8 @@ public class MainWorker {
         loadUserSettings();
         loadWindowPosition();
 
+        currentLocale = prefs.get("currentLocale", "eng");
+
         savePreferencesOnExit();
     }
 
@@ -279,6 +283,8 @@ public class MainWorker {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             saveUserSettings();
             saveWindowPosition();
+
+            prefs.put("currentLocale", currentLocale);
         }));
     }
 
@@ -314,7 +320,7 @@ public class MainWorker {
         // checks project GitHub for latest version at launch
         new Thread(() -> SwingGUI.updateCheckerDialog(currentVersion, null, debug,
                 "https://github.com/everdro1d/YouTubeVideoDownloader/releases/latest/",
-                dro1dDevWebsite + "projects.html#youtube-video-downloader", prefs))
+                dro1dDevWebsite + "projects.html#youtube-video-downloader", prefs, localeManager))
                 .start();
     }
 
@@ -785,7 +791,7 @@ public class MainWorker {
     public static String openFileChooser() {
         String output = System.getProperty("user.home");
 
-        FileChooser fileChooser = new FileChooser(output, "Select Download Location", false);
+        FileChooser fileChooser = new FileChooser(output, "Select Download Location", false, localeManager);
 
         int returnValue = fileChooser.showOpenDialog(frame);
         if (returnValue == JFileChooser.APPROVE_OPTION) {
