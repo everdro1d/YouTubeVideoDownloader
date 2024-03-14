@@ -19,6 +19,7 @@ import java.util.ArrayList;
 
 import static main.com.everdro1d.ytvd.core.HistoryLogger.*;
 import static main.com.everdro1d.ytvd.core.MainWorker.darkMode;
+import static main.com.everdro1d.ytvd.core.MainWorker.localeManager;
 import static main.com.everdro1d.ytvd.ui.MainWindow.fontName;
 import static main.com.everdro1d.ytvd.ui.MainWindow.frame;
 
@@ -27,37 +28,36 @@ public class HistoryWindow extends JFrame {
     private static final int historyWindowHeight = 550;
 
     public static JFrame historyFrame;
-        protected JPanel mainPanel;
-            protected JPanel topPanel;
-                protected JLabel labelTitle;
+        private JPanel mainPanel;
+            private JPanel topPanel;
+                private JLabel labelTitle;
                 protected static CustomSeparator separatorHistoryTitle;
-            protected JScrollPane scrollPane;
-                protected DefaultTableModel tableModel;
-                protected DefaultTableCellRenderer cellRenderer;
-                protected JTable historyTable;
-                protected JPopupMenu tablePopupMenu;
+            private JScrollPane scrollPane;
+                private DefaultTableModel tableModel;
+                private DefaultTableCellRenderer cellRenderer;
+                private JTable historyTable;
+                private JPopupMenu tablePopupMenu;
                 public static ArrayList<String[]> historyList;
-                protected int sortModeCol = colDate;
-                protected int selectedRow;
-            protected JPanel sidePanelLeft;
-            protected JPanel sidePanelRight;
-                protected JLabel labelRight;
-                protected JPanel buttonPanel;
-                    protected JButton openLinkButton;
-                    protected JButton clearButton;
-                    protected JButton removeButton;
-                    protected JButton insertButton;
-                    protected JCheckBox closeAfterInsert;
-
-            protected JPanel verticalPanelBottom;
-                protected JPanel pagePanel;
-                    protected JButton firstButton;
-                    protected JButton previousButton;
-                    protected JLabel labelPage;
-                    protected JLabel labelPageNumber;
-                    protected JLabel labelPageTotal;
-                    protected JButton nextButton;
-                    protected JButton lastButton;
+                private int sortModeCol = colDate;
+                private int selectedRow;
+            private JPanel sidePanelLeft;
+            private JPanel sidePanelRight;
+                private JLabel labelRight;
+                private JPanel buttonPanel;
+                    private JButton openLinkButton;
+                    private JButton clearButton;
+                    private JButton removeButton;
+                    private JButton insertButton;
+                    private JCheckBox closeAfterInsert;
+            private JPanel verticalPanelBottom;
+                private JPanel pagePanel;
+                    private JButton firstButton;
+                    private JButton previousButton;
+                    private JLabel labelPage;
+                    private JLabel labelPageNumber;
+                    private JLabel labelPageTotal;
+                    private JButton nextButton;
+                    private JButton lastButton;
                     protected static JButton closeButton;
 
     public HistoryWindow() {
@@ -282,7 +282,7 @@ public class HistoryWindow extends JFrame {
                         int confirm = DoNotAskAgainConfirmDialog.showConfirmDialog(this,
                                 "Are you sure you want to clear the history?",
                                 "Clear History", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE,
-                                MainWorker.prefs, "doNotAskAgainClearButton");
+                                MainWorker.prefs, "doNotAskAgainClearButton", localeManager);
 
                         if (confirm == JOptionPane.YES_OPTION) {
                             HistoryLogger historyLogger = new HistoryLogger();
@@ -505,7 +505,7 @@ public class HistoryWindow extends JFrame {
             int confirm = DoNotAskAgainConfirmDialog.showConfirmDialog(this,
                     "Are you sure you want to remove the selected entry?",
                     "Remove Entry", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE,
-                    MainWorker.prefs, "doNotAskAgainRemoveButton");
+                    MainWorker.prefs, "doNotAskAgainRemoveButton", localeManager);
 
             if (confirm == JOptionPane.YES_OPTION) {
                 HistoryLogger historyLogger = new HistoryLogger();
