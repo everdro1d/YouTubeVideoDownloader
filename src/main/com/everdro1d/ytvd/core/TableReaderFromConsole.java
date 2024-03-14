@@ -44,7 +44,7 @@ public class TableReaderFromConsole {
         AdvancedSettings.tableMap = parseTableToMap(table);
 
         //Print the tableMap
-        if (MainWorker.debug) Utils.printNestedMapFormatted(AdvancedSettings.tableMap);
+        if (MainWorker.debug) Utils.printNestedMapFormatted(AdvancedSettings.tableMap, 0);
     }
 
     public static Map<String, Map<String, String>> parseTableToMap(String[][] table) {
