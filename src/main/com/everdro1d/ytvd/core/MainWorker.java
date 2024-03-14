@@ -47,7 +47,6 @@ import static main.com.everdro1d.ytvd.ui.WorkingPane.workingFrame;
 public class MainWorker {
     public static final String dro1dDevWebsite = "https://everdro1d.github.io/";
     public static final String currentVersion = "1.2.4"; //TODO: update this with each release
-    public static final String titleText = "YouTube Video Downloader";
     private static final Map<String, CommandInterface> CUSTOM_COMMANDS_MAP = Map.of(
             "-debug", new DebugCommand()
     );
@@ -56,6 +55,7 @@ public class MainWorker {
     public static boolean debug = false; // whether debug mode is enabled
     public static boolean closeAfterInsert;
     protected static MainWindow window;
+    public static HistoryWindow historyWindow;
     public static int[] windowPosition = new int[]{0, 0, 0};
     private static Process globalDefaultProcess;
     public static String rawURL = ""; // raw URL String from the text field

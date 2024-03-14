@@ -22,43 +22,42 @@ import static main.com.everdro1d.ytvd.core.MainWorker.*;
 import static main.com.everdro1d.ytvd.ui.WorkingPane.workingFrame;
 
 public class MainWindow extends JFrame {
-    public static HistoryWindow historyWindow;
     public static JFrame frame;
-        protected JPanel mainPanel;
-            protected JPanel northPanel;
-                protected JPanel northPanelBorder1;
-                    protected JPanel northPanelWestBorder;
-                        protected JButton openWindowMenuButton;
-                    protected JPanel northPanelCenter;
-                        protected JPanel northPanelCenterRow1;
-                            protected JPanel northPanelCenterRow1YPanel;
-                                protected JLabel labelTitle;
-                                protected CustomSeparator separatorTitle;
-                    protected JPanel northPanelEastBorder;
-                        protected JToggleButton lightDarkModeButton;
-                        protected JPanel northPanelCenterRow2;
-                            protected JLabel labelURL;
+        private JPanel mainPanel;
+            private JPanel northPanel;
+                private JPanel northPanelBorder1;
+                    private JPanel northPanelWestBorder;
+                        private JButton openWindowMenuButton;
+                    private JPanel northPanelCenter;
+                        private JPanel northPanelCenterRow1;
+                            private JPanel northPanelCenterRow1YPanel;
+                                private JLabel labelTitle;
+                                    public static String titleText = "YouTube Video Downloader";
+                                private CustomSeparator separatorTitle;
+                    private JPanel northPanelEastBorder;
+                        private JToggleButton lightDarkModeButton;
+                        private JPanel northPanelCenterRow2;
+                            private JLabel labelURL;
                             public static JTextField textField_URL;
-                            protected static JPopupMenu textFieldPopupMenu;
-                            protected boolean validURL;
-                            protected JComboBox<String> comboBoxType;
-            protected JPanel centerVerticalPanel;
-
-                protected JPanel centerVerticalPanelRow1;
-                    protected static JLabel validURLLabel;
+                            private static JPopupMenu textFieldPopupMenu;
+                            private boolean validURL;
+                            private JComboBox<String> comboBoxType;
+            private JPanel centerVerticalPanel;
+                private JPanel centerVerticalPanelRow1;
+                    private static JLabel validURLLabel;
                     public static boolean overrideValidURL;
                     public static JCheckBox checkBoxAdvancedSettings;
-                    protected static JCheckBox checkBoxCompatibility;
-                    protected static JCheckBox checkBoxLogHistory;
+                    private static JCheckBox checkBoxCompatibility;
+                    private static JCheckBox checkBoxLogHistory;
 
-                protected JPanel centerVerticalPanelRow2;
-                    protected JPanel advancedSettingsPanelRow1;
+                private JPanel centerVerticalPanelRow2;
+                    private JPanel advancedSettingsPanelRow1;
                         // Video
-                        protected JLabel labelVideoExt;
-                        protected JLabel labelVideoResolution;
-                        protected JLabel labelVideoFPS;
-                        protected JLabel labelVideoVBR;
-                        protected JLabel labelVideoCodec;
+                        private JLabel labelVideoExt;
+                        private JLabel labelVideoResolution;
+                        private JLabel labelVideoFPS;
+                        private JLabel labelVideoVBR;
+                        private JLabel labelVideoCodec;
 
                         public static JComboBox<String> comboBoxVideoExt;
                         public static JComboBox<String> comboBoxVideoResolution;
@@ -66,13 +65,13 @@ public class MainWindow extends JFrame {
                         public static JComboBox<String> comboBoxVideoVBR;
                         public static JComboBox<String> comboBoxVideoCodec;
 
-                    protected JPanel advancedSettingsPanelRow2;
+                    private JPanel advancedSettingsPanelRow2;
                         // Audio
-                        protected JLabel labelAudioExt;
-                        protected JLabel labelAudioChannels;
-                        protected JLabel labelAudioABR;
-                        protected JLabel labelAudioASR;
-                        protected JLabel labelAudioCodec;
+                        private JLabel labelAudioExt;
+                        private JLabel labelAudioChannels;
+                        private JLabel labelAudioABR;
+                        private JLabel labelAudioASR;
+                        private JLabel labelAudioCodec;
 
                         public static JComboBox<String> comboBoxAudioChannels;
                         public static JComboBox<String> comboBoxAudioExt;
@@ -80,22 +79,22 @@ public class MainWindow extends JFrame {
                         public static JComboBox<String> comboBoxAudioASR;
                         public static JComboBox<String> comboBoxAudioCodec;
 
-                    protected JPanel advancedSettingsPanelRow3;
-                        protected static JCheckBox checkBoxRecode;
-                        protected JLabel labelRecodeBox;
+                    private JPanel advancedSettingsPanelRow3;
+                        private static JCheckBox checkBoxRecode;
+                        private JLabel labelRecodeBox;
                         public static JComboBox<String> comboBoxRecodeExt;
-                        protected static JCheckBox checkBoxWriteThumbnail;
-                        protected static JComboBox<String> comboBoxWriteThumbnailExt;
-                        protected static JCheckBox checkBoxEmbedThumbnail;
-                        protected static JCheckBox checkBoxMetadata;
+                        private static JCheckBox checkBoxWriteThumbnail;
+                        private static JComboBox<String> comboBoxWriteThumbnailExt;
+                        private static JCheckBox checkBoxEmbedThumbnail;
+                        private static JCheckBox checkBoxMetadata;
 
-            protected JPanel southPanel;
-                protected CustomSeparator separatorButtonPanel;
-                protected JPanel southPanelRow1;
-                    protected JButton fileChooserButton;
+            private JPanel southPanel;
+                private CustomSeparator separatorButtonPanel;
+                private JPanel southPanelRow1;
+                    private JButton fileChooserButton;
                     protected static JButton downloadButton;
-            protected JPanel eastPanel;
-            protected JPanel westPanel;
+            private JPanel eastPanel;
+            private JPanel westPanel;
     private final String[] typeComboBoxOptions = {"Video + Audio", "Only Video", "Only Audio"};
     protected static final int windowWidth = 840;
     protected final int windowHeight = 250;
