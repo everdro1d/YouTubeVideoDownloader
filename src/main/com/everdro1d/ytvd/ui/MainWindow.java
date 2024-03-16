@@ -1163,13 +1163,11 @@ public class MainWindow extends JFrame {
 
         }
 
-
         // History window colors
         if (HistoryWindow.historyFrame != null) {
             HistoryWindow.separatorHistoryTitle.setBackground(separatorTitleColor);
             HistoryWindow.closeButton.setBackground(new Color(darkMode ? 0x375a81 : 0xffffff));
         }
-
 
         // Debug console colors
         DebugConsoleWindow.expandWindowButtonColorChange(textColor);
