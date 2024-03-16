@@ -161,6 +161,8 @@ public class MainWorker {
     public static void executeOSSpecificCode(String detectedOS) {
         switch (detectedOS) {
             case "Windows" -> {
+                windows = true;
+
                 // binary arg stuff
                 fileDiv = "\\";
                 stringQuotes = "\"";
@@ -172,6 +174,8 @@ public class MainWorker {
                 }
             }
             case "macOS" -> {
+                macOS = true;
+
                 // binary arg stuff
                 fileDiv = "/";
                 stringQuotes = "";
