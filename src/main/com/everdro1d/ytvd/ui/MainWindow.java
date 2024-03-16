@@ -27,7 +27,7 @@ public class MainWindow extends JFrame {
 
     // Swing components - Follow tab hierarchy for organization -----------|
     public static JFrame frame;
-        private JPanel mainPanel;
+    private JPanel mainPanel;
             private JPanel northPanel;
                 private JPanel northPanelBorder1;
                     private JPanel northPanelWestBorder;
@@ -47,16 +47,20 @@ public class MainWindow extends JFrame {
                             public static JTextField textField_URL;
                                 private static JPopupMenu textFieldPopupMenu;
                                     private String[] textFieldPopupMenuItems = {"Cut", "Copy", "Paste", "Delete", "Select All"};
-                            private boolean validURL;
                             private JComboBox<String> comboBoxType;
                                 private final String[] typeComboBoxOptions = {"Video + Audio", "Only Video", "Only Audio"};
             private JPanel centerVerticalPanel;
                 private JPanel centerVerticalPanelRow1;
                     private static JLabel validURLLabel;
+                        private boolean validURL;
                         private String validURLLabelAcceptText = "URL is valid";
                         private String validURLLabelDenyText = "URL is invalid";
                         private String validURLLabelOverrideText = "URL is valid (Override)";
                         private String validURLLabelOverridePopupText = "Force valid URL (Allow anything as URL)";
+                        // following few are called from MainWorker.
+                        public static String invalidURLDialogMessageText = "Please check the link or enter a valid URL.";
+                        public static String invalidURLDialogTitleText = "Error! Media not found.";
+
                     public static boolean overrideValidURL;
                     public static JCheckBox checkBoxAdvancedSettings;
                         private String advancedSettingsCheckBoxText = "Advanced Settings";
@@ -122,8 +126,11 @@ public class MainWindow extends JFrame {
             private JPanel southPanel;
                 private CustomSeparator separatorButtonPanel;
                 private JPanel southPanelRow1;
-                    private JButton directoryChooserButton;
-                        private String directoryChooserButtonText = "Choose Folder";
+                    private JButton fileChooserButton;
+                        private String fileChooserButtonText = "Choose Folder";
+                        public static String fileChooserDialogTitleText = "Select Download Location";
+                        public static String setDownloadLocationDialogMessageText = "Download location set to:";
+                        public static String setDownloadLocationDialogTitleText = "Download Location Set";
                     protected static JButton downloadButton;
                         private String downloadButtonText = "Download";
             private JPanel eastPanel;
@@ -166,6 +173,8 @@ public class MainWindow extends JFrame {
                 mainMap.put("validURLLabelDenyText", validURLLabelDenyText);
                 mainMap.put("validURLLabelOverrideText", validURLLabelOverrideText);
                 mainMap.put("validURLLabelOverridePopupText", validURLLabelOverridePopupText);
+                mainMap.put("invalidURLDialogMessageText", invalidURLDialogMessageText);
+                mainMap.put("invalidURLDialogTitleText", invalidURLDialogTitleText);
                 mainMap.put("advancedSettingsCheckBoxText", advancedSettingsCheckBoxText);
                 mainMap.put("compatabilityModeCheckBoxText", compatabilityModeCheckBoxText);
                 mainMap.put("logHistoryCheckBoxText", logHistoryCheckBoxText);
@@ -185,7 +194,6 @@ public class MainWindow extends JFrame {
                 mainMap.put("writeThumbnailComboBoxLabelText", writeThumbnailComboBoxLabelText);
                 mainMap.put("embedThumbnailCheckBoxText", embedThumbnailCheckBoxText);
                 mainMap.put("embedMetadataCheckBoxText", embedMetadataCheckBoxText);
-                mainMap.put("directoryChooserButtonText", directoryChooserButtonText);
                 mainMap.put("downloadButtonText", downloadButtonText);
 
             classMap.put("TextFieldPopupMenu", new TreeMap<>());
@@ -209,6 +217,13 @@ public class MainWindow extends JFrame {
                 typeComboBoxMap.put("Only Video", typeComboBoxOptions[1]);
                 typeComboBoxMap.put("Only Audio", typeComboBoxOptions[2]);
 
+            classMap.put("FileChooser", new TreeMap<>());
+            Map<String, String> fileChooserMap = classMap.get("FileChooser");
+                fileChooserMap.put("fileChooserButtonText", fileChooserButtonText);
+                fileChooserMap.put("fileChooserDialogTitleText", fileChooserDialogTitleText);
+                fileChooserMap.put("setDownloadLocationDialogMessageText", setDownloadLocationDialogMessageText);
+                fileChooserMap.put("setDownloadLocationDialogTitleText", setDownloadLocationDialogTitleText);
+
         localeManager.addClassSpecificMap("MainWindow", classMap);
     }
 
@@ -221,6 +236,8 @@ public class MainWindow extends JFrame {
                 validURLLabelDenyText = mainMap.getOrDefault("validURLLabelDenyText", validURLLabelDenyText);
                 validURLLabelOverrideText = mainMap.getOrDefault("validURLLabelOverrideText", validURLLabelOverrideText);
                 validURLLabelOverridePopupText = mainMap.getOrDefault("validURLLabelOverridePopupText", validURLLabelOverridePopupText);
+                invalidURLDialogMessageText = mainMap.getOrDefault("invalidURLDialogMessageText", invalidURLDialogMessageText);
+                invalidURLDialogTitleText = mainMap.getOrDefault("invalidURLDialogTitleText", invalidURLDialogTitleText);
                 advancedSettingsCheckBoxText = mainMap.getOrDefault("advancedSettingsCheckBoxText", advancedSettingsCheckBoxText);
                 compatabilityModeCheckBoxText = mainMap.getOrDefault("compatabilityModeCheckBoxText", compatabilityModeCheckBoxText);
                 logHistoryCheckBoxText = mainMap.getOrDefault("logHistoryCheckBoxText", logHistoryCheckBoxText);
@@ -240,7 +257,7 @@ public class MainWindow extends JFrame {
                 writeThumbnailComboBoxLabelText = mainMap.getOrDefault("writeThumbnailComboBoxLabelText", writeThumbnailComboBoxLabelText);
                 embedThumbnailCheckBoxText = mainMap.getOrDefault("embedThumbnailCheckBoxText", embedThumbnailCheckBoxText);
                 embedMetadataCheckBoxText = mainMap.getOrDefault("embedMetadataCheckBoxText", embedMetadataCheckBoxText);
-                directoryChooserButtonText = mainMap.getOrDefault("directoryChooserButtonText", directoryChooserButtonText);
+                fileChooserButtonText = mainMap.getOrDefault("directoryChooserButtonText", fileChooserButtonText);
                 downloadButtonText = mainMap.getOrDefault("downloadButtonText", downloadButtonText);
 
             Map<String, String> textFieldPopupMenuMap = classMap.get("TextFieldPopupMenu");
@@ -260,6 +277,12 @@ public class MainWindow extends JFrame {
                 typeComboBoxOptions[0] = typeComboBoxMap.getOrDefault("Video + Audio", typeComboBoxOptions[0]);
                 typeComboBoxOptions[1] = typeComboBoxMap.getOrDefault("Only Video", typeComboBoxOptions[1]);
                 typeComboBoxOptions[2] = typeComboBoxMap.getOrDefault("Only Audio", typeComboBoxOptions[2]);
+
+            Map<String, String> fileChooserMap = classMap.get("FileChooser");
+                fileChooserButtonText = fileChooserMap.getOrDefault("fileChooserButtonText", fileChooserButtonText);
+                fileChooserDialogTitleText = fileChooserMap.getOrDefault("fileChooserDialogTitleText", fileChooserDialogTitleText);
+                setDownloadLocationDialogMessageText = fileChooserMap.getOrDefault("setDownloadLocationDialogMessageText", setDownloadLocationDialogMessageText);
+                setDownloadLocationDialogTitleText = fileChooserMap.getOrDefault("setDownloadLocationDialogTitleText", setDownloadLocationDialogTitleText);
     }
 
     private void initializeWindowProperties() {
@@ -984,14 +1007,14 @@ public class MainWindow extends JFrame {
                 southPanel.add(southPanelRow1, BorderLayout.SOUTH);
                 {
                     //add a new FileChooser button in the center of the southPanel
-                    directoryChooserButton = new JButton(directoryChooserButtonText);
-                    directoryChooserButton.setFont(new Font(fontName, Font.PLAIN, fontSize + 2));
-                    directoryChooserButton.setPreferredSize(new Dimension(185, 40));
-                    directoryChooserButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-                    directoryChooserButton.setIcon(SwingGUI.getApplicationIcon("images/folderIcon.png", this.getClass()));
-                    southPanelRow1.add(directoryChooserButton);
+                    fileChooserButton = new JButton(fileChooserButtonText);
+                    fileChooserButton.setFont(new Font(fontName, Font.PLAIN, fontSize + 2));
+                    fileChooserButton.setPreferredSize(new Dimension(185, 40));
+                    fileChooserButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+                    fileChooserButton.setIcon(SwingGUI.getApplicationIcon("images/folderIcon.png", this.getClass()));
+                    southPanelRow1.add(fileChooserButton);
 
-                    directoryChooserButton.addActionListener((e) -> MainWorker.downloadDirectoryPath = MainWorker.openFileChooser());
+                    fileChooserButton.addActionListener((e) -> MainWorker.downloadDirectoryPath = MainWorker.openFileChooser());
 
 
                     southPanelRow1.add(Box.createRigidArea(new Dimension(20, 0)));
@@ -1133,7 +1156,7 @@ public class MainWindow extends JFrame {
         if (WorkingPane.workingFrame != null) {
             WorkingPane.workingFrame.getContentPane().setBackground(backgroundColor);
             WorkingPane.panel.setBackground(backgroundColor);
-            WorkingPane.label1.setForeground(textColor);
+            WorkingPane.labelTitle.setForeground(textColor);
             WorkingPane.labelMessage.setForeground(textColor);
             WorkingPane.progressBar.setForeground(textColor);
             WorkingPane.progressBar.setBackground(separatorButtonPanelColor);

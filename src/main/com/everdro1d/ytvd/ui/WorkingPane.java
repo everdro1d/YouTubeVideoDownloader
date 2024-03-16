@@ -5,7 +5,9 @@ import com.everdro1d.libs.swing.SwingGUI;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
+import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 
 import static main.com.everdro1d.ytvd.core.MainWorker.*;
 import static main.com.everdro1d.ytvd.ui.MainWindow.frame;
@@ -13,18 +15,52 @@ import static main.com.everdro1d.ytvd.ui.MainWindow.frame;
 public class WorkingPane extends JFrame {
     public static JFrame workingFrame;
     protected static JPanel panel;
-    protected static JPanel panelRow2;
-    protected static JLabel label1;
+    private static JPanel panelRow2;
+    protected static JLabel labelTitle;
+        public static String workingFrameTitleText = "Working...";
+        private String prepareDownloadTitleText = "Preparing Download...";
+        public static String gettingDownloadInfoTitleText = "Getting Download Info...";
+        public static String recodingVideoTitleText = "Recoding Video...";
+        public static String recodingAudioTitleText = "Recoding Audio...";
+        public static String mergingVideoTitleText = "Merging...";
+        public static String finishingTitleText = "Finishing...";
     protected static JLabel labelMessage;
+        private String pleaseWaitLabelText = "Please wait...";
+        public static String gettingVideoInfoMessageText = "Getting video info...";
+        public static String gettingVideoFilenameMessageText = "Getting file info...";
+        public static String recodingInfoMessageText = "Recoding to";
+        public static String recodingInfoNoteText = "Note: Recoding can take a while.";
+        public static String mergingVideoMessageText = "Merging audio and video...";
+        public static String finishingMessageText = "Finishing up...";
     public static JProgressBar progressBar;
-    protected static JButton cancelButton;
+    private static JButton cancelButton;
+        private String cancelButtonText = "Cancel";
+    private static JDialog confirmDialog;
+        private String cancelDownloadConfirmDialogMessageText = "Are you sure you want to cancel the download?";
+        private String cancelDownloadConfirmDialogTitleText = "Cancel Download";
+    private static JDialog cancelledDialog;
+        private String cancelledDownloadDialogNoticeMessageText = "Download was cancelled.";
+        private String cancelledDownloadDialogNoticeTitleText = "Cancelled";
+    private static JDialog saveProgressDialog;
+        private String saveProgressDialogQuestionMessageText = "Save download progress to resume later?";
+        private String saveProgressDialogQuestionTitleText = "Save Progress";
+    private static JDialog[] cancelDialogArray = new JDialog[3];
 
-    protected static JDialog cancelledDialog;
-    protected static JDialog confirmDialog;
-    protected static JDialog saveProgressDialog;
-    protected static JDialog[] cancelDialogArray = new JDialog[3];
+    // dialog texts
+    public static String downloadErrorDialogMessageText = "An error occurred while downloading the video:";
+    public static String downloadErrorDialogTitleText = "An error occurred while downloading the video:";
+    public static String videoAlreadyDownloadedDialogMessageText = "This video has already been downloaded.";
+    public static String videoAlreadyDownloadedDialogTitleText = "Aborted!";
+    public static String downloadCompletedDialogMessageText = "Download completed!";
+    public static String downloadCompletedDialogTitleText = "Finished!";
 
     public WorkingPane() {
+        // if the locale does not contain the class, add it and it's components
+        if (!localeManager.getClassesInLocaleMap().contains("WorkingPane")) {
+            addClassToLocale();
+        }
+        useLocale();
+
         initializeWindowProperties();
 
         initializeGUIComponents();
@@ -34,6 +70,110 @@ public class WorkingPane extends JFrame {
         SwingGUI.setHandCursorToClickableComponents(this);
     }
 
+    private void addClassToLocale() {
+        Map<String, Map<String, String>> classMap = new TreeMap<>();
+            classMap.put("Main", new TreeMap<>());
+            Map<String, String> mainMap = classMap.get("Main");
+                mainMap.put("pleaseWaitLabelText", pleaseWaitLabelText);
+                mainMap.put("cancelButtonText", cancelButtonText);
+                mainMap.put("cancelDownloadConfirmDialogMessageText", cancelDownloadConfirmDialogMessageText);
+                mainMap.put("cancelDownloadConfirmDialogTitleText", cancelDownloadConfirmDialogTitleText);
+                mainMap.put("cancelledDownloadDialogNoticeMessageText", cancelledDownloadDialogNoticeMessageText);
+                mainMap.put("cancelledDownloadDialogNoticeTitleText", cancelledDownloadDialogNoticeTitleText);
+                mainMap.put("saveProgressDialogQuestionMessageText", saveProgressDialogQuestionMessageText);
+                mainMap.put("saveProgressDialogQuestionTitleText", saveProgressDialogQuestionTitleText);
+
+            classMap.put("TitleLabel", new TreeMap<>());
+            Map<String, String> titleLabelMap = classMap.get("TitleLabel");
+                titleLabelMap.put("workingFrameTitleText", workingFrameTitleText);
+                titleLabelMap.put("prepareDownloadTitleText", prepareDownloadTitleText);
+                titleLabelMap.put("gettingDownloadInfoTitleText", gettingDownloadInfoTitleText);
+                titleLabelMap.put("recodingVideoTitleText", recodingVideoTitleText);
+                titleLabelMap.put("recodingAudioTitleText", recodingAudioTitleText);
+                titleLabelMap.put("mergingVideoTitleText", mergingVideoTitleText);
+                titleLabelMap.put("finishingTitleText", finishingTitleText);
+
+            classMap.put("MessageLabel", new TreeMap<>());
+            Map<String, String> messageLabelMap = classMap.get("MessageLabel");
+                messageLabelMap.put("pleaseWaitLabelText", pleaseWaitLabelText);
+                messageLabelMap.put("gettingVideoInfoMessageText", gettingVideoInfoMessageText);
+                messageLabelMap.put("gettingVideoFilenameMessageText", gettingVideoFilenameMessageText);
+                messageLabelMap.put("recodingInfoMessageText", recodingInfoMessageText);
+                messageLabelMap.put("recodingInfoNoteText", recodingInfoNoteText);
+                messageLabelMap.put("mergingVideoMessageText", mergingVideoMessageText);
+                messageLabelMap.put("finishingMessageText", finishingMessageText);
+
+            classMap.put("StatusDialogs", new TreeMap<>());
+            Map<String, String> statusDialogsMap = classMap.get("StatusDialogs");
+                statusDialogsMap.put("downloadErrorDialogMessageText", downloadErrorDialogMessageText);
+                statusDialogsMap.put("downloadErrorDialogTitleText", downloadErrorDialogTitleText);
+                statusDialogsMap.put("videoAlreadyDownloadedDialogMessageText", videoAlreadyDownloadedDialogMessageText);
+                statusDialogsMap.put("videoAlreadyDownloadedDialogTitleText", videoAlreadyDownloadedDialogTitleText);
+                statusDialogsMap.put("downloadCompletedDialogMessageText", downloadCompletedDialogMessageText);
+                statusDialogsMap.put("downloadCompletedDialogTitleText", downloadCompletedDialogTitleText);
+
+        localeManager.addClassSpecificMap("WorkingPane", classMap);
+    }
+
+    private void useLocale() {
+        Map<String, Map<String, String>> classMap = localeManager.getClassSpecificMap("WorkingPane");
+        Map<String, String> mainMap = classMap.get("Main");
+            workingFrameTitleText = mainMap.getOrDefault("workingFrameTitleText", workingFrameTitleText);
+            prepareDownloadTitleText = mainMap.getOrDefault("prepareDownloadLabelText", prepareDownloadTitleText);
+            pleaseWaitLabelText = mainMap.getOrDefault("pleaseWaitLabelText", pleaseWaitLabelText);
+            cancelButtonText = mainMap.getOrDefault("cancelButtonText", cancelButtonText);
+            cancelDownloadConfirmDialogMessageText = mainMap.getOrDefault("cancelDownloadConfirmDialogMessageText", cancelDownloadConfirmDialogMessageText);
+            cancelDownloadConfirmDialogTitleText = mainMap.getOrDefault("cancelDownloadConfirmDialogTitleText", cancelDownloadConfirmDialogTitleText);
+            cancelledDownloadDialogNoticeMessageText = mainMap.getOrDefault("cancelledDownloadDialogNoticeMessageText", cancelledDownloadDialogNoticeMessageText);
+            cancelledDownloadDialogNoticeTitleText = mainMap.getOrDefault("cancelledDownloadDialogNoticeTitleText", cancelledDownloadDialogNoticeTitleText);
+            saveProgressDialogQuestionMessageText = mainMap.getOrDefault("saveProgressDialogQuestionMessageText", saveProgressDialogQuestionMessageText);
+            saveProgressDialogQuestionTitleText = mainMap.getOrDefault("saveProgressDialogQuestionTitleText", saveProgressDialogQuestionTitleText);
+
+        Map<String, String> titleLabelMap = classMap.get("TitleLabel");
+            workingFrameTitleText = titleLabelMap.getOrDefault("workingFrameTitleText", workingFrameTitleText);
+            prepareDownloadTitleText = titleLabelMap.getOrDefault("prepareDownloadLabelText", prepareDownloadTitleText);
+            gettingDownloadInfoTitleText = titleLabelMap.getOrDefault("gettingDownloadInfoTitleText", gettingDownloadInfoTitleText);
+            recodingVideoTitleText = titleLabelMap.getOrDefault("recodingVideoTitleText", recodingVideoTitleText);
+            recodingAudioTitleText = titleLabelMap.getOrDefault("recodingAudioTitleText", recodingAudioTitleText);
+            mergingVideoTitleText = titleLabelMap.getOrDefault("mergingVideoTitleText", mergingVideoTitleText);
+            finishingTitleText = titleLabelMap.getOrDefault("finishingTitleText", finishingTitleText);
+
+        Map<String, String> messageLabelMap = classMap.get("MessageLabel");
+            pleaseWaitLabelText = messageLabelMap.getOrDefault("pleaseWaitLabelText", pleaseWaitLabelText);
+            gettingVideoInfoMessageText = messageLabelMap.getOrDefault("gettingVideoInfoMessageText", gettingVideoInfoMessageText);
+            gettingVideoFilenameMessageText = messageLabelMap.getOrDefault("gettingVideoFilenameMessageText", gettingVideoFilenameMessageText);
+            recodingInfoMessageText = messageLabelMap.getOrDefault("recodingInfoMessageText", recodingInfoMessageText);
+            recodingInfoNoteText = messageLabelMap.getOrDefault("recodingInfoNoteText", recodingInfoNoteText);
+            mergingVideoMessageText = messageLabelMap.getOrDefault("mergingVideoMessageText", mergingVideoMessageText);
+            finishingMessageText = messageLabelMap.getOrDefault("finishingMessageText", finishingMessageText);
+
+        Map<String, String> statusDialogsMap = classMap.get("StatusDialogs");
+            downloadErrorDialogMessageText = statusDialogsMap.getOrDefault("downloadErrorDialogMessageText", downloadErrorDialogMessageText);
+            downloadErrorDialogTitleText = statusDialogsMap.getOrDefault("downloadErrorDialogTitleText", downloadErrorDialogTitleText);
+            videoAlreadyDownloadedDialogMessageText = statusDialogsMap.getOrDefault("videoAlreadyDownloadedDialogMessageText", videoAlreadyDownloadedDialogMessageText);
+            videoAlreadyDownloadedDialogTitleText = statusDialogsMap.getOrDefault("videoAlreadyDownloadedDialogTitleText", videoAlreadyDownloadedDialogTitleText);
+            downloadCompletedDialogMessageText = statusDialogsMap.getOrDefault("downloadCompletedDialogMessageText", downloadCompletedDialogMessageText);
+            downloadCompletedDialogTitleText = statusDialogsMap.getOrDefault("downloadCompletedDialogTitleText", downloadCompletedDialogTitleText);
+    }
+
+    private void initializeWindowProperties() {
+        workingFrame = new JFrame(workingFrameTitleText);
+
+        workingFrame.setMinimumSize(new Dimension(355, 170));
+        workingFrame.setPreferredSize(new Dimension(355, 170));
+        workingFrame.setLocationRelativeTo(frame);
+        workingFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+
+        workingFrame.addWindowListener( new WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                closeWorkingPane();
+            }
+        });
+
+        workingFrame.setResizable(false);
+    }
+
     private void initializeGUIComponents() {
         panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -41,15 +181,15 @@ public class WorkingPane extends JFrame {
         {
             panel.add(Box.createVerticalStrut(5));
 
-            label1 = new JLabel(" Preparing Download...");
-            label1.setFont(new Font(MainWindow.fontName, Font.PLAIN, 18));
-            label1.setAlignmentX(Component.LEFT_ALIGNMENT);
-            label1.setHorizontalTextPosition(JLabel.LEFT);
-            panel.add(label1);
+            labelTitle = new JLabel(" " + prepareDownloadTitleText);
+            labelTitle.setFont(new Font(MainWindow.fontName, Font.PLAIN, 18));
+            labelTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+            labelTitle.setHorizontalTextPosition(JLabel.LEFT);
+            panel.add(labelTitle);
 
             panel.add(Box.createVerticalStrut(10));
 
-            labelMessage = new JLabel(" Please wait...");
+            labelMessage = new JLabel(" " + pleaseWaitLabelText);
             labelMessage.setFont(new Font(MainWindow.fontName, Font.PLAIN, 14));
             labelMessage.setAlignmentX(Component.LEFT_ALIGNMENT);
             labelMessage.setHorizontalTextPosition(JLabel.LEFT);
@@ -72,7 +212,7 @@ public class WorkingPane extends JFrame {
             panelRow2.setAlignmentX(Component.LEFT_ALIGNMENT);
             panel.add(panelRow2);
             {
-                cancelButton = new JButton("Cancel");
+                cancelButton = new JButton(cancelButtonText);
                 cancelButton.setFont(new Font(MainWindow.fontName, Font.PLAIN, 14));
                 panelRow2.add(cancelButton);
 
@@ -85,33 +225,15 @@ public class WorkingPane extends JFrame {
         }
     }
 
-    private void initializeWindowProperties() {
-        workingFrame = new JFrame("Working...");
-
-        workingFrame.setMinimumSize(new Dimension(355, 170));
-        workingFrame.setPreferredSize(new Dimension(355, 170));
-        workingFrame.setLocationRelativeTo(frame);
-        workingFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-
-        workingFrame.addWindowListener( new WindowAdapter() {
-            @Override
-            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-                closeWorkingPane();
-            }
-        });
-
-        workingFrame.setResizable(false);
-    }
-
     private void cancelDownload() {
-        JOptionPane confirmPane = new JOptionPane("Are you sure you want to cancel the download?", JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION);
-        confirmDialog = confirmPane.createDialog(workingFrame, "Cancel Download");
+        JOptionPane confirmPane = new JOptionPane(cancelDownloadConfirmDialogMessageText, JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION);
+        confirmDialog = confirmPane.createDialog(workingFrame, cancelDownloadConfirmDialogTitleText);
 
-        JOptionPane cancelledPane = new JOptionPane("Download was cancelled.", JOptionPane.INFORMATION_MESSAGE);
-        cancelledDialog = cancelledPane.createDialog(frame, "Cancelled");
+        JOptionPane cancelledPane = new JOptionPane(cancelledDownloadDialogNoticeMessageText, JOptionPane.INFORMATION_MESSAGE);
+        cancelledDialog = cancelledPane.createDialog(frame, cancelledDownloadDialogNoticeTitleText);
 
-        JOptionPane saveProgressPane = new JOptionPane("Save download progress to resume later?", JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION);
-        saveProgressDialog = saveProgressPane.createDialog(frame, "Save Progress");
+        JOptionPane saveProgressPane = new JOptionPane(saveProgressDialogQuestionMessageText, JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION);
+        saveProgressDialog = saveProgressPane.createDialog(frame, saveProgressDialogQuestionTitleText);
 
         cancelDialogArray[0] = confirmDialog;
         cancelDialogArray[1] = cancelledDialog;
@@ -199,8 +321,8 @@ public class WorkingPane extends JFrame {
         workingFrame.dispose();
     }
 
-    public void setCTitle(String title) {
-        label1.setText(title);
+    public void setTempTitle(String title) {
+        labelTitle.setText(title);
     }
 
     public void setMessage(String message) {

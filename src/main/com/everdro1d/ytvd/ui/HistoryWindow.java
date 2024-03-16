@@ -60,7 +60,6 @@ public class HistoryWindow extends JFrame {
                         private String clearHistoryDialogTitleText = "Clear History";
                     private JButton removeButton;
                         private String removeButtonText = "Remove Entry";
-                        private String removeRowErrorDialogMessageText = "No row is selected to remove.";
                         private String removeRowErrorDialogTitleText = "Remove Entry Error";
                         private String removeRowConfirmDialogMessageText = "Are you sure you want to remove the selected entry?";
                         private String removeRowConfirmDialogTitleText = "Remove Entry";
@@ -68,6 +67,8 @@ public class HistoryWindow extends JFrame {
                         private String insertButtonText = "Insert URL";
                     private JCheckBox closeAfterInsert;
                         private String closeAfterInsertCheckBoxText = "Close History Window After Inserting URL";
+                    public static String noRowSelectedErrorDialogMessageText = "No row selected. Please select a row and try again.";
+                    public static String noRowSelectedErrorDialogTitleText = "Error!";
             private JPanel verticalPanelBottom;
                 private JPanel pagePanel;
                     private JButton firstButton;
@@ -113,7 +114,6 @@ public class HistoryWindow extends JFrame {
                 mainMap.put("clearHistoryDialogMessageText", clearHistoryDialogMessageText);
                 mainMap.put("clearHistoryDialogTitleText", clearHistoryDialogTitleText);
                 mainMap.put("removeButtonText", removeButtonText);
-                mainMap.put("removeRowErrorDialogMessageText", removeRowErrorDialogMessageText);
                 mainMap.put("removeRowErrorDialogTitleText", removeRowErrorDialogTitleText);
                 mainMap.put("removeRowConfirmDialogMessageText", removeRowConfirmDialogMessageText);
                 mainMap.put("removeRowConfirmDialogTitleText", removeRowConfirmDialogTitleText);
@@ -122,6 +122,8 @@ public class HistoryWindow extends JFrame {
                 mainMap.put("pageLabelText", pageLabelText);
                 mainMap.put("ofText", ofText);
                 mainMap.put("closeButtonText", closeButtonText);
+                mainMap.put("noRowSelectedErrorDialogMessageText", noRowSelectedErrorDialogMessageText);
+                mainMap.put("noRowSelectedErrorDialogTitleText", noRowSelectedErrorDialogTitleText);
 
             classMap.put("ColumnHeaderNames", new TreeMap<>());
             Map<String, String> columnHeaderNamesMap = classMap.get("ColumnHeaderNames");
@@ -160,7 +162,6 @@ public class HistoryWindow extends JFrame {
             clearHistoryDialogMessageText = mainMap.getOrDefault("clearHistoryDialogMessageText", clearHistoryDialogMessageText);
             clearHistoryDialogTitleText = mainMap.getOrDefault("clearHistoryDialogTitleText", clearHistoryDialogTitleText);
             removeButtonText = mainMap.getOrDefault("removeButtonText", removeButtonText);
-            removeRowErrorDialogMessageText = mainMap.getOrDefault("removeRowErrorDialogMessageText", removeRowErrorDialogMessageText);
             removeRowErrorDialogTitleText = mainMap.getOrDefault("removeRowErrorDialogTitleText", removeRowErrorDialogTitleText);
             removeRowConfirmDialogMessageText = mainMap.getOrDefault("removeRowConfirmDialogMessageText", removeRowConfirmDialogMessageText);
             removeRowConfirmDialogTitleText = mainMap.getOrDefault("removeRowConfirmDialogTitleText", removeRowConfirmDialogTitleText);
@@ -169,6 +170,8 @@ public class HistoryWindow extends JFrame {
             pageLabelText = mainMap.getOrDefault("pageLabelText", pageLabelText);
             ofText = mainMap.getOrDefault("ofText", ofText);
             closeButtonText = mainMap.getOrDefault("closeButtonText", closeButtonText);
+            noRowSelectedErrorDialogMessageText = mainMap.getOrDefault("noRowSelectedErrorDialogMessageText", noRowSelectedErrorDialogMessageText);
+            noRowSelectedErrorDialogTitleText = mainMap.getOrDefault("noRowSelectedErrorDialogTitleText", noRowSelectedErrorDialogTitleText);
 
         Map<String, String> columnHeaderNamesMap = classMap.get("ColumnHeaderNames");
             columnNames[0] = columnHeaderNamesMap.getOrDefault("Title", columnNames[0]);
@@ -612,7 +615,7 @@ public class HistoryWindow extends JFrame {
         if (selectedRow == -1) {
             // show an error dialog if no row is selected
             JOptionPane.showMessageDialog(this,
-                    removeRowErrorDialogMessageText,
+                    noRowSelectedErrorDialogMessageText,
                     removeRowErrorDialogTitleText, JOptionPane.ERROR_MESSAGE);
 
         } else {

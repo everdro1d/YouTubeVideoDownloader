@@ -39,8 +39,7 @@ import java.util.prefs.Preferences;
 import static main.com.everdro1d.ytvd.core.AdvancedSettings.*;
 import static main.com.everdro1d.ytvd.core.HistoryLogger.colUrl;
 import static main.com.everdro1d.ytvd.ui.MainWindow.*;
-import static main.com.everdro1d.ytvd.ui.WorkingPane.progressBar;
-import static main.com.everdro1d.ytvd.ui.WorkingPane.workingFrame;
+import static main.com.everdro1d.ytvd.ui.WorkingPane.*;
 
 public class MainWorker {
     public static final String dro1dDevWebsite = "https://everdro1d.github.io/";
@@ -95,7 +94,7 @@ public class MainWorker {
     public static boolean compatibilityMode = false; // if the compatability mode is enabled
     public static boolean logHistory = true; // whether to log the download history
     public static final Preferences prefs = Preferences.userNodeForPackage(MainWorker.class);
-    public static final LocaleManager localeManager = new LocaleManager("locale_eng", MainWorker.class);
+    public static final LocaleManager localeManager = new LocaleManager(MainWorker.class);
     private static String currentLocale = "eng";
     protected static String videoTitle = "";
     protected static String videoFileName = "";
@@ -405,7 +404,7 @@ public class MainWorker {
             return true;
         }
         if ((rawURL == null) || !validURL(rawURL) || show) {
-            JOptionPane.showMessageDialog(frame, "Please check the link or enter a valid URL.", "Error! Media not found.", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(frame, invalidURLDialogMessageText, invalidURLDialogTitleText, JOptionPane.ERROR_MESSAGE);
             return false;
         }
         return true;
@@ -423,14 +422,14 @@ public class MainWorker {
 
         downloadCanceled = false;
         workingPane = new WorkingPane();
-        workingPane.setCTitle(" Getting Download Info...");
+        workingPane.setTempTitle(" " + gettingDownloadInfoTitleText);
 
         // thread for working pane (won't draw otherwise)
         new Thread(() -> {
             // get video info
-            workingPane.setMessage(" Getting video info...");
+            workingPane.setMessage(" " + gettingVideoInfoMessageText);
             getVideoTitleProcess();
-            workingPane.setMessage(" Getting file info...");
+            workingPane.setMessage(" " + gettingVideoFilenameMessageText);
             getVideoFileNameProcess();
             if (debug) System.out.println("Video Title: " + videoTitle);
             if (debug) System.out.println("Video Filename: " + videoFileName);
@@ -556,7 +555,7 @@ public class MainWorker {
             case 2:
                 yield 1; // audio only
             default:
-                throw new IllegalStateException("Unexpected value: " + videoAudio);
+                throw new IllegalStateException("Unexpected value(videoAudio-downloadProgressPanes-MainWorker): " + videoAudio);
         };
         int delMax = 1;
 
@@ -628,38 +627,39 @@ public class MainWorker {
 
                     if (( downloadComplete && (downloadCount == downloadMax) )
                             && !s.contains("ERROR:")
-                            && !s.contains("has already been downloaded") ) {
+                            && !s.contains("has already been downloaded") )
+                    { // successful download
                         String message =
-                                "<tab>Recoding to " + ((arrayRecodeExt.length >= recodeExt) ?
+                                "<tab>" + recodingInfoMessageText + " " + ((arrayRecodeExt.length >= recodeExt) ?
                                         arrayRecodeExt[recodeExt] :
                                         "[FORMAT ERROR]") +
                                         "..." +
-                                        "<p><tab>Note: Recoding can take a while.";
-                        if (videoAudio == 0) {
+                                        "<p><tab>" + recodingInfoNoteText;
+                        if (videoAudio == 0) { // video and audio
                             if (recode) {
-                                workingPane.setTitle("Recoding Video...");
-                                workingPane.setMessage(String.format("<html><body style='width: 300px'>%s</body></html>", message));
+                                workingPane.setTitle(recodingVideoTitleText);
+                                workingPane.setMessage(message);
                                 SwingGUI.setProgressPercent(-1, progressBar);
                             } else {
-                                workingPane.setTitle("Merging...");
-                                workingPane.setMessage(" Merging audio and video...");
+                                workingPane.setTitle(mergingVideoTitleText);
+                                workingPane.setMessage(" " + mergingVideoMessageText);
                                 SwingGUI.setProgressPercent(-1, progressBar);
                             }
                         } else {
                             if (recode) {
                                 switch (videoAudio) {
                                     case 1:
-                                        workingPane.setTitle("Recoding Video...");
+                                        workingPane.setTitle(recodingVideoTitleText);
                                         break;
                                     case 2:
-                                        workingPane.setTitle("Recoding Audio...");
+                                        workingPane.setTitle(recodingAudioTitleText);
                                         break;
                                 }
-                                workingPane.setMessage(String.format("<html><body style='width: 300px'>%s</body></html>", message));
+                                workingPane.setMessage(message);
                                 SwingGUI.setProgressPercent(-1, progressBar);
                             } else {
-                                workingPane.setTitle("Finishing...");
-                                workingPane.setMessage(" Finishing up...");
+                                workingPane.setTitle(finishingTitleText);
+                                workingPane.setMessage(" " + finishingMessageText);
                                 SwingGUI.setProgressPercent(-1, progressBar);
                             }
                         }
@@ -673,7 +673,7 @@ public class MainWorker {
                         System.err.println("An error occurred while downloading the video.:\n" + s);
                         workingPane.setVisible(false);
                         workingPane.closeWorkingPane();
-                        JOptionPane.showMessageDialog(frame, "An error occurred while downloading the video:\n" + s, "Error!", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(frame,  downloadErrorDialogMessageText + "\n" + s, downloadErrorDialogTitleText, JOptionPane.ERROR_MESSAGE);
                         for (String binaryFile : binaryFiles) {
                             closeProcess(p, binaryFile);
                         }
@@ -683,7 +683,7 @@ public class MainWorker {
                         if (debug) System.out.println("This video has already been downloaded.");
                         workingPane.setVisible(false);
                         workingPane.closeWorkingPane();
-                        JOptionPane.showMessageDialog(frame, "This video has already been downloaded.", "Aborted!", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(frame, videoAlreadyDownloadedDialogMessageText, videoAlreadyDownloadedDialogTitleText, JOptionPane.ERROR_MESSAGE);
                         for (String binaryFile : binaryFiles) {
                             closeProcess(p, binaryFile);
                         }
@@ -753,7 +753,7 @@ public class MainWorker {
         if (debug) System.out.println("Finished.");
         workingPane.setVisible(false);
         workingPane.closeWorkingPane();
-        JOptionPane.showMessageDialog(frame, "Download Completed", "Finished!", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(frame, downloadCompletedDialogMessageText, downloadCompletedDialogTitleText, JOptionPane.INFORMATION_MESSAGE);
         boolean downloadChecked = true;
         downloadStatus = validDownloadStatus[0];
 
@@ -781,7 +781,7 @@ public class MainWorker {
         String message = "<tab>" + joinedMessage1 + "<br><tab>" + joinedMessage2;
 
         workingPane.setMessage(message);
-        workingPane.setCTitle(" Working...   (" + (dC) + "/" + downloadMax + ")");
+        workingPane.setTempTitle(" " + workingFrameTitleText + "   (" + (dC) + "/" + downloadMax + ")");
 
         if (joinedMessage1.contains("%")) {
             String progress = joinedMessage1.split("%")[0].replace(".", "").replace(" ", "");
@@ -795,12 +795,12 @@ public class MainWorker {
     public static String openFileChooser() {
         String output = System.getProperty("user.home");
 
-        FileChooser fileChooser = new FileChooser(output, "Select Download Location", false, localeManager);
+        FileChooser fileChooser = new FileChooser(output, fileChooserDialogTitleText, false, localeManager);
 
         int returnValue = fileChooser.showOpenDialog(frame);
         if (returnValue == JFileChooser.APPROVE_OPTION) {
             output = fileChooser.getSelectedFile().getAbsolutePath();
-            JOptionPane.showMessageDialog(frame, "Download location set to: " + output, "Download Location", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(frame, setDownloadLocationDialogMessageText + " " + output, setDownloadLocationDialogTitleText, JOptionPane.INFORMATION_MESSAGE);
 
         } else if (!downloadDirectoryPath.isEmpty()) output = downloadDirectoryPath;
 
@@ -827,8 +827,8 @@ public class MainWorker {
         if (selectedRow == -1) {
             // show an error dialog if no row is selected
             JOptionPane.showMessageDialog(historyWindow,
-                    "No row selected. Please select a row and try again.",
-                    "Error", JOptionPane.ERROR_MESSAGE);
+                    HistoryWindow.noRowSelectedErrorDialogMessageText,
+                    HistoryWindow.noRowSelectedErrorDialogTitleText, JOptionPane.ERROR_MESSAGE);
 
         } else {
             // get the string in the first column of the selected row
@@ -841,8 +841,8 @@ public class MainWorker {
         if (selectedRow == -1) {
             // show an error dialog if no row is selected
             JOptionPane.showMessageDialog(historyWindow,
-                    "No row selected. Please select a row and try again.",
-                    "Error", JOptionPane.ERROR_MESSAGE);
+                    HistoryWindow.noRowSelectedErrorDialogMessageText,
+                    HistoryWindow.noRowSelectedErrorDialogTitleText, JOptionPane.ERROR_MESSAGE);
 
         } else {
             // get the string in the first column of the selected row
@@ -867,8 +867,8 @@ public class MainWorker {
         if (selectedRow == -1) {
             // show an error dialog if no row is selected
             JOptionPane.showMessageDialog(historyWindow,
-                    "No row selected. Please select a row and try again.",
-                    "Error", JOptionPane.ERROR_MESSAGE);
+                    HistoryWindow.noRowSelectedErrorDialogMessageText,
+                    HistoryWindow.noRowSelectedErrorDialogTitleText, JOptionPane.ERROR_MESSAGE);
 
         } else {
             // get the string in the i-th column of the selected row
