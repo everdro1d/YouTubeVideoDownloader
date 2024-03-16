@@ -856,10 +856,10 @@ public class MainWorker {
             } catch (Exception e) {
                 if (debug) e.printStackTrace(System.err);
             }
-        }
 
-        if (closeAfterInsert) {
-            historyWindow.dispose();
+            if (closeAfterInsert) {
+                historyWindow.dispose();
+            }
         }
     }
 
