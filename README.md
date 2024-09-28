@@ -1,5 +1,5 @@
 # YouTubeVideoDownloader
-[Download from GitHub ->](https://github.com/everdro1d/YouTubeVideoDownloader/release/latest)
+[Download from GitHub ->](https://github.com/everdro1d/YouTubeVideoDownloader/releases/latest)
 
 ---
 ### What is it:
