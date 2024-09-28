@@ -2,7 +2,6 @@
 [Download from GitHub ->](https://github.com/everdro1d/YouTubeVideoDownloader/release/latest)
 
 ---
-## About
 ### What is it:
 YouTube Video Downloader is a GUI Application that allows users to download videos from the web, based on the CLI program ['yt-dlp'](https://github.com/yt-dlp/yt-dlp) YouTube Video Downloader strives to be easy to use for both beginner and advanced users, allowing for simple and straightforward downloading no matter the use case. Support for Windows and MacOS.
 
