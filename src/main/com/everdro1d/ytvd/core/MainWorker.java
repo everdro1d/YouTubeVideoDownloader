@@ -131,6 +131,9 @@ public class MainWorker {
         startMainWindow();
 
         checkUpdate();
+
+        // try to keep yt-dlp up to date on launch
+        tryUpdateYTDLP();
     }
 
     private static void startMainWindow() {
@@ -326,6 +329,24 @@ public class MainWorker {
                 "https://github.com/everdro1d/YouTubeVideoDownloader/releases/latest/",
                 dro1dDevWebsite + "projects.html#youtube-video-downloader", prefs, localeManager))
                 .start();
+    }
+
+    public static void tryUpdateYTDLP() {
+        // trys to update yt-dlp
+        ProcessBuilder pb = new ProcessBuilder(Arrays.asList(
+                downloadBinary, "-U"
+        ));
+        Process p;
+        try {
+            p = pb.start();
+            new Thread(new SyncPipe(p.getErrorStream(), System.err)).start();
+            Scanner scanner = new Scanner(p.getInputStream());
+            if (scanner.hasNextLine() && debug) System.out.println(scanner.nextLine().trim());
+            p.waitFor();
+            if (debug) System.out.println(p.exitValue());
+        } catch (Exception e) {
+            if (debug) e.printStackTrace(System.err);
+        }
     }
 
     public static boolean validURL(String url) { //TODO #1 - see top of file comments
