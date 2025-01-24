@@ -149,7 +149,7 @@ public class MainWindow extends JFrame {
 
 
     public MainWindow() {
-        // if the locale does not contain the class, add it and it's components
+        // if the locale does not contain this class, add it and it's components
         if (!localeManager.getClassesInLocaleMap().contains("MainWindow")) {
             addClassToLocale();
         }
@@ -163,6 +163,7 @@ public class MainWindow extends JFrame {
         SwingGUI.setHandCursorToClickableComponents(frame);
     }
 
+    // updates the locale based on current variable values
     private void addClassToLocale() {
         Map<String, Map<String, String>> classMap = new TreeMap<>();
             classMap.put("Main", new TreeMap<>());
@@ -227,6 +228,7 @@ public class MainWindow extends JFrame {
         localeManager.addClassSpecificMap("MainWindow", classMap);
     }
 
+    // updates variable values from locale file
     private void useLocale() {
         Map<String, Map<String, String>> classMap = localeManager.getClassSpecificMap("MainWindow");
             Map<String, String> mainMap = classMap.get("Main");
@@ -342,7 +344,7 @@ public class MainWindow extends JFrame {
                         openWindowMenuButton.addActionListener((e) -> {
                             JPopupMenu popupMenu = new JPopupMenu();
                             {
-                                ActionListener[] actions = {
+                                ActionListener[] actions = { // TODO - add locale change window
                                         (e1) -> showHistoryWindow(),
                                         (e1) -> showDebugConsole(),
                                         (e1) -> debug = !debug,

@@ -134,6 +134,19 @@ public class MainWorker {
 
         // try to keep yt-dlp up to date on launch
         tryUpdateYTDLP();
+
+        if (!localeManager.getClassesInLocaleMap().contains("!head")) {
+            addVersionToLocale();
+        }
+    }
+
+    private static void addVersionToLocale() {
+        Map<String, Map<String, String>> classMap = new TreeMap<>();
+        classMap.put("version", new TreeMap<>());
+        Map<String, String> mainMap = classMap.get("version");
+        mainMap.put("currentVersion", currentVersion);
+
+        localeManager.addClassSpecificMap("!head", classMap);
     }
 
     private static void startMainWindow() {
@@ -224,7 +237,7 @@ public class MainWorker {
     }
 
     private static void copyBinaryTempFiles() {
-        if (debug) System.out.println("Copying binary files to temp directory.");
+        if (debug) System.out.println("Copying temp binary files to directory.");
         downloadBinary = jarPath + fileDiv + binaryFiles[0];
 
         for (String binaryFile : binaryFiles) {
@@ -323,11 +336,11 @@ public class MainWorker {
         prefs.putInt("activeMonitor", windowPosition[2]);
     }
 
-    public static void checkUpdate() {
+    public static void checkUpdate() { // TODO - update for localemanager
         // checks project GitHub for latest version at launch
         new Thread(() -> SwingGUI.updateCheckerDialog(currentVersion, null, debug,
                 "https://github.com/everdro1d/YouTubeVideoDownloader/releases/latest/",
-                dro1dDevWebsite + "projects.html#youtube-video-downloader", prefs, localeManager))
+                dro1dDevWebsite + "posts/youtube-video-downloader/", prefs))
                 .start();
     }
 

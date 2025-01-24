@@ -433,7 +433,7 @@ public class HistoryWindow extends JFrame {
                         int confirm = DoNotAskAgainConfirmDialog.showConfirmDialog(this,
                                 clearHistoryDialogMessageText,
                                 clearHistoryDialogTitleText, JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE,
-                                MainWorker.prefs, "doNotAskAgainClearButton", localeManager);
+                                MainWorker.prefs, "doNotAskAgainClearButton"); //TODO - update for localeManager
 
                         if (confirm == JOptionPane.YES_OPTION) {
                             HistoryLogger historyLogger = new HistoryLogger();
@@ -622,7 +622,7 @@ public class HistoryWindow extends JFrame {
             int confirm = DoNotAskAgainConfirmDialog.showConfirmDialog(this,
                     removeRowConfirmDialogMessageText,
                     removeRowConfirmDialogTitleText, JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE,
-                    MainWorker.prefs, "doNotAskAgainRemoveButton", localeManager);
+                    MainWorker.prefs, "doNotAskAgainRemoveButton"); //TODO - update for localeManager
 
             if (confirm == JOptionPane.YES_OPTION) {
                 HistoryLogger historyLogger = new HistoryLogger();
