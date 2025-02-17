@@ -18,6 +18,7 @@ import com.everdro1d.libs.io.SyncPipe;
 import com.everdro1d.libs.swing.SwingGUI;
 import com.everdro1d.libs.swing.components.DebugConsoleWindow;
 import com.everdro1d.libs.swing.components.FileChooser;
+import com.everdro1d.libs.swing.components.UpdateCheckerDialog;
 import main.com.everdro1d.ytvd.core.commands.DebugCommand;
 import main.com.everdro1d.ytvd.ui.HistoryWindow;
 import main.com.everdro1d.ytvd.ui.MainWindow;
@@ -339,12 +340,12 @@ public class MainWorker {
         prefs.putInt("activeMonitor", windowPosition[2]);
     }
 
-    public static void checkUpdate() { // TODO - update for localemanager
+    public static void checkUpdate() {
         // checks project GitHub for latest version at launch
-        new Thread(() -> SwingGUI.updateCheckerDialog(currentVersion, null, debug,
+        new Thread(() -> UpdateCheckerDialog.showUpdateCheckerDialog(currentVersion, null, debug,
                 "https://github.com/everdro1d/YouTubeVideoDownloader/releases/latest/",
-                dro1dDevWebsite + "posts/youtube-video-downloader/", prefs))
-                .start();
+                dro1dDevWebsite + "posts/youtube-video-downloader/", prefs, localeManager
+        )).start();
     }
 
     public static void tryUpdateYTDLP() {
