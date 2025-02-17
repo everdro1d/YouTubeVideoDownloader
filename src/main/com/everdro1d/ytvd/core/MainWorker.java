@@ -105,6 +105,7 @@ public class MainWorker {
     protected static String jarPath;
     public static String fileDiv = "\\";
     public static String stringQuotes = "\"";
+    public static boolean tryUpdateYTDLP = true;
 
     public static void main(String[] args) {
         ApplicationCore.checkCLIArgs(args, commandManager);
@@ -133,7 +134,7 @@ public class MainWorker {
         checkUpdate();
 
         // try to keep yt-dlp up to date on launch
-        tryUpdateYTDLP();
+        if (tryUpdateYTDLP) tryUpdateYTDLP();
 
         if (!localeManager.getClassesInLocaleMap().contains("!head")) {
             addVersionToLocale();
@@ -314,6 +315,7 @@ public class MainWorker {
         compatibilityMode = prefs.getBoolean("compatibilityMode", false);
         logHistory = prefs.getBoolean("logHistory", true);
         closeAfterInsert = prefs.getBoolean("closeAfterInsert", false);
+        tryUpdateYTDLP = prefs.getBoolean("tryUpdateYTDLP", true);
     }
 
     private static void saveUserSettings() {
@@ -322,6 +324,7 @@ public class MainWorker {
         prefs.putBoolean("compatibilityMode", compatibilityMode);
         prefs.putBoolean("logHistory", logHistory);
         prefs.putBoolean("closeAfterInsert", closeAfterInsert);
+        prefs.putBoolean("tryUpdateYTDLP", tryUpdateYTDLP);
     }
 
     private static void loadWindowPosition() {

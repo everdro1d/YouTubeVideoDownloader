@@ -32,7 +32,10 @@ public class MainWindow extends JFrame {
                 private JPanel northPanelBorder1;
                     private JPanel northPanelWestBorder;
                         private JButton openWindowMenuButton;
-                        private String[] windowMenuItems = {"Open History Window", "Open Debug Console", "Toggle Debug Mode On/Off", "Open dro1dDev website"};
+                        private String[] windowMenuItems = {
+                                "Open History Window", "Open Debug Console", "Toggle Debug Mode On/Off",
+                                "Open dro1dDev website", "Toggle yt-dlp Update On Launch"
+                        };
                     private JPanel northPanelCenter;
                         private JPanel northPanelCenterRow1;
                             private JPanel northPanelCenterRow1YPanel;
@@ -274,6 +277,7 @@ public class MainWindow extends JFrame {
                 windowMenuItems[1] = windowMenuMap.getOrDefault("Open Debug Console", windowMenuItems[1]);
                 windowMenuItems[2] = windowMenuMap.getOrDefault("Toggle Debug Mode On/Off", windowMenuItems[2]);
                 windowMenuItems[3] = windowMenuMap.getOrDefault("Open dro1dDev website", windowMenuItems[3]);
+                windowMenuItems[4] = windowMenuMap.getOrDefault("Toggle yt-dlp Update On Launch", windowMenuItems[4]);
 
             Map<String, String> typeComboBoxMap = classMap.get("TypeComboBoxMap");
                 typeComboBoxOptions[0] = typeComboBoxMap.getOrDefault("Video + Audio", typeComboBoxOptions[0]);
@@ -342,13 +346,18 @@ public class MainWindow extends JFrame {
                         northPanelWestBorder.add(openWindowMenuButton);
 
                         openWindowMenuButton.addActionListener((e) -> {
+                            String[] parts = windowMenuItems[4].split("\\|");
+                            windowMenuItems[4] = parts[0].trim() + " | " + (MainWorker.tryUpdateYTDLP ? "ON" : "OFF");
+
                             JPopupMenu popupMenu = new JPopupMenu();
                             {
-                                ActionListener[] actions = { // TODO - add locale change window
+                                ActionListener[] actions = { // add to string[] and to locale check
+                                         // TODO - add locale change window
                                         (e1) -> showHistoryWindow(),
                                         (e1) -> showDebugConsole(),
                                         (e1) -> debug = !debug,
-                                        (e1) -> Utils.openLink(dro1dDevWebsite)
+                                        (e1) -> Utils.openLink(dro1dDevWebsite),
+                                        (e1) -> MainWorker.tryUpdateYTDLP = !MainWorker.tryUpdateYTDLP
                                 };
 
                                 for (int i = 0; i < windowMenuItems.length; i++) {
