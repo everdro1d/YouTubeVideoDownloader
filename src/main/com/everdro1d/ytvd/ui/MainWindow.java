@@ -346,13 +346,10 @@ public class MainWindow extends JFrame {
                         northPanelWestBorder.add(openWindowMenuButton);
 
                         openWindowMenuButton.addActionListener((e) -> {
-                            String[] parts = windowMenuItems[4].split("\\|");
-                            windowMenuItems[4] = parts[0].trim() + " | " + (MainWorker.tryUpdateYTDLP ? "ON" : "OFF");
-
                             JPopupMenu popupMenu = new JPopupMenu();
                             {
                                 ActionListener[] actions = { // add to string[] and to locale check
-                                         // TODO - add locale change window
+                                         // TODO - add locale change window (settingsWindow)
                                         (e1) -> showHistoryWindow(),
                                         (e1) -> showDebugConsole(),
                                         (e1) -> debug = !debug,
@@ -360,12 +357,23 @@ public class MainWindow extends JFrame {
                                         (e1) -> MainWorker.tryUpdateYTDLP = !MainWorker.tryUpdateYTDLP
                                 };
 
+
+
                                 for (int i = 0; i < windowMenuItems.length; i++) {
-                                    JMenuItem menuItem = new JMenuItem(windowMenuItems[i]);
-                                    menuItem.addActionListener(actions[i]);
-                                    popupMenu.add(menuItem);
-                                    menuItem.setEnabled(true);
-                                    menuItem.setFont(new Font(fontName, Font.PLAIN, 14));
+                                    if (i==4 || i==2) {
+                                        JCheckBoxMenuItem checkBoxMenuItem =
+                                                new JCheckBoxMenuItem(windowMenuItems[i], (i==2 ? debug : tryUpdateYTDLP));
+                                        checkBoxMenuItem.addActionListener(actions[i]);
+                                        popupMenu.add(checkBoxMenuItem);
+                                        checkBoxMenuItem.setEnabled(true);
+                                        checkBoxMenuItem.setFont(new Font(fontName,Font.PLAIN,14));
+                                    } else {
+                                        JMenuItem menuItem = new JMenuItem(windowMenuItems[i]);
+                                        menuItem.addActionListener(actions[i]);
+                                        popupMenu.add(menuItem);
+                                        menuItem.setEnabled(true);
+                                        menuItem.setFont(new Font(fontName, Font.PLAIN, 14));
+                                    }
                                 }
 
                                 popupMenu.addPopupMenuListener(new PopupMenuListener() {
