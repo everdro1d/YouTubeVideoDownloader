@@ -348,16 +348,16 @@ public class MainWindow extends JFrame {
                         openWindowMenuButton.addActionListener((e) -> {
                             JPopupMenu popupMenu = new JPopupMenu();
                             {
-                                ActionListener[] actions = { // add to string[] and to locale check
-                                         // TODO - add locale change window (settingsWindow)
+                                ActionListener[] actions = {
+                                        // add to string[] and to locale checks
+                                        // remember to regen locale as well
+                                        // TODO - add locale change window (settingsWindow)
                                         (e1) -> showHistoryWindow(),
                                         (e1) -> showDebugConsole(),
                                         (e1) -> debug = !debug,
                                         (e1) -> Utils.openLink(dro1dDevWebsite),
                                         (e1) -> MainWorker.tryUpdateYTDLP = !MainWorker.tryUpdateYTDLP
                                 };
-
-
 
                                 for (int i = 0; i < windowMenuItems.length; i++) {
                                     if (i==4 || i==2) {
