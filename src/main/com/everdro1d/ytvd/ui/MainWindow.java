@@ -3,6 +3,7 @@ package main.com.everdro1d.ytvd.ui;
 import com.everdro1d.libs.core.Utils;
 import com.everdro1d.libs.swing.SwingGUI;
 import com.everdro1d.libs.swing.components.DebugConsoleWindow;
+import com.everdro1d.libs.swing.components.WindowDependentSeparator;
 import com.formdev.flatlaf.FlatClientProperties;
 import main.com.everdro1d.ytvd.core.AdvancedSettings;
 import main.com.everdro1d.ytvd.core.MainWorker;
@@ -41,7 +42,7 @@ public class MainWindow extends JFrame {
                             private JPanel northPanelCenterRow1YPanel;
                                 private JLabel labelTitle;
                                     public static String titleText = "YouTube Video Downloader";
-                                private CustomSeparator separatorTitle;
+                                private WindowDependentSeparator separatorTitle;
                     private JPanel northPanelEastBorder;
                         private JToggleButton lightDarkModeButton;
                         private JPanel northPanelCenterRow2;
@@ -127,7 +128,7 @@ public class MainWindow extends JFrame {
                             private String embedMetadataCheckBoxText = "Embed Metadata";
 
             private JPanel southPanel;
-                private CustomSeparator separatorButtonPanel;
+                private WindowDependentSeparator separatorButtonPanel;
                 private JPanel southPanelRow1;
                     private JButton fileChooserButton;
                         private String fileChooserButtonText = "Choose Folder";
@@ -423,7 +424,7 @@ public class MainWindow extends JFrame {
                                 northPanelCenterRow1YPanel.add(Box.createRigidArea(new Dimension(0, 5)));
 
                                 // add a new separator in the north of the northPanelRow1
-                                separatorTitle = new CustomSeparator(true, 3, 3);
+                                separatorTitle = new WindowDependentSeparator(frame, 0.70f, 3);
                                 northPanelCenterRow1YPanel.add(separatorTitle);
                             }
 
@@ -1015,7 +1016,7 @@ public class MainWindow extends JFrame {
             {
                 southPanel.add(Box.createRigidArea(new Dimension(0, 10)));
 
-                separatorButtonPanel = new CustomSeparator(true, 6, 4);
+                separatorButtonPanel = new WindowDependentSeparator(frame, 0.85f, 4);
                 southPanel.add(separatorButtonPanel);
 
                 southPanel.add(Box.createRigidArea(new Dimension(0, 5)));

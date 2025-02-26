@@ -3,7 +3,7 @@ package main.com.everdro1d.ytvd.ui;
 import com.everdro1d.libs.core.Utils;
 import com.everdro1d.libs.swing.RequestFocusListener;
 import com.everdro1d.libs.swing.SwingGUI;
-import com.everdro1d.libs.swing.components.DoNotAskAgainConfirmDialog;
+import com.everdro1d.libs.swing.components.WindowDependentSeparator;
 import main.com.everdro1d.ytvd.core.HistoryLogger;
 import main.com.everdro1d.ytvd.core.MainWorker;
 
@@ -34,7 +34,7 @@ public class HistoryWindow extends JFrame {
             private JPanel topPanel;
                 private JLabel labelTitle;
                     private String titleText = "Download History";
-                protected static CustomSeparator separatorHistoryTitle;
+                protected static WindowDependentSeparator separatorHistoryTitle;
             private JScrollPane scrollPane;
                 private DefaultTableModel tableModel;
                 private DefaultTableCellRenderer cellRenderer;
@@ -243,10 +243,8 @@ public class HistoryWindow extends JFrame {
                 topPanel.add(Box.createRigidArea(new Dimension(0, 5)));
 
                 // create a separator at the top of the border panel
-                separatorHistoryTitle = new CustomSeparator(true, 4, 3);
-                separatorHistoryTitle.setBackground(new Color(darkMode ? 0x595959 : 0xc2c2c2));
+                separatorHistoryTitle = new WindowDependentSeparator(historyFrame, 0.85f, 5);
                 topPanel.add(separatorHistoryTitle);
-
             }
 
             // create a side panel on the left of the border panel
