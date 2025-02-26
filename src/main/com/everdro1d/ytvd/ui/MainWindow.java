@@ -710,14 +710,19 @@ public class MainWindow extends JFrame {
 
                         compatibilityMode = checkBoxCompatibility.isSelected();
                         if (compatibilityMode) {
-                            checkBoxAdvancedSettings.setSelected(false);
                             checkBoxAdvancedSettings.setEnabled(false);
-                            advancedSettingsPanelRow1.setVisible(false);
-                            advancedSettingsPanelRow2.setVisible(false);
-                            advancedSettingsPanelRow3.setVisible(false);
-                            advancedSettingsEvent(true);
+
+                            // shouldn't be reachable during normal use as compat & adv. settings are mutually exclusive
+                            if (advancedSettingsEnabled) {
+                                checkBoxAdvancedSettings.setSelected(false);
+                                advancedSettingsPanelRow1.setVisible(false);
+                                advancedSettingsPanelRow2.setVisible(false);
+                                advancedSettingsPanelRow3.setVisible(false);
+                                advancedSettingsEvent(true);
+                            }
+
                         } else {
-                            checkBoxAdvancedSettings.setEnabled(validURL && !checkBoxCompatibility.isSelected());
+                            checkBoxAdvancedSettings.setEnabled(validURL);
                         }
                     });
 
