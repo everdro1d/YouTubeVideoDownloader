@@ -5,6 +5,7 @@ import com.everdro1d.libs.swing.SwingGUI;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
@@ -18,7 +19,7 @@ public class WorkingPane extends JFrame {
     private static JPanel panelRow2;
     protected static JLabel labelTitle;
         public static String workingFrameTitleText = "Working...";
-        private String prepareDownloadTitleText = "Preparing Download...";
+    private String prepareDownloadTitleText = "Preparing Download...";
         public static String gettingDownloadInfoTitleText = "Getting Download Info...";
         public static String recodingVideoTitleText = "Recoding Video...";
         public static String recodingAudioTitleText = "Recoding Audio...";
@@ -36,6 +37,7 @@ public class WorkingPane extends JFrame {
     private static JButton cancelButton;
         private String cancelButtonText = "Cancel";
     private static JDialog confirmDialog;
+        private final boolean showConfirmDialog;
         private String cancelDownloadConfirmDialogMessageText = "Are you sure you want to cancel the download?";
         private String cancelDownloadConfirmDialogTitleText = "Cancel Download";
     private static JDialog cancelledDialog;
@@ -55,6 +57,12 @@ public class WorkingPane extends JFrame {
     public static String downloadCompletedDialogTitleText = "Finished!";
 
     public WorkingPane() {
+        this(true);
+    }
+
+    public WorkingPane(boolean showConfirmDialog) {
+        this.showConfirmDialog = showConfirmDialog;
+
         // if the locale does not contain the class, add it and it's components
         if (!localeManager.getClassesInLocaleMap().contains("WorkingPane")) {
             addClassToLocale();
@@ -166,7 +174,7 @@ public class WorkingPane extends JFrame {
 
         workingFrame.addWindowListener( new WindowAdapter() {
             @Override
-            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+            public void windowClosing(WindowEvent windowEvent) {
                 closeWorkingPane();
             }
         });
@@ -226,6 +234,14 @@ public class WorkingPane extends JFrame {
     }
 
     private void cancelDownload() {
+        if (!showConfirmDialog) { //TODO fails to stop retrieval process after cancel
+            for (String binaryFile : binaryFiles) {
+                closeProcess(null, binaryFile);
+            }
+            closeWorkingPane(false);
+            return;
+        }
+
         JOptionPane confirmPane = new JOptionPane(cancelDownloadConfirmDialogMessageText, JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION);
         confirmDialog = confirmPane.createDialog(workingFrame, cancelDownloadConfirmDialogTitleText);
 

@@ -21,6 +21,7 @@ import java.util.TreeMap;
 
 import static main.com.everdro1d.ytvd.core.AdvancedSettings.*;
 import static main.com.everdro1d.ytvd.core.MainWorker.*;
+import static main.com.everdro1d.ytvd.ui.WorkingPane.gettingVideoInfoMessageText;
 import static main.com.everdro1d.ytvd.ui.WorkingPane.workingFrame;
 
 public class MainWindow extends JFrame {
@@ -1091,26 +1092,53 @@ public class MainWindow extends JFrame {
     public void advancedSettingsEvent(boolean youtube) {
         checkType();
 
-        if (checkBoxAdvancedSettings.isSelected() && youtube && !compatibilityMode) {
-            // get video options
-            AdvancedSettings.readVideoOptionsFromYT();
-        } else {
+        if (!(checkBoxAdvancedSettings.isSelected() && youtube && !compatibilityMode)) {
             getVideoOptions = false;
             AdvancedSettings.advancedSettingsEnabled = false;
+            doAdvancedSettingsGUIActions();
+            return;
         }
 
-        while (advancedSettingsEnabled) {
-            frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            if (getVideoOptions) {
-                break;
+        // get video options
+        WorkingPane wp = new WorkingPane(false);
+        wp.setTempTitle(" " + gettingVideoInfoMessageText);
+        wp.setMessage(" ");
+
+        SwingWorker<Void,Void> worker = new SwingWorker<>() {
+            @Override
+            protected Void doInBackground() {
+                AdvancedSettings.readVideoOptionsFromYT();
+
+                while (advancedSettingsEnabled) {
+                    frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                    if (getVideoOptions) {
+                        break;
+                    }
+                }
+                return null;
             }
-        }
-        frame.setCursor(Cursor.getPredefinedCursor(Cursor.getDefaultCursor().getType()));
 
-        if (youtube) {
-            advancedSettingsPanelRow1.setVisible(checkBoxAdvancedSettings.isSelected());
-            advancedSettingsPanelRow2.setVisible(checkBoxAdvancedSettings.isSelected());
-        }
+            @Override
+            protected void done() {
+                super.done();
+                wp.closeWorkingPane();
+
+                frame.setCursor(Cursor.getPredefinedCursor(Cursor.getDefaultCursor().getType()));
+                doAdvancedSettingsGUIActions();
+
+                if (advancedSettingsEnabled) {
+                    setAdvancedSettings();
+                }
+            }
+        };
+
+        worker.execute();
+
+    }
+
+    private void doAdvancedSettingsGUIActions() {
+        advancedSettingsPanelRow1.setVisible(checkBoxAdvancedSettings.isSelected());
+        advancedSettingsPanelRow2.setVisible(checkBoxAdvancedSettings.isSelected());
         advancedSettingsPanelRow3.setVisible(checkBoxAdvancedSettings.isSelected());
         frame.pack();
 
@@ -1127,10 +1155,6 @@ public class MainWindow extends JFrame {
             frame.setMinimumSize(new Dimension(windowWidth, windowHeight));
             frame.setSize(new Dimension(windowWidth, windowHeight));
             frame.setMaximumSize(new Dimension(windowWidth, windowHeight));
-        }
-
-        if (advancedSettingsEnabled) {
-            setAdvancedSettings();
         }
     }
 

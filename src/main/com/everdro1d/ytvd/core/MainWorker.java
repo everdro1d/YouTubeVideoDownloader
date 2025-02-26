@@ -55,7 +55,7 @@ public class MainWorker {
     protected static MainWindow window;
     public static HistoryWindow historyWindow;
     public static int[] windowPosition = new int[]{0, 0, 0};
-    private static Process globalDefaultProcess;
+    static Process globalDefaultProcess;
     public static String rawURL = ""; // raw URL String from the text field
     public static String videoID; // the video ID from the URL
     protected static String downloadBinary = ""; // the name of the binary to run
@@ -847,20 +847,19 @@ public class MainWorker {
         return output;
     }
 
-    public static void closeProcess(Process p, String binaryFile) {
-        if (p == null) {
-            p = globalDefaultProcess;
-        }
-        try {
-            if (windows) new ProcessBuilder("taskkill", "/F", "/IM", binaryFile).start();
-            if (macOS) new ProcessBuilder("killall", "-SIGINT", binaryFile).start();
-            System.out.println("Attempted to close task: " + binaryFile);
-            if (p != null && p.isAlive()) {
-                p.destroy();
+    public static void closeProcess(final Process p, String binaryFile) {
+        new Thread(() -> {
+            try {
+                if (windows) new ProcessBuilder("taskkill", "/F", "/IM", binaryFile).start();
+                if (macOS) new ProcessBuilder("killall", "-SIGINT", binaryFile).start();
+                System.out.println("Attempted to close task: " + binaryFile);
+                if (p != null && p.isAlive()) {
+                    globalDefaultProcess.destroy();
+                }
+            } catch (IOException e) {
+                if (debug) e.printStackTrace(System.err);
             }
-        } catch (IOException e) {
-            if (debug) e.printStackTrace(System.err);
-        }
+        }).start();
     }
 
     public static void openLinkFromTable(HistoryWindow historyWindow, JTable historyTable, int selectedRow) {

@@ -75,6 +75,7 @@ public class AdvancedSettings {
         ProcessBuilder pb = new ProcessBuilder(cmd);
         try {
             Process p = pb.start();
+            globalDefaultProcess = p;
             new Thread(new SyncPipe(p.getErrorStream(), System.err)).start();
             Scanner scanner = new Scanner(p.getInputStream());
             scannerTableMap(scanner, p);
