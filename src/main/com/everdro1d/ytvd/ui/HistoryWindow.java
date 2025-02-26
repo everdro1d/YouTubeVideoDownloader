@@ -4,6 +4,7 @@ import com.everdro1d.libs.core.Utils;
 import com.everdro1d.libs.swing.RequestFocusListener;
 import com.everdro1d.libs.swing.SwingGUI;
 import com.everdro1d.libs.swing.components.WindowDependentSeparator;
+import com.everdro1d.libs.swing.dialogs.DoNotAskAgainConfirmDialog;
 import main.com.everdro1d.ytvd.core.HistoryLogger;
 import main.com.everdro1d.ytvd.core.MainWorker;
 

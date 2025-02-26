@@ -2,8 +2,8 @@ package main.com.everdro1d.ytvd.ui;
 
 import com.everdro1d.libs.core.Utils;
 import com.everdro1d.libs.swing.SwingGUI;
-import com.everdro1d.libs.swing.components.DebugConsoleWindow;
 import com.everdro1d.libs.swing.components.WindowDependentSeparator;
+import com.everdro1d.libs.swing.windows.DebugConsoleWindow;
 import com.formdev.flatlaf.FlatClientProperties;
 import main.com.everdro1d.ytvd.core.AdvancedSettings;
 import main.com.everdro1d.ytvd.core.MainWorker;

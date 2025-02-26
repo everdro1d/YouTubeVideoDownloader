@@ -16,9 +16,9 @@ import com.everdro1d.libs.core.Utils;
 import com.everdro1d.libs.io.Files;
 import com.everdro1d.libs.io.SyncPipe;
 import com.everdro1d.libs.swing.SwingGUI;
-import com.everdro1d.libs.swing.components.DebugConsoleWindow;
-import com.everdro1d.libs.swing.components.FileChooser;
-import com.everdro1d.libs.swing.components.UpdateCheckerDialog;
+import com.everdro1d.libs.swing.dialogs.UpdateCheckerDialog;
+import com.everdro1d.libs.swing.windows.DebugConsoleWindow;
+import com.everdro1d.libs.swing.windows.FileChooser;
 import main.com.everdro1d.ytvd.core.commands.DebugCommand;
 import main.com.everdro1d.ytvd.ui.HistoryWindow;
 import main.com.everdro1d.ytvd.ui.MainWindow;
@@ -111,12 +111,12 @@ public class MainWorker {
     public static void main(String[] args) {
         ApplicationCore.checkCLIArgs(args, commandManager);
         checkOSCompatibility();
-        SwingGUI.setLookAndFeel(true, true);
+        SwingGUI.setupLookAndFeel(true, true);
 
         loadPreferencesAndQueueSave();
 
         SwingGUI.lightOrDarkMode(darkMode, new JFrame[]{frame, workingFrame, DebugConsoleWindow.debugFrame, HistoryWindow.historyFrame});
-        SwingGUI.uiSetup(darkMode, MainWindow.fontName, MainWindow.fontSize);
+        SwingGUI.uiSetup(MainWindow.fontName, MainWindow.fontSize);
 
         localeManager.loadLocaleFromFile("locale_" + currentLocale);
 
