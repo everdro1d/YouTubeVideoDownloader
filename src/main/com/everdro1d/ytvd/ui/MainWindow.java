@@ -480,7 +480,7 @@ public class MainWindow extends JFrame {
                                     }
                                     if (!overrideValidURL) validURLLabel.setText(validURL ? validURLLabelAcceptText : validURLLabelDenyText);
                                     else validURLLabel.setText(validURLLabelOverrideText);
-                                    coloringModeChange();
+                                    customActionsOnDarkModeSwitch();
 
                                     if ( validURL && !(compatibilityMode || overrideValidURL) ) {
                                         checkBoxAdvancedSettings.setEnabled(true);
@@ -621,8 +621,8 @@ public class MainWindow extends JFrame {
 
                         lightDarkModeButton.addActionListener((e) -> {
                             darkMode = !darkMode;
-                            SwingGUI.lightOrDarkMode(darkMode, new JFrame[]{frame, workingFrame, DebugConsoleWindow.debugFrame, HistoryWindow.historyFrame});
-                            coloringModeChange();
+                            SwingGUI.switchLightOrDarkMode(darkMode, new JFrame[]{frame, workingFrame, DebugConsoleWindow.debugFrame, HistoryWindow.historyFrame});
+                            customActionsOnDarkModeSwitch();
                             SwingUtilities.updateComponentTreeUI(frame);
                         });
 
@@ -1129,34 +1129,17 @@ public class MainWindow extends JFrame {
         }
     }
 
-    public void coloringModeChange() {
-        // Colors
-        Color backgroundColor = new Color(darkMode ? 0x2B2B2B : 0xE7E7E7);
-
-        Color separatorTitleColor = new Color(darkMode ? 0x46494b : 0xc2c2c2);
-        Color separatorButtonPanelColor = new Color(darkMode ? 0x595959 : 0xc2c2c2);
-
-        Color advSettingsPanelColor = new Color(darkMode ? 0x303234 : 0xe0e0e0);
-
-        Color textColor = new Color(darkMode ? 0xbbbbbb : 0x000000);
+    public void customActionsOnDarkModeSwitch() {
+        Color advSettingsPanelColor = new Color(darkMode ? 0x282828 : 0xd7d7d7);
 
         // darkMode if() dependent colors
         if (darkMode) {
             // Valid URL Label colors
-            validURLLabel.setForeground(validURL ? new Color(0x0dc47d) : new Color(0xCE3737));
+            validURLLabel.setForeground(validURL ? new Color(0x93ae48) : new Color(0xCE3737));
         } else {
             // Valid URL Label colors
-            validURLLabel.setForeground(validURL ? new Color(0x007C4D) : new Color(0xad0c0c));
+            validURLLabel.setForeground(validURL ? new Color(0x58ae4d) : new Color(0xad0c0c));
         }
-
-
-        // Main Panel colors
-        frame.getContentPane().setBackground(backgroundColor);
-        frame.setBackground(backgroundColor);
-
-        // Separator colors
-        separatorTitle.setBackground(separatorTitleColor);
-        separatorButtonPanel.setBackground(separatorButtonPanelColor);
 
         openWindowMenuButton.setIcon(
                 SwingGUI.getApplicationIcon(
@@ -1170,27 +1153,6 @@ public class MainWindow extends JFrame {
         advancedSettingsPanelRow1.setBackground(advSettingsPanelColor);
         advancedSettingsPanelRow2.setBackground(advSettingsPanelColor);
         advancedSettingsPanelRow3.setBackground(advSettingsPanelColor);
-
-
-        // Working Pane colors
-        if (WorkingPane.workingFrame != null) {
-            WorkingPane.workingFrame.getContentPane().setBackground(backgroundColor);
-            WorkingPane.panel.setBackground(backgroundColor);
-            WorkingPane.labelTitle.setForeground(textColor);
-            WorkingPane.labelMessage.setForeground(textColor);
-            WorkingPane.progressBar.setForeground(textColor);
-            WorkingPane.progressBar.setBackground(separatorButtonPanelColor);
-
-        }
-
-        // History window colors
-        if (HistoryWindow.historyFrame != null) {
-            HistoryWindow.separatorHistoryTitle.setBackground(separatorTitleColor);
-            HistoryWindow.closeButton.setBackground(new Color(darkMode ? 0x375a81 : 0xffffff));
-        }
-
-        // Debug console colors
-        DebugConsoleWindow.expandWindowButtonColorChange(textColor);
     }
 
     private JComboBox<String> setupAdvancedSettingsComboBoxes(

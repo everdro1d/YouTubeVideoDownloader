@@ -115,7 +115,6 @@ public class MainWorker {
 
         loadPreferencesAndQueueSave();
 
-        SwingGUI.lightOrDarkMode(darkMode, new JFrame[]{frame, workingFrame, DebugConsoleWindow.debugFrame, HistoryWindow.historyFrame});
         SwingGUI.uiSetup(MainWindow.fontName, MainWindow.fontSize);
 
         localeManager.loadLocaleFromFile("locale_" + currentLocale);
@@ -163,7 +162,9 @@ public class MainWorker {
                 );
                 SwingGUI.setFrameIcon(frame, "images/diskIconLargeDownloadArrow.png", MainWorker.class);
 
-                window.coloringModeChange();
+                SwingGUI.switchLightOrDarkMode(darkMode, new JFrame[]{frame, workingFrame, DebugConsoleWindow.debugFrame, HistoryWindow.historyFrame});
+                window.customActionsOnDarkModeSwitch();
+                SwingUtilities.updateComponentTreeUI(frame);
             } catch (Exception ex) {
                 if (debug) ex.printStackTrace(System.err);
                 System.err.println("Failed to start main window.");

@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import static main.com.everdro1d.ytvd.core.HistoryLogger.*;
-import static main.com.everdro1d.ytvd.core.MainWorker.darkMode;
 import static main.com.everdro1d.ytvd.core.MainWorker.localeManager;
 import static main.com.everdro1d.ytvd.ui.MainWindow.fontName;
 import static main.com.everdro1d.ytvd.ui.MainWindow.frame;
