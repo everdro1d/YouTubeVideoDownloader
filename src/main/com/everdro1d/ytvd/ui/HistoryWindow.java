@@ -575,7 +575,6 @@ public class HistoryWindow extends JFrame {
                     closeButton = new JButton(closeButtonText);
                     closeButton.setFont(new Font(fontName, Font.PLAIN, 14));
                     closeButton.setPreferredSize(new Dimension(125, 25));
-                    closeButton.setBackground(new Color(darkMode ? 0x375a81 : 0xffffff));
                     closeButton.addAncestorListener(new RequestFocusListener());
                     pagePanel.add(closeButton);
 
@@ -808,5 +807,14 @@ public class HistoryWindow extends JFrame {
 
         // set the table to the first page
         setTablePage(1);
+    }
+
+    @Override
+    public void setVisible(boolean b) {
+        super.setVisible(b);
+
+        JRootPane rootPane = SwingUtilities.getRootPane(closeButton);
+        rootPane.setDefaultButton(closeButton);
+        closeButton.requestFocusInWindow();
     }
 }
