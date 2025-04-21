@@ -481,7 +481,7 @@ public class MainWindow extends JFrame {
                                     }
                                     if (!overrideValidURL) validURLLabel.setText(validURL ? validURLLabelAcceptText : validURLLabelDenyText);
                                     else validURLLabel.setText(validURLLabelOverrideText);
-                                    customActionsOnDarkModeSwitch();
+                                    customActionsOnDarkModeSwitch(); // TODO: why is this here?
 
                                     if ( validURL && !(compatibilityMode || overrideValidURL) ) {
                                         checkBoxAdvancedSettings.setEnabled(true);
