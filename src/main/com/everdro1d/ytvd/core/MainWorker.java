@@ -121,7 +121,7 @@ public class MainWorker {
 
         if (debug) {
             showDebugConsole();
-            if (debug) System.out.println("Loaded locale: locale_" + currentLocale);
+            System.out.println("Loaded locale: locale_" + currentLocale + " at: " + localeManager.getLocaleDirPath());
             System.out.println("Starting " + titleText + " v" + currentVersion + "...");
             System.out.println("Detected OS: " + ApplicationCore.detectOS());
         }
