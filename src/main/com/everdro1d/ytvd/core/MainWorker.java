@@ -588,14 +588,11 @@ public class MainWorker {
 
         int delCount = 0;
         downloadMax = switch (videoAudio) {
-            case 0:
-                yield 2; // video and audio are downloaded separately and the thumbnail is accounted for below
-            case 1:
-                yield 1; // video only
-            case 2:
-                yield 1; // audio only
-            default:
-                throw new IllegalStateException("Unexpected value(videoAudio-downloadProgressPanes-MainWorker): " + videoAudio);
+            case 0 -> 2; // video and audio are downloaded separately and the thumbnail is accounted for below
+            case 1 -> 1; // video only
+            case 2 -> 1; // audio only
+            default ->
+                    throw new IllegalStateException("Unexpected value(videoAudio-downloadProgressPanes-MainWorker): " + videoAudio);
         };
         int delMax = 1;
 
