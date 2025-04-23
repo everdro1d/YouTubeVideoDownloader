@@ -751,7 +751,7 @@ public class MainWorker {
 
             // check if the download failed somehow
             if ( !Utils.containsAny(validDownloadStatus, downloadStatus) ) {
-                // if the download was canceled by the program (error from process, likely by an invalid url),
+                // if the program canceled the download (error from process, likely by an invalid url),
                 // show the dialog and skip logging download history
                 if (debug) System.out.println(
                         "Error from process. Skipped logging download history. Showing Dialog." + downloadStatus);
