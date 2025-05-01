@@ -10,6 +10,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="formdev.flatlaf" level="application" />
     <orderEntry type="library" exported="" name="json" level="application" />
-    <orderEntry type="library" name="everdro1dCoreLib" level="application" />
+    <orderEntry type="library" exported="" name="dro1d-libs-java" level="application" />
   </component>
 </module>
