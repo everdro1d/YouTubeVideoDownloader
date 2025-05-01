@@ -103,8 +103,8 @@ public class MainWorker {
     public static boolean downloadCanceled = false;
     protected static boolean windows = false;
     protected static boolean macOS = false;
-    public static String fileDiv = "\\";
     protected static String workingDirectoryPath;
+    public static String fileDiv = File.separator;
     public static String stringQuotes = "\"";
     public static boolean tryUpdateYTDLP = true;
 
@@ -183,7 +183,6 @@ public class MainWorker {
                 windows = true;
 
                 // binary arg stuff
-                fileDiv = "\\";
                 stringQuotes = "\"";
 
                 // set binary path
@@ -196,7 +195,6 @@ public class MainWorker {
                 macOS = true;
 
                 // binary arg stuff
-                fileDiv = "/";
                 stringQuotes = "";
 
                 // set binary path
