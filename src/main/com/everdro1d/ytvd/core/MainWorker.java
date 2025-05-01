@@ -248,7 +248,13 @@ public class MainWorker {
     }
 
     private static void copyBinaryTempFiles() {
-        if (debug) System.out.println("Copying temp binary files to directory.");
+        if (debug) System.out.println("Copying temp binary files to temp directory.");
+        File tempDir = new File(workingDirectoryPath + fileDiv + "temp");
+        if (!tempDir.exists()) {
+            if (debug) System.out.println("Creating temp directory: " + tempDir.getAbsolutePath());
+            tempDir.mkdirs();
+        }
+
         downloadBinary = workingDirectoryPath + fileDiv + "temp" + fileDiv + binaryFiles[0];
 
         for (String binaryFile : binaryFiles) {
@@ -329,7 +335,7 @@ public class MainWorker {
         compatibilityMode = prefs.getBoolean("compatibilityMode", false);
         logHistory = prefs.getBoolean("logHistory", true);
         closeAfterInsert = prefs.getBoolean("closeAfterInsert", false);
-        tryUpdateYTDLP = prefs.getBoolean("tryUpdateYTDLP", true);
+        tryUpdateYTDLP = prefs.getBoolean("tryUpdateYTDLP", false);
     }
 
     private static void saveUserSettings() {
