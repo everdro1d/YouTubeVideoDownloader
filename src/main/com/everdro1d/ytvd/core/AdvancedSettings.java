@@ -88,7 +88,7 @@ public class AdvancedSettings {
 
                 advancedSettingsEnabled = false;
                 MainWindow.checkBoxAdvancedSettings.setSelected(false);
-                MainWorker.window.advancedSettingsEvent(true);
+                MainWorker.mainWindow.advancedSettingsEvent(true);
             }
             getVideoOptions = true;
         } catch (Exception e) {
@@ -193,7 +193,7 @@ public class AdvancedSettings {
 
     public static ArrayList<String> getAdvancedSettings() {
         ArrayList<String> arrayListAdvancedSettings = new ArrayList<>();
-        String ffmpegPath = workingDirectoryPath + fileDiv + binaryFiles[1];
+        String ffmpegPath = workingDirectoryPath + fileDiv + "temp" + fileDiv + binaryFiles[1];
 
         arrayListAdvancedSettings.add("--ffmpeg-location");
         arrayListAdvancedSettings.add(stringQuotes + ffmpegPath + stringQuotes);

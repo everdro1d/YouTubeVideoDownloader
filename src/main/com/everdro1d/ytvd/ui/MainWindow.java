@@ -3,7 +3,6 @@ package main.com.everdro1d.ytvd.ui;
 import com.everdro1d.libs.core.Utils;
 import com.everdro1d.libs.swing.SwingGUI;
 import com.everdro1d.libs.swing.components.WindowDependentSeparator;
-import com.everdro1d.libs.swing.windows.DebugConsoleWindow;
 import com.formdev.flatlaf.FlatClientProperties;
 import main.com.everdro1d.ytvd.core.AdvancedSettings;
 import main.com.everdro1d.ytvd.core.MainWorker;
@@ -22,7 +21,6 @@ import java.util.TreeMap;
 import static main.com.everdro1d.ytvd.core.AdvancedSettings.*;
 import static main.com.everdro1d.ytvd.core.MainWorker.*;
 import static main.com.everdro1d.ytvd.ui.WorkingPane.gettingVideoInfoMessageText;
-import static main.com.everdro1d.ytvd.ui.WorkingPane.workingFrame;
 
 public class MainWindow extends JFrame {
     // Variables ------------------------------------------------------------------------------------------------------|
@@ -622,9 +620,8 @@ public class MainWindow extends JFrame {
 
                         lightDarkModeButton.addActionListener((e) -> {
                             darkMode = !darkMode;
-                            SwingGUI.switchLightOrDarkMode(darkMode, new JFrame[]{frame, workingFrame, DebugConsoleWindow.debugFrame, HistoryWindow.historyFrame});
+                            SwingGUI.switchLightOrDarkMode(darkMode, windowFrameArray);
                             customActionsOnDarkModeSwitch();
-                            SwingUtilities.updateComponentTreeUI(frame);
                         });
 
                         northPanelEastBorder.add(Box.createRigidArea(new Dimension(20, 0)));

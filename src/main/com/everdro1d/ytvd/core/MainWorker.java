@@ -13,7 +13,6 @@ import com.everdro1d.libs.commands.CommandManager;
 import com.everdro1d.libs.core.ApplicationCore;
 import com.everdro1d.libs.core.LocaleManager;
 import com.everdro1d.libs.core.Utils;
-import com.everdro1d.libs.io.Files;
 import com.everdro1d.libs.io.SyncPipe;
 import com.everdro1d.libs.swing.SwingGUI;
 import com.everdro1d.libs.swing.dialogs.UpdateCheckerDialog;
@@ -43,6 +42,7 @@ import static main.com.everdro1d.ytvd.ui.MainWindow.*;
 import static main.com.everdro1d.ytvd.ui.WorkingPane.*;
 
 public class MainWorker {
+    public static final String githubRepoURL = "https://github.com/everdro1d/YouTubeVideoDownloader/";
     public static final String dro1dDevWebsite = "https://everdro1d.github.io/";
     public static final String currentVersion = "1.2.5"; //TODO: update this with each release
     private static final Map<String, CommandInterface> CUSTOM_COMMANDS_MAP = Map.of(
@@ -52,9 +52,17 @@ public class MainWorker {
     public static DebugConsoleWindow debugConsoleWindow;
     public static boolean debug = false; // whether debug mode is enabled
     public static boolean closeAfterInsert;
-    protected static MainWindow window;
+    protected static MainWindow mainWindow;
     public static HistoryWindow historyWindow;
+    private static WorkingPane workingPane;
     public static int[] windowPosition = new int[]{0, 0, 0};
+    public static JFrame[] windowFrameArray = new JFrame[]{
+            mainWindow,
+            workingPane,
+            debugConsoleWindow,
+            historyWindow
+    };
+
     static Process globalDefaultProcess;
     public static String rawURL = ""; // raw URL String from the text field
     public static String videoID; // the video ID from the URL
@@ -89,7 +97,7 @@ public class MainWorker {
      * </ul>
      */
     public static String[] binaryFiles = {"yt-dlp", "ffmpeg", "ffprobe"};
-    protected static String binaryPath = "main/libs/"; // the path to the binary to run
+    protected static String binaryPath = "main/libs/"; // the internal path to the binary to run
     public static String downloadDirectoryPath = ""; // the path to download the video to
     public static boolean darkMode = false; // whether dark mode is enabled
     public static boolean compatibilityMode = false; // if the compatability mode is enabled
@@ -99,7 +107,6 @@ public class MainWorker {
     private static String currentLocale = "eng";
     protected static String videoTitle = "";
     protected static String videoFileName = "";
-    private static WorkingPane workingPane;
     public static boolean downloadCanceled = false;
     protected static boolean windows = false;
     protected static boolean macOS = false;
@@ -153,7 +160,8 @@ public class MainWorker {
     private static void startMainWindow() {
         EventQueue.invokeLater(() -> {
             try {
-                window = new MainWindow();
+                mainWindow = new MainWindow();
+                windowFrameArray[0] = mainWindow;
                 SwingGUI.setFramePosition(
                         frame,
                         prefs.getInt("framePosX", windowPosition[0]),
@@ -162,9 +170,9 @@ public class MainWorker {
                 );
                 SwingGUI.setFrameIcon(frame, "images/diskIconLargeDownloadArrow.png", MainWorker.class);
 
-                SwingGUI.switchLightOrDarkMode(darkMode, new JFrame[]{frame, workingFrame, DebugConsoleWindow.debugFrame, HistoryWindow.historyFrame});
-                window.customActionsOnDarkModeSwitch();
-                SwingUtilities.updateComponentTreeUI(frame);
+                SwingGUI.switchLightOrDarkMode(darkMode, windowFrameArray);
+                mainWindow.customActionsOnDarkModeSwitch();
+
             } catch (Exception ex) {
                 if (debug) ex.printStackTrace(System.err);
                 System.err.println("Failed to start main window.");
@@ -216,6 +224,7 @@ public class MainWorker {
     public static void showDebugConsole() {
         if (debugConsoleWindow == null) {
             debugConsoleWindow = new DebugConsoleWindow(MainWindow.frame, MainWindow.fontName, 14, prefs, debug, localeManager);
+            windowFrameArray[2] = debugConsoleWindow;
             if (debug) System.out.println("Debug console started.");
         } else if (!debugConsoleWindow.isVisible()) {
             debugConsoleWindow.setVisible(true);
@@ -229,6 +238,7 @@ public class MainWorker {
     public static void showHistoryWindow() {
         if (historyWindow == null) {
             historyWindow = new HistoryWindow();
+            windowFrameArray[3] = historyWindow;
             historyWindow.setVisible(true);
         } else if (!historyWindow.isVisible()) {
             historyWindow.setVisible(true);
@@ -239,7 +249,7 @@ public class MainWorker {
 
     private static void copyBinaryTempFiles() {
         if (debug) System.out.println("Copying temp binary files to directory.");
-        downloadBinary = workingDirectoryPath + fileDiv + binaryFiles[0];
+        downloadBinary = workingDirectoryPath + fileDiv + "temp" + fileDiv + binaryFiles[0];
 
         for (String binaryFile : binaryFiles) {
             if (debug) System.out.println("Copying binary file: " + binaryFile);
@@ -249,7 +259,7 @@ public class MainWorker {
                     System.err.println("Could not find binary file: " + binaryFile);
                     continue;
                 }
-                Path outputPath = new File((workingDirectoryPath + fileDiv + binaryFile)).toPath();
+                Path outputPath = new File((workingDirectoryPath + fileDiv + "temp" + fileDiv + binaryFile)).toPath();
 
                 java.nio.file.Files.copy(binaryPathStream, outputPath, StandardCopyOption.REPLACE_EXISTING);
 
@@ -271,7 +281,7 @@ public class MainWorker {
 
     private static void deleteBinaryTempFile(String binaryFile) {
         if (debug) System.out.println("Deleting binary file: " + binaryFile);
-        File fileToDelete = new File((workingDirectoryPath + fileDiv + binaryFile));
+        File fileToDelete = new File((workingDirectoryPath + fileDiv + "temp" + fileDiv + binaryFile));
         if (fileToDelete.exists()) {
             int iterations = 0;
             while (!fileToDelete.delete() && iterations++ < 5) {
@@ -292,6 +302,8 @@ public class MainWorker {
     }
 
     private static void loadPreferencesAndQueueSave() {
+        ApplicationCore.loadConfigFile(MainWorker.class);
+
         loadUserSettings();
         loadWindowPosition();
 
@@ -306,6 +318,8 @@ public class MainWorker {
             saveWindowPosition();
 
             prefs.put("currentLocale", currentLocale);
+
+            ApplicationCore.saveConfigFile(MainWorker.class, prefs);
         }));
     }
 
@@ -342,7 +356,7 @@ public class MainWorker {
     public static void checkUpdate() {
         // checks project GitHub for latest version at launch
         new Thread(() -> UpdateCheckerDialog.showUpdateCheckerDialog(currentVersion, null, debug,
-                "https://github.com/everdro1d/YouTubeVideoDownloader/releases/latest/",
+                githubRepoURL + "releases/latest/",
                 dro1dDevWebsite + "posts/youtube-video-downloader/", prefs, localeManager
         )).start();
     }
@@ -460,6 +474,7 @@ public class MainWorker {
 
         downloadCanceled = false;
         workingPane = new WorkingPane();
+        windowFrameArray[1] = workingPane;
         workingPane.setTempTitle(" " + gettingDownloadInfoTitleText);
 
         // thread for working pane (won't draw otherwise)
@@ -576,8 +591,10 @@ public class MainWorker {
         }
     }
 
+    // tech debt mess
     private static void downloadProgressPanes(Scanner scanner, Process p) {
         workingPane = new WorkingPane();
+        windowFrameArray[1] = workingPane;
 
         boolean doDownload = true;
         boolean downloadComplete = false;
@@ -846,11 +863,9 @@ public class MainWorker {
         new Thread(() -> {
             try {
                 if (windows) new ProcessBuilder("taskkill", "/F", "/IM", binaryFile).start();
-                if (macOS) new ProcessBuilder("killall", "-SIGINT", binaryFile).start();
+                else if (macOS) new ProcessBuilder("killall", "-SIGINT", binaryFile).start();
                 System.out.println("Attempted to close task: " + binaryFile);
-                if (p != null && p.isAlive()) {
-                    globalDefaultProcess.destroy();
-                }
+                if (p != null && p.isAlive()) globalDefaultProcess.destroyForcibly();
             } catch (IOException e) {
                 if (debug) e.printStackTrace(System.err);
             }

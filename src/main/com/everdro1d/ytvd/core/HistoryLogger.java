@@ -3,10 +3,7 @@ package main.com.everdro1d.ytvd.core;
 import com.everdro1d.libs.io.Files;
 import main.com.everdro1d.ytvd.ui.HistoryWindow;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -94,9 +91,7 @@ public class HistoryLogger {
     }
 
     private void loadHistoryFromFile() {
-        BufferedReader reader = null;
-        try {
-            reader = new BufferedReader(new FileReader(historyFilePath));
+        try (BufferedReader reader = new BufferedReader(new FileReader(historyFilePath))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 // Split the line into a String array
@@ -105,15 +100,6 @@ public class HistoryLogger {
             }
         } catch (IOException e) {
             if (MainWorker.debug) e.printStackTrace(System.err);
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    System.err.println("[ERROR] Failed to close history file reader.");
-                    if (MainWorker.debug) e.printStackTrace(System.err);
-                }
-            }
         }
         sortHistoryList(historyList, colDate, colType, false);
     }
@@ -121,8 +107,7 @@ public class HistoryLogger {
     public static String getHistoryFilePath() {
         String historyFilePath;
 
-        String div = windows ? "\\" : "/";
-        historyFilePath = MainWorker.workingDirectoryPath + div + historyFileName;
+        historyFilePath = MainWorker.workingDirectoryPath + MainWorker.fileDiv + historyFileName;
         if (MainWorker.debug) System.out.println("History File Default Path: " + historyFilePath);
 
         Path filePath = Paths.get(historyFilePath);
@@ -130,7 +115,7 @@ public class HistoryLogger {
         if (!java.nio.file.Files.exists(filePath)) {
             try {
                 java.nio.file.Files.createFile(filePath);
-                if (MainWorker.windows) java.nio.file.Files.setAttribute(filePath, "dos:hidden", true);
+                if (windows) java.nio.file.Files.setAttribute(filePath, "dos:hidden", true);
                 if (MainWorker.macOS) {
                     new ProcessBuilder("chflags", "hidden", filePath.toString()).start();
                 }
