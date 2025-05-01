@@ -103,8 +103,8 @@ public class MainWorker {
     public static boolean downloadCanceled = false;
     protected static boolean windows = false;
     protected static boolean macOS = false;
-    protected static String jarPath;
     public static String fileDiv = "\\";
+    protected static String workingDirectoryPath;
     public static String stringQuotes = "\"";
     public static boolean tryUpdateYTDLP = true;
 
@@ -126,7 +126,7 @@ public class MainWorker {
             System.out.println("Detected OS: " + ApplicationCore.detectOS());
         }
 
-        jarPath = Files.getJarPath(MainWorker.class);
+        workingDirectoryPath = ApplicationCore.getApplicationConfigDirectory(MainWorker.class);
         copyBinaryTempFiles();
 
         startMainWindow();
@@ -241,7 +241,7 @@ public class MainWorker {
 
     private static void copyBinaryTempFiles() {
         if (debug) System.out.println("Copying temp binary files to directory.");
-        downloadBinary = jarPath + fileDiv + binaryFiles[0];
+        downloadBinary = workingDirectoryPath + fileDiv + binaryFiles[0];
 
         for (String binaryFile : binaryFiles) {
             if (debug) System.out.println("Copying binary file: " + binaryFile);
@@ -251,7 +251,7 @@ public class MainWorker {
                     System.err.println("Could not find binary file: " + binaryFile);
                     continue;
                 }
-                Path outputPath = new File((jarPath + fileDiv + binaryFile)).toPath();
+                Path outputPath = new File((workingDirectoryPath + fileDiv + binaryFile)).toPath();
 
                 java.nio.file.Files.copy(binaryPathStream, outputPath, StandardCopyOption.REPLACE_EXISTING);
 
@@ -273,7 +273,7 @@ public class MainWorker {
 
     private static void deleteBinaryTempFile(String binaryFile) {
         if (debug) System.out.println("Deleting binary file: " + binaryFile);
-        File fileToDelete = new File((jarPath + fileDiv + binaryFile));
+        File fileToDelete = new File((workingDirectoryPath + fileDiv + binaryFile));
         if (fileToDelete.exists()) {
             int iterations = 0;
             while (!fileToDelete.delete() && iterations++ < 5) {

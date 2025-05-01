@@ -122,7 +122,7 @@ public class HistoryLogger {
         String historyFilePath;
 
         String div = windows ? "\\" : "/";
-        historyFilePath = MainWorker.jarPath + div + historyFileName;
+        historyFilePath = MainWorker.workingDirectoryPath + div + historyFileName;
         if (MainWorker.debug) System.out.println("History File Default Path: " + historyFilePath);
 
         Path filePath = Paths.get(historyFilePath);

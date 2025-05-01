@@ -193,7 +193,7 @@ public class AdvancedSettings {
 
     public static ArrayList<String> getAdvancedSettings() {
         ArrayList<String> arrayListAdvancedSettings = new ArrayList<>();
-        String ffmpegPath = jarPath + fileDiv + binaryFiles[1];
+        String ffmpegPath = workingDirectoryPath + fileDiv + binaryFiles[1];
 
         arrayListAdvancedSettings.add("--ffmpeg-location");
         arrayListAdvancedSettings.add(stringQuotes + ffmpegPath + stringQuotes);
