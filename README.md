@@ -1,4 +1,7 @@
 # YouTubeVideoDownloader
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/everdro1d/YouTubeVideoDownloader?style=flat-square&label=Latest%20Release&logo=github&color=blue)
+
+
 [Download from GitHub ->](https://github.com/everdro1d/YouTubeVideoDownloader/releases/latest)
 
 ---
@@ -10,7 +13,6 @@ The YouTube Video Downloader first came about due to a need to make downloading 
 
 ---
 ## Installation:
-Installation is very straightforward for both Windows and MacOS featuring an installer that does everything for you, all you need to do is press the 'next' button a bunch. See below for details.
 
 ### Windows
 1. Download the installer from the Releases section in GitHub. 
