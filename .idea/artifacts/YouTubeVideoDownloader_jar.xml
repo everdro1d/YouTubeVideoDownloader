@@ -1,0 +1,11 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="YouTubeVideoDownloader:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/YouTubeVideoDownloader_jar</output-path>
+    <root id="archive" name="YouTubeVideoDownloader.jar">
+      <element id="module-output" name="YouTubeVideoDownloader" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/formdev/flatlaf/3.4/flatlaf-3.4.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/json/json/20240303/json-20240303.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../dro1d-libs-java/out/artifacts/dro1d_libs_java_jar/dro1d-libs-java.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
