@@ -1,6 +1,7 @@
 package main.com.everdro1d.ytvd.ui;
 
 import com.everdro1d.libs.core.Utils;
+import com.everdro1d.libs.swing.ImageUtils;
 import com.everdro1d.libs.swing.SwingGUI;
 import com.everdro1d.libs.swing.components.WindowDependentSeparator;
 import com.formdev.flatlaf.FlatClientProperties;
@@ -341,7 +342,7 @@ public class MainWindow extends JFrame {
                         openWindowMenuButton.setAlignmentX(Component.LEFT_ALIGNMENT);
                         openWindowMenuButton.setAlignmentY(Component.BOTTOM_ALIGNMENT);
                         openWindowMenuButton.setIcon(
-                                SwingGUI.getApplicationIcon(darkMode ? "images/historyIconDark.png" : "images/historyIcon.png", this.getClass())
+                                ImageUtils.getApplicationIcon(darkMode ? "images/historyIconDark.png" : "images/historyIcon.png", this.getClass())
                         );
                         northPanelWestBorder.add(openWindowMenuButton);
 
@@ -610,8 +611,8 @@ public class MainWindow extends JFrame {
                         lightDarkModeButton.setAlignmentX(Component.RIGHT_ALIGNMENT);
                         lightDarkModeButton.setAlignmentY(Component.CENTER_ALIGNMENT);
 
-                        Icon sunIcon = SwingGUI.getApplicationIcon("images/sunIcon.png", this.getClass());
-                        Icon moonIcon = SwingGUI.getApplicationIcon("images/moonIcon.png", this.getClass());
+                        Icon sunIcon = ImageUtils.getApplicationIcon("images/sunIcon.png", this.getClass());
+                        Icon moonIcon = ImageUtils.getApplicationIcon("images/moonIcon.png", this.getClass());
 
                         lightDarkModeButton.setSelectedIcon(darkMode ? sunIcon : moonIcon);
                         lightDarkModeButton.setIcon(darkMode ? moonIcon : sunIcon);
@@ -684,7 +685,7 @@ public class MainWindow extends JFrame {
                         checkBoxCompatibility.setSelected(false);
                         compatibilityMode = false;
                         checkBoxCompatibility.setEnabled(!checkBoxAdvancedSettings.isSelected());
-                        advancedSettingsEvent(Utils.containsAny(new String[]{
+                        advancedSettingsEvent(Utils.stringContainsAny(new String[]{
                                 "https://www.youtube.com/watch?v=",
                                 "https://youtu.be/",
                                 "https://www.youtube.com/shorts/"
@@ -1034,7 +1035,7 @@ public class MainWindow extends JFrame {
                     fileChooserButton.setFont(new Font(fontName, Font.PLAIN, fontSize + 2));
                     fileChooserButton.setPreferredSize(new Dimension(185, 40));
                     fileChooserButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-                    fileChooserButton.setIcon(SwingGUI.getApplicationIcon("images/folderIcon.png", this.getClass()));
+                    fileChooserButton.setIcon(ImageUtils.getApplicationIcon("images/folderIcon.png", this.getClass()));
                     southPanelRow1.add(fileChooserButton);
 
                     fileChooserButton.addActionListener((e) -> MainWorker.downloadDirectoryPath = MainWorker.openFileChooser());
@@ -1048,7 +1049,7 @@ public class MainWindow extends JFrame {
                     downloadButton.setFont(new Font(fontName, Font.PLAIN, fontSize + 2));
                     downloadButton.setPreferredSize(new Dimension(160, 40));
                     downloadButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-                    downloadButton.setIcon(SwingGUI.getApplicationIcon("images/downloadIcon.png", this.getClass()));
+                    downloadButton.setIcon(ImageUtils.getApplicationIcon("images/downloadIcon.png", this.getClass()));
                     southPanelRow1.add(downloadButton);
 
                     downloadButton.addActionListener((e) -> MainWorker.downloadButtonClicked());
@@ -1168,7 +1169,7 @@ public class MainWindow extends JFrame {
         }
 
         openWindowMenuButton.setIcon(
-                SwingGUI.getApplicationIcon(
+                ImageUtils.getApplicationIcon(
                         darkMode ? "images/historyIconDark.png"
                                 : "images/historyIcon.png",
                         this.getClass())
@@ -1407,7 +1408,7 @@ public class MainWindow extends JFrame {
             return;
         }
 
-        if (writeThumbnail && Utils.containsAny(arrayEmbedThumbnailSupported, ext) ) {
+        if (writeThumbnail && Utils.stringContainsAny(arrayEmbedThumbnailSupported, ext) ) {
             checkBoxEmbedThumbnail.setEnabled(true);
         } else {
             checkBoxEmbedThumbnail.setSelected(false);

@@ -11,9 +11,10 @@ package main.com.everdro1d.ytvd.core;
 import com.everdro1d.libs.commands.CommandInterface;
 import com.everdro1d.libs.commands.CommandManager;
 import com.everdro1d.libs.core.ApplicationCore;
-import com.everdro1d.libs.core.LocaleManager;
 import com.everdro1d.libs.core.Utils;
 import com.everdro1d.libs.io.SyncPipe;
+import com.everdro1d.libs.locale.LocaleManager;
+import com.everdro1d.libs.swing.ImageUtils;
 import com.everdro1d.libs.swing.SwingGUI;
 import com.everdro1d.libs.swing.dialogs.UpdateCheckerDialog;
 import com.everdro1d.libs.swing.windows.DebugConsoleWindow;
@@ -106,13 +107,13 @@ public class MainWorker {
     public static boolean compatibilityMode = false; // if the compatability mode is enabled
     public static boolean logHistory = true; // whether to log the download history
     public static final Preferences prefs = Preferences.userNodeForPackage(MainWorker.class);
-    public static final LocaleManager localeManager = new LocaleManager(MainWorker.class);
+    public static final LocaleManager localeManager = new LocaleManager(MainWorker.class, "dro1dDev");
     private static String currentLocale = "eng";
     protected static String videoTitle = "";
     protected static String videoFileName = "";
     public static boolean downloadCanceled = false;
     protected static boolean windows = false;
-    protected static boolean macOS = false;
+    protected static boolean mac = false;
     protected static String workingDirectoryPath;
     public static String fileDiv = File.separator;
     public static String stringQuotes = "\"";
@@ -121,7 +122,7 @@ public class MainWorker {
     public static void main(String[] args) {
         ApplicationCore.checkCLIArgs(args, commandManager);
         checkOSCompatibility();
-        SwingGUI.setupLookAndFeel(true, true);
+        SwingGUI.setupLookAndFeel(true, true, darkMode);
 
         loadPreferencesAndQueueSave();
 
@@ -131,12 +132,12 @@ public class MainWorker {
 
         if (debug) {
             showDebugConsole();
-            System.out.println("Loaded locale: locale_" + currentLocale + " at: " + localeManager.getLocaleDirPath());
+            System.out.println("Loaded locale: locale_" + currentLocale + " at: " + localeManager.getLocaleDirectoryPath());
             System.out.println("Starting " + titleText + " v" + currentVersion + "...");
             System.out.println("Detected OS: " + ApplicationCore.detectOS());
         }
 
-        workingDirectoryPath = ApplicationCore.getApplicationConfigDirectory(MainWorker.class);
+        workingDirectoryPath = ApplicationCore.getApplicationConfigDirectory(MainWorker.class, "dro1dDev");
         copyBinaryTempFiles();
 
         startMainWindow();
@@ -171,7 +172,7 @@ public class MainWorker {
                         prefs.getInt("framePosY", windowPosition[1]),
                         prefs.getInt("activeMonitor", windowPosition[2])
                 );
-                SwingGUI.setFrameIcon(frame, "images/diskIconLargeDownloadArrow.png", MainWorker.class);
+                ImageUtils.setFrameIcon(frame, "images/diskIconLargeDownloadArrow.png", MainWorker.class);
 
                 SwingGUI.switchLightOrDarkMode(darkMode, windowFrameArray);
                 mainWindow.customActionsOnDarkModeSwitch();
@@ -190,7 +191,7 @@ public class MainWorker {
 
     public static void executeOSSpecificCode(String detectedOS) {
         switch (detectedOS) {
-            case "Windows" -> {
+            case "windows" -> {
                 windows = true;
 
                 // binary arg stuff
@@ -202,8 +203,8 @@ public class MainWorker {
                     binaryFiles[i] += ".exe";
                 }
             }
-            case "macOS" -> {
-                macOS = true;
+            case "mac" -> {
+                mac = true;
 
                 // binary arg stuff
                 stringQuotes = "";
@@ -275,7 +276,7 @@ public class MainWorker {
                 // set binary file to hidden
                 if (windows) java.nio.file.Files.setAttribute(outputPath, "dos:hidden", true);
                 // set binary file to executable (and hidden on macOS)
-                if (macOS) {
+                if (mac) {
                     new ProcessBuilder("chflags", "hidden", outputPath.toString()).start();
                     new ProcessBuilder("chmod", "+x", outputPath.toString()).start();
                 }
@@ -311,7 +312,7 @@ public class MainWorker {
     }
 
     private static void loadPreferencesAndQueueSave() {
-        ApplicationCore.loadConfigFile(MainWorker.class);
+        ApplicationCore.loadConfigFile(MainWorker.class, "dro1dDev");
 
         loadUserSettings();
         loadWindowPosition();
@@ -328,7 +329,7 @@ public class MainWorker {
 
             prefs.put("currentLocale", currentLocale);
 
-            ApplicationCore.saveConfigFile(MainWorker.class, prefs);
+            ApplicationCore.saveConfigFile(MainWorker.class, "dro1dDev", prefs);
         }));
     }
 
@@ -410,7 +411,7 @@ public class MainWorker {
                     "instagram.com/reel/"
             };
 
-            if (Utils.containsAny(validURLs, rawURL)) {
+            if (Utils.stringContainsAny(validURLs, rawURL)) {
                 if (!validatedURL(url, validURLs)) {
                     if (debug) System.out.println("Failed url - validatedURL check.");
                     return false;
@@ -774,7 +775,7 @@ public class MainWorker {
             }
 
             // check if the download failed somehow
-            if ( !Utils.containsAny(validDownloadStatus, downloadStatus) ) {
+            if ( !Utils.stringContainsAny(validDownloadStatus, downloadStatus) ) {
                 // if the program canceled the download (error from process, likely by an invalid url),
                 // show the dialog and skip logging download history
                 if (debug) System.out.println(
@@ -872,7 +873,7 @@ public class MainWorker {
         new Thread(() -> {
             try {
                 if (windows) new ProcessBuilder("taskkill", "/F", "/IM", binaryFile).start();
-                else if (macOS) new ProcessBuilder("killall", "-SIGINT", binaryFile).start();
+                else if (mac) new ProcessBuilder("killall", "-SIGINT", binaryFile).start();
                 System.out.println("Attempted to close task: " + binaryFile);
                 if (p != null && p.isAlive()) globalDefaultProcess.destroyForcibly();
             } catch (IOException e) {

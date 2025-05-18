@@ -3,7 +3,10 @@ package main.com.everdro1d.ytvd.core;
 import com.everdro1d.libs.io.Files;
 import main.com.everdro1d.ytvd.ui.HistoryWindow;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -116,7 +119,7 @@ public class HistoryLogger {
             try {
                 java.nio.file.Files.createFile(filePath);
                 if (windows) java.nio.file.Files.setAttribute(filePath, "dos:hidden", true);
-                if (MainWorker.macOS) {
+                if (MainWorker.mac) {
                     new ProcessBuilder("chflags", "hidden", filePath.toString()).start();
                 }
                 if (MainWorker.debug) System.out.println("Created history file at: " + historyFilePath);
