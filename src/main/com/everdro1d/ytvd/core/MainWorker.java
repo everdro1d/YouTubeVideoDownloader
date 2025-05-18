@@ -46,9 +46,12 @@ public class MainWorker {
     public static final String dro1dDevWebsite = "https://everdro1d.github.io/";
     public static final String currentVersion = "1.2.5"; //TODO: update this with each release
     private static final Map<String, CommandInterface> CUSTOM_COMMANDS_MAP = Map.of(
-            "-debug", new DebugCommand()
+            "--debug", new DebugCommand()
     );
-    public static CommandManager commandManager = new CommandManager(CUSTOM_COMMANDS_MAP);
+    private static final Map<String, String> CUSTOM_ALIAS_MAP = Map.of(
+            "-d", "--debug"
+    );
+    public static CommandManager commandManager = new CommandManager(CUSTOM_COMMANDS_MAP, CUSTOM_ALIAS_MAP);
     public static DebugConsoleWindow debugConsoleWindow;
     public static boolean debug = false; // whether debug mode is enabled
     public static boolean closeAfterInsert;
