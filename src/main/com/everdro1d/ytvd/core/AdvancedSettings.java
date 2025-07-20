@@ -67,11 +67,15 @@ public class AdvancedSettings {
     }
 
     private static void getVideoOptions() {
-        String[] cmd = {downloadBinary, "--list-formats", rawURL};
+        List<String> cmd = new ArrayList<>(List.of(downloadBinary, "--list-formats", rawURL));
+        if (useCookiesFromBrowser) {
+            cmd.add("--cookies-from-browser");
+            cmd.add(browserName);
+        }
         new Thread(()-> videoOptionsProcess(cmd)).start();
     }
 
-    private static void videoOptionsProcess(String[] cmd) {
+    private static void videoOptionsProcess(List<String> cmd) {
         ProcessBuilder pb = new ProcessBuilder(cmd);
         try {
             Process p = pb.start();
