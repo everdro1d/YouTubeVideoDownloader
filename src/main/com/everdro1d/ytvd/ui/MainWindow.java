@@ -215,6 +215,7 @@ public class MainWindow extends JFrame {
                 windowMenuMap.put("Open Debug Console", windowMenuItems[1]);
                 windowMenuMap.put("Toggle Debug Mode On/Off", windowMenuItems[2]);
                 windowMenuMap.put("Open dro1dDev website", windowMenuItems[3]);
+                windowMenuMap.put("Toggle yt-dlp Update On Launch", windowMenuItems[4]);
 
             classMap.put("TypeComboBoxMap", new TreeMap<>());
             Map<String, String> typeComboBoxMap = classMap.get("TypeComboBoxMap");
