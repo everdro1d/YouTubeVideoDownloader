@@ -46,7 +46,7 @@ import static main.com.everdro1d.ytvd.ui.WorkingPane.*;
 public class MainWorker {
     public static final String githubRepoURL = "https://github.com/everdro1d/YouTubeVideoDownloader/";
     public static final String dro1dDevWebsite = "https://everdro1d.github.io/";
-    public static final String currentVersion = "1.2.5"; //TODO: update this with each release
+    public static final String currentVersion = "1.2.6"; //TODO: update this with each release
     private static final Map<String, CommandInterface> CUSTOM_COMMANDS_MAP = Map.of(
             "--debug", new DebugCommand()
     );
