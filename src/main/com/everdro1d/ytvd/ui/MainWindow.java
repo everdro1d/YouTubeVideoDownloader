@@ -35,7 +35,7 @@ public class MainWindow extends JFrame {
                         private JButton openWindowMenuButton;
                         private String[] windowMenuItems = {
                                 "Open History Window", "Open Debug Console", "Toggle Debug Mode On/Off",
-                                "Open dro1dDev website", "Toggle yt-dlp Update On Launch"
+                                "Open dro1dDev website", "Toggle yt-dlp Update On Launch", "Use Sign-In Cookies From Browser"
                         };
                     private JPanel northPanelCenter;
                         private JPanel northPanelCenterRow1;
@@ -216,6 +216,7 @@ public class MainWindow extends JFrame {
                 windowMenuMap.put("Toggle Debug Mode On/Off", windowMenuItems[2]);
                 windowMenuMap.put("Open dro1dDev website", windowMenuItems[3]);
                 windowMenuMap.put("Toggle yt-dlp Update On Launch", windowMenuItems[4]);
+                windowMenuMap.put("Use Sign-In Cookies From Browser", windowMenuItems[5]);
 
             classMap.put("TypeComboBoxMap", new TreeMap<>());
             Map<String, String> typeComboBoxMap = classMap.get("TypeComboBoxMap");
@@ -280,6 +281,7 @@ public class MainWindow extends JFrame {
                 windowMenuItems[2] = windowMenuMap.getOrDefault("Toggle Debug Mode On/Off", windowMenuItems[2]);
                 windowMenuItems[3] = windowMenuMap.getOrDefault("Open dro1dDev website", windowMenuItems[3]);
                 windowMenuItems[4] = windowMenuMap.getOrDefault("Toggle yt-dlp Update On Launch", windowMenuItems[4]);
+                windowMenuItems[5] = windowMenuMap.getOrDefault("Use Sign-In Cookies From Browser", windowMenuItems[5]);
 
             Map<String, String> typeComboBoxMap = classMap.get("TypeComboBoxMap");
                 typeComboBoxOptions[0] = typeComboBoxMap.getOrDefault("Video + Audio", typeComboBoxOptions[0]);
@@ -349,6 +351,7 @@ public class MainWindow extends JFrame {
 
                         openWindowMenuButton.addActionListener((e) -> {
                             JPopupMenu popupMenu = new JPopupMenu();
+                                JMenu browserMenu = new JMenu();
                             {
                                 ActionListener[] actions = {
                                         // add to string[] and to locale checks
@@ -369,6 +372,29 @@ public class MainWindow extends JFrame {
                                         popupMenu.add(checkBoxMenuItem);
                                         checkBoxMenuItem.setEnabled(true);
                                         checkBoxMenuItem.setFont(new Font(fontName,Font.PLAIN,14));
+
+                                    } else if (i==5) {
+                                        browserMenu.setText(windowMenuItems[i]);
+                                        browserMenu.setFont(new Font(fontName, Font.PLAIN, 14));
+
+                                        JCheckBoxMenuItem browserToggleMenuItem
+                                                = new JCheckBoxMenuItem(windowMenuItems[i], useCookiesFromBrowser);
+                                        browserToggleMenuItem.addActionListener((e1) -> {
+                                            toggleUseCookiesFromBrowser(popupMenu, browserMenu);
+                                        });
+                                        browserToggleMenuItem.setEnabled(true);
+                                        browserToggleMenuItem.setFont(new Font(fontName,Font.PLAIN,14));
+                                        browserMenu.add(browserToggleMenuItem);
+
+                                        ButtonGroup browserButtonGroup = new ButtonGroup();
+                                        for (String browser : validBrowserList) {
+                                            JRadioButtonMenuItem browserMenuItem = getBrowserMenuItem(browser);
+                                            browserButtonGroup.add(browserMenuItem);
+                                            browserMenu.add(browserMenuItem);
+                                        }
+
+                                        popupMenu.add(browserMenu);
+
                                     } else {
                                         JMenuItem menuItem = new JMenuItem(windowMenuItems[i]);
                                         menuItem.addActionListener(actions[i]);
@@ -1078,6 +1104,45 @@ public class MainWindow extends JFrame {
             }
         }
 
+    }
+
+    private void toggleUseCookiesFromBrowser(JPopupMenu popupMenu, JMenu browserMenu) {
+        useCookiesFromBrowser = !useCookiesFromBrowser;
+        if (useCookiesFromBrowser && debug) System.out.println("Using cookies from browser");
+        else if (debug) System.out.println("No longer using cookies from browser");
+
+        for (Component item : browserMenu.getMenuComponents()) {
+            if (item instanceof JRadioButtonMenuItem) {
+                item.setEnabled(useCookiesFromBrowser);
+                String text = ((JRadioButtonMenuItem) item).getText();
+
+                if (text.equals(browserName)) {
+                    ((JRadioButtonMenuItem) item).setSelected(true);
+                } else if (browserName.isBlank()
+                        && text.equals("chrome")
+                ) {
+                    ((JRadioButtonMenuItem) item).setSelected(true);
+                    browserName = text;
+                    if (debug) System.out.println("Browser set to: " + browserName);
+                }
+            }
+        }
+
+        popupMenu.setVisible(true);
+    }
+
+    private static JRadioButtonMenuItem getBrowserMenuItem(String browser) {
+        JRadioButtonMenuItem browserMenuItem = new JRadioButtonMenuItem(browser, useCookiesFromBrowser);
+        browserMenuItem.addActionListener((e1) -> {
+            if (debug) System.out.println("Browser set to: " + browser);
+            browserName = browser;
+        });
+
+        browserMenuItem.setEnabled(useCookiesFromBrowser);
+        browserMenuItem.setFont(new Font(fontName, Font.PLAIN, 14));
+
+        browserMenuItem.setSelected(browser.equals(browserName));
+        return browserMenuItem;
     }
 
     public void overrideValidURL(boolean override) {

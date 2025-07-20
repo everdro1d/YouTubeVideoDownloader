@@ -35,6 +35,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.List;
 import java.util.prefs.Preferences;
 
 import static main.com.everdro1d.ytvd.core.AdvancedSettings.*;
@@ -68,6 +69,12 @@ public class MainWorker {
     };
 
     static Process globalDefaultProcess;
+    public static boolean useCookiesFromBrowser = false; // whether to use cookies from the browser
+    public static String browserName = ""; // the name of the browser to use for cookies
+    public static String[] validBrowserList = new String[]{
+            "brave", "chrome", "chromium", "edge", "firefox",
+            "opera", "safari", "vivaldi", "whale"
+    };
     public static String rawURL = ""; // raw URL String from the text field
     public static String videoID; // the video ID from the URL
     protected static String downloadBinary = ""; // the name of the binary to run
@@ -340,6 +347,8 @@ public class MainWorker {
         logHistory = prefs.getBoolean("logHistory", true);
         closeAfterInsert = prefs.getBoolean("closeAfterInsert", false);
         tryUpdateYTDLP = prefs.getBoolean("tryUpdateYTDLP", false);
+        useCookiesFromBrowser = prefs.getBoolean("useCookiesFromBrowser", false);
+        browserName = prefs.get("browserName", "chrome");
     }
 
     private static void saveUserSettings() {
@@ -349,6 +358,8 @@ public class MainWorker {
         prefs.putBoolean("logHistory", logHistory);
         prefs.putBoolean("closeAfterInsert", closeAfterInsert);
         prefs.putBoolean("tryUpdateYTDLP", tryUpdateYTDLP);
+        prefs.putBoolean("useCookiesFromBrowser", useCookiesFromBrowser);
+        prefs.put("browserName", browserName);
     }
 
     private static void loadWindowPosition() {
@@ -517,9 +528,15 @@ public class MainWorker {
     }
 
     public static void getVideoTitleProcess() {
-        ProcessBuilder pb = new ProcessBuilder(Arrays.asList(
+        List<String> command = new ArrayList<>(List.of(
                 downloadBinary, "--get-title", "-o", "%(title)s", rawURL
         ));
+        if (useCookiesFromBrowser) {
+            command.add("--cookies-from-browser");
+            command.add(browserName);
+        }
+
+        ProcessBuilder pb = new ProcessBuilder(command);
         Process p;
         try {
             p = pb.start();
@@ -535,9 +552,15 @@ public class MainWorker {
 
     private static void getVideoFileNameProcess() {
         String fileName = "";
-        ProcessBuilder pb = new ProcessBuilder(Arrays.asList(
+        List<String> command = new ArrayList<>(List.of(
                 downloadBinary, "--restrict-filenames", "--get-filename", "-o %(title)s ", rawURL
         ));
+        if (useCookiesFromBrowser) {
+            command.add("--cookies-from-browser");
+            command.add(browserName);
+        }
+
+        ProcessBuilder pb = new ProcessBuilder(command);
         Process p;
         try {
             p = pb.start();
@@ -566,6 +589,11 @@ public class MainWorker {
             cmdList.add("-o");
             cmdList.add(stringQuotes + "%(title)s.%(ext)s" + stringQuotes);
             cmdList.add(stringQuotes + rawURL + stringQuotes);
+
+            if (useCookiesFromBrowser) {
+                cmdList.add("--cookies-from-browser");
+                cmdList.add(browserName);
+            }
 
         return cmdList;
     }
