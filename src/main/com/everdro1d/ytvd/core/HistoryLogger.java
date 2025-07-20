@@ -12,8 +12,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import static main.com.everdro1d.ytvd.core.MainWorker.windows;
-
 public class HistoryLogger {
     public static final String historyFileName = "history.txt";
     public static String historyFilePath;
@@ -118,10 +116,6 @@ public class HistoryLogger {
         if (!java.nio.file.Files.exists(filePath)) {
             try {
                 java.nio.file.Files.createFile(filePath);
-                if (windows) java.nio.file.Files.setAttribute(filePath, "dos:hidden", true);
-                if (MainWorker.mac) {
-                    new ProcessBuilder("chflags", "hidden", filePath.toString()).start();
-                }
                 if (MainWorker.debug) System.out.println("Created history file at: " + historyFilePath);
             } catch (IOException e) {
                 if (MainWorker.debug) e.printStackTrace(System.err);
