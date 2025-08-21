@@ -1,0 +1,205 @@
+{
+  "!head": {
+    "version": {
+      "currentVersion": "1.2.6"
+    }
+  },
+  "DebugConsoleWindow": {
+    "Main": {
+      "clearButtonText": "Clear",
+      "closeButtonText": "Close",
+      "copyButtonText": "Copy",
+      "numberOfLinesText": "Number of Lines:",
+      "saveButtonText": "Save as",
+      "titleText": "Debug Console"
+    }
+  },
+  "Dialogs": {
+    "DoNotAskAgainConfirmDialog": {
+      "doNotAskAgainCheckBoxText": "Don't ask me again"
+    },
+    "UpdateCheckerDialog": {
+      "updateCheckerDialogText0": "An update is available.",
+      "updateCheckerDialogText1": "Would you like to update now?",
+      "updateCheckerDialogText2": "Latest Version: v",
+      "updateCheckerDialogText3": "Installed Version: v",
+      "updateCheckerDialogText4": "Update Available"
+    }
+  },
+  "FileChooser": {
+    "DebugConsoleWindow": {
+      "fileChooserCustomMessage": "Text File",
+      "fileChooserTitle": "Save To",
+      "savedSuccessDialogMessage": "Saved debug console to file at:",
+      "savedSuccessDialogTitle": "Success!"
+    },
+    "Defaults": {
+      "anyFileOrDirectory": "Any File or Directory (Folder)",
+      "approveButtonText": "Select",
+      "cancelButtonText": "Cancel",
+      "cancelButtonToolTipText": "Cancel",
+      "detailsViewButtonToolTipText": "Details",
+      "dirOnlyDescription": "Directory (Folder)",
+      "directoryOpenButtonText": "Open",
+      "directoryOpenButtonToolTipText": "Open selected directory",
+      "extFilterDescription": "Files",
+      "fileAttrHeaderText": "Attributes",
+      "fileDateHeaderText": "Date",
+      "fileNameHeaderText": "Name",
+      "fileNameLabelText": "File Name:",
+      "fileSizeHeaderText": "Size",
+      "fileTypeHeaderText": "Type",
+      "filesOfTypeLabelText": "Files of Type:",
+      "filesOnlyDescription": "Any File",
+      "homeFolderToolTipText": "Home",
+      "listViewButtonToolTipText": "List",
+      "lookInLabelText": "Look In:",
+      "newFolderErrorText": "Error creating new folder",
+      "newFolderToolTipText": "Create New Folder",
+      "openButtonText": "Open",
+      "openButtonToolTipText": "Open selected file",
+      "saveButtonText": "Save",
+      "saveButtonToolTipText": "Save selected file",
+      "saveInLabelText": "Save In:",
+      "upFolderToolTipText": "Up One Level"
+    }
+  },
+  "HistoryWindow": {
+    "ColumnHeaderNames": {
+      "Date": "Date",
+      "Status": "Status",
+      "Title": "Title",
+      "Type": "Type",
+      "URL": "URL"
+    },
+    "CopySubMenuMap": {
+      "All": "All",
+      "Date": "Date",
+      "Status": "Status",
+      "Title": "Title",
+      "Type": "Type",
+      "URL": "URL"
+    },
+    "Main": {
+      "clearButtonText": "Clear History",
+      "clearHistoryDialogMessageText": "Are you sure you want to clear the history?",
+      "clearHistoryDialogTitleText": "Clear History",
+      "closeAfterInsertCheckBoxText": "Close History Window After Inserting URL",
+      "closeButtonText": "Close",
+      "insertButtonText": "Insert URL",
+      "noRowSelectedErrorDialogMessageText": "No row selected. Please select a row and try again.",
+      "noRowSelectedErrorDialogTitleText": "Error!",
+      "ofText": "of",
+      "openLinkButtonText": "Open Link",
+      "optionsLabelText": "Options",
+      "pageLabelText": "Page",
+      "removeButtonText": "Remove Entry",
+      "removeRowConfirmDialogMessageText": "Are you sure you want to remove the selected entry?",
+      "removeRowConfirmDialogTitleText": "Remove Entry",
+      "removeRowErrorDialogTitleText": "Remove Entry Error",
+      "titleText": "Download History"
+    },
+    "TablePopupMenu": {
+      "tablePopupMenuCopyItem": "Copy",
+      "tablePopupMenuInsertItem": "Insert URL",
+      "tablePopupMenuOpenItem": "Open Link",
+      "tablePopupMenuRemoveItem": "Remove Entry"
+    }
+  },
+  "MainWindow": {
+    "FileChooser": {
+      "fileChooserButtonText": "Choose Folder",
+      "fileChooserDialogTitleText": "Select Download Location",
+      "setDownloadLocationDialogMessageText": "Download location set to:",
+      "setDownloadLocationDialogTitleText": "Download Location Set"
+    },
+    "Main": {
+      "advancedSettingsCheckBoxText": "Advanced Settings",
+      "audioABRLabelText": "ABR:",
+      "audioASRLabelText": "ASR:",
+      "audioChannelsLabelText": "Channels:",
+      "audioCodecLabelText": "Codec:",
+      "audioExtLabelText": "Audio Format:",
+      "compatabilityModeCheckBoxText": "Compatibility Mode",
+      "downloadButtonText": "Download",
+      "embedMetadataCheckBoxText": "Embed Metadata",
+      "embedThumbnailCheckBoxText": "Embed Thumbnail",
+      "invalidURLDialogMessageText": "Please check the link or enter a valid URL.",
+      "invalidURLDialogTitleText": "Error! Media not found.",
+      "logHistoryCheckBoxText": "Log History",
+      "recodeComboBoxLabelText": "to:",
+      "recodeVideoCheckBoxText": "Recode Video",
+      "titleText": "YouTube Video Downloader",
+      "urlLabelText": "URL:",
+      "validURLLabelAcceptText": "URL is valid",
+      "validURLLabelDenyText": "URL is invalid",
+      "validURLLabelOverridePopupText": "Force valid URL (Allow anything as URL)",
+      "validURLLabelOverrideText": "URL is valid (Override)",
+      "videoCodecLabelText": "Codec:",
+      "videoExtLabelText": "Video Format:",
+      "videoFPSLabelText": "FPS:",
+      "videoResolutionLabelText": "Resolution:",
+      "videoVBRLabelText": "VBR:",
+      "writeThumbnailCheckBoxText": "Write Thumbnail",
+      "writeThumbnailComboBoxLabelText": "as:"
+    },
+    "TextFieldPopupMenu": {
+      "textFieldPopupMenuCopyText": "Copy",
+      "textFieldPopupMenuCutText": "Cut",
+      "textFieldPopupMenuDeleteText": "Delete",
+      "textFieldPopupMenuPasteText": "Paste",
+      "textFieldPopupMenuSelectAllText": "Select All"
+    },
+    "TypeComboBoxMap": {
+      "Only Audio": "Only Audio",
+      "Only Video": "Only Video",
+      "Video + Audio": "Video + Audio"
+    },
+    "WindowMenu": {
+      "Open Debug Console": "Open Debug Console",
+      "Open History Window": "Open History Window",
+      "Open dro1dDev website": "Open dro1dDev website",
+      "Toggle Debug Mode On/Off": "Toggle Debug Mode On/Off",
+      "Toggle yt-dlp Update On Launch": "Toggle yt-dlp Update On Launch",
+      "Use Sign-In Cookies From Browser": "Use Sign-In Cookies From Browser"
+    }
+  },
+  "WorkingPane": {
+    "Main": {
+      "cancelButtonText": "Cancel",
+      "cancelDownloadConfirmDialogMessageText": "Are you sure you want to cancel the download?",
+      "cancelDownloadConfirmDialogTitleText": "Cancel Download",
+      "cancelledDownloadDialogNoticeMessageText": "Download was cancelled.",
+      "cancelledDownloadDialogNoticeTitleText": "Cancelled",
+      "pleaseWaitLabelText": "Please wait...",
+      "saveProgressDialogQuestionMessageText": "Save download progress to resume later?",
+      "saveProgressDialogQuestionTitleText": "Save Progress"
+    },
+    "MessageLabel": {
+      "finishingMessageText": "Finishing up...",
+      "gettingVideoFilenameMessageText": "Getting file info...",
+      "gettingVideoInfoMessageText": "Getting video info...",
+      "mergingVideoMessageText": "Merging audio and video...",
+      "pleaseWaitLabelText": "Please wait...",
+      "recodingInfoMessageText": "Recoding to",
+      "recodingInfoNoteText": "Note: Recoding can take a while."
+    },
+    "StatusDialogs": {
+      "downloadCompletedDialogMessageText": "Download completed!",
+      "downloadCompletedDialogTitleText": "Finished!",
+      "downloadErrorDialogMessageText": "An error occurred while downloading the video:",
+      "downloadErrorDialogTitleText": "An error occurred while downloading the video:",
+      "videoAlreadyDownloadedDialogMessageText": "This video has already been downloaded.",
+      "videoAlreadyDownloadedDialogTitleText": "Aborted!"
+    },
+    "TitleLabel": {
+      "finishingTitleText": "Finishing...",
+      "gettingDownloadInfoTitleText": "Getting Download Info...",
+      "mergingVideoTitleText": "Merging...",
+      "prepareDownloadTitleText": "Preparing Download...",
+      "recodingAudioTitleText": "Recoding Audio...",
+      "recodingVideoTitleText": "Recoding Video...",
+      "workingFrameTitleText": "Working..."
+    }
+  }
+}
