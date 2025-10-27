@@ -877,7 +877,7 @@ public class MainWorker {
             String progress = joinedMessage1.split("%")[0].replace(".", "").replace(" ", "");
             if (!progress.isEmpty()) {
                 int progressInt = Math.round(Float.parseFloat(progress) / 10);
-                SwingGUI.setProgressPercent(progressInt, progressBar);
+                SwingUtilities.invokeLater(() -> SwingGUI.setProgressPercent(progressInt, progressBar));
             }
         }
     }
