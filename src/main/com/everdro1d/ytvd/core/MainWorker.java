@@ -119,7 +119,6 @@ public class MainWorker {
     protected static String videoTitle = "";
     protected static String videoFileName = "";
     public static boolean downloadCanceled = false;
-    protected static boolean windows = false;
     protected static String workingDirectoryPath;
     public static String fileDiv = File.separator;
     public static String stringQuotes = "\"";
@@ -196,24 +195,19 @@ public class MainWorker {
     }
 
     public static void executeOSSpecificCode(String detectedOS) {
-        switch (detectedOS) {
-            case "windows" -> {
-                windows = true;
+        if (detectedOS.equals("windows")) {
+            // binary arg stuff
+            stringQuotes = "\"";
 
-                // binary arg stuff
-                stringQuotes = "\"";
-
-                // set binary path
-                binaryPath += "win/";
-                for (int i = 0; i < 3; i++) {
-                    binaryFiles[i] += ".exe";
-                }
+            // set binary path
+            binaryPath += "win/";
+            for (int i = 0; i < binaryFiles.length; i++) {
+                binaryFiles[i] += ".exe";
             }
-            default -> { // Anything not windows or macOS
-                System.err.println("This program is not compatible with your operating system.");
-                JOptionPane.showMessageDialog(frame, "This program is not compatible with your operating system.", "Error!", JOptionPane.ERROR_MESSAGE);
-                System.exit(1);
-            }
+        } else {
+            System.err.println("This program is not compatible with your operating system.");
+            JOptionPane.showMessageDialog(frame, "This program is not compatible with your operating system.", "Error!", JOptionPane.ERROR_MESSAGE);
+            System.exit(1);
         }
     }
 
@@ -266,7 +260,7 @@ public class MainWorker {
                 java.nio.file.Files.copy(binaryPathStream, outputPath, StandardCopyOption.REPLACE_EXISTING);
 
                 // set binary file to hidden
-                if (windows) java.nio.file.Files.setAttribute(outputPath, "dos:hidden", true);
+                java.nio.file.Files.setAttribute(outputPath, "dos:hidden", true);
 
                 Runtime.getRuntime().addShutdownHook(new Thread(() -> deleteBinaryTempFile(binaryFile)));
 
@@ -564,7 +558,7 @@ public class MainWorker {
             cmdList.addAll(advancedSettings);
             cmdList.add("-P");
 
-            String tmpDiv = (windows) ? "\\\\" : "/";
+            String tmpDiv = "\\\\";
             cmdList.add(stringQuotes + downloadDirectoryPath + tmpDiv + stringQuotes);
             cmdList.add("-o");
             cmdList.add(stringQuotes + "%(title)s.%(ext)s" + stringQuotes);
@@ -880,7 +874,7 @@ public class MainWorker {
     public static void closeProcess(final Process p, String binaryFile) {
         new Thread(() -> {
             try {
-                if (windows) new ProcessBuilder("taskkill", "/F", "/IM", binaryFile).start();
+                new ProcessBuilder("taskkill", "/F", "/IM", binaryFile).start();
                 System.out.println("Attempted to close task: " + binaryFile);
                 if (p != null && p.isAlive()) globalDefaultProcess.destroyForcibly();
             } catch (IOException e) {
