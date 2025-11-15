@@ -120,7 +120,6 @@ public class MainWorker {
     protected static String videoFileName = "";
     public static boolean downloadCanceled = false;
     protected static boolean windows = false;
-    protected static boolean mac = false;
     protected static String workingDirectoryPath;
     public static String fileDiv = File.separator;
     public static String stringQuotes = "\"";
@@ -210,20 +209,6 @@ public class MainWorker {
                     binaryFiles[i] += ".exe";
                 }
             }
-            case "mac" -> {
-                mac = true;
-
-                // binary arg stuff
-                stringQuotes = "";
-
-                // set binary path
-                binaryPath += "mac/";
-                binaryFiles[0] = "yt-dlp_macos";
-
-                // UI
-                System.setProperty("apple.awt.application.name", titleText);
-                System.setProperty("apple.awt.application.appearance", "system");
-            }
             default -> { // Anything not windows or macOS
                 System.err.println("This program is not compatible with your operating system.");
                 JOptionPane.showMessageDialog(frame, "This program is not compatible with your operating system.", "Error!", JOptionPane.ERROR_MESSAGE);
@@ -282,11 +267,6 @@ public class MainWorker {
 
                 // set binary file to hidden
                 if (windows) java.nio.file.Files.setAttribute(outputPath, "dos:hidden", true);
-                // set binary file to executable (and hidden on macOS)
-                if (mac) {
-                    new ProcessBuilder("chflags", "hidden", outputPath.toString()).start();
-                    new ProcessBuilder("chmod", "+x", outputPath.toString()).start();
-                }
 
                 Runtime.getRuntime().addShutdownHook(new Thread(() -> deleteBinaryTempFile(binaryFile)));
 
@@ -901,7 +881,6 @@ public class MainWorker {
         new Thread(() -> {
             try {
                 if (windows) new ProcessBuilder("taskkill", "/F", "/IM", binaryFile).start();
-                else if (mac) new ProcessBuilder("killall", "-SIGINT", binaryFile).start();
                 System.out.println("Attempted to close task: " + binaryFile);
                 if (p != null && p.isAlive()) globalDefaultProcess.destroyForcibly();
             } catch (IOException e) {
