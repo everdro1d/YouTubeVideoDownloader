@@ -105,9 +105,10 @@ public class MainWorker {
      *     <li>[0] yt-dlp *note: use downloadBinary to call for correct name</li>
      *     <li>[1] ffmpeg</li>
      *     <li>[2] ffprobe</li>
+     *     <li>[3] deno</li>
      * </ul>
      */
-    public static String[] binaryFiles = {"yt-dlp", "ffmpeg", "ffprobe"};
+    public static String[] binaryFiles = {"yt-dlp", "ffmpeg", "ffprobe", "deno"};
     protected static String binaryPath = "main/libs/"; // the internal path to the binary to run
     public static String downloadDirectoryPath = ""; // the path to download the video to
     public static boolean darkMode = false; // whether dark mode is enabled
